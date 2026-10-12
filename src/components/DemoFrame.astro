@@ -1,0 +1,28 @@
+---
+// The stage for a runnable demo. The Run link opens the full-screen page;
+// with JavaScript on a wide screen, src/scripts/demo.ts loads the sandboxed
+// frame in place.
+import { Image } from 'astro:assets';
+import { runImage } from '../lib/oneshots/data';
+import { DEMO_SANDBOX } from '../lib/oneshots/vendor-map';
+import type { SyncedRun } from '../lib/oneshots/types';
+
+interface Props { run: SyncedRun; commit: string }
+const { run, commit } = Astro.props;
+const hero = runImage(run, run.hero);
+const edits = run.demo!.substitutions.map((s) => s.label);
+---
+<div class="stage" data-demo-src={run.demo!.src} data-demo-title={`${run.title}, running`} data-sandbox={DEMO_SANDBOX}>
+  <div class="stage-poster">
+    {hero ? <Image src={hero} alt="" widths={[640, 1280]} sizes="(max-width: 860px) 100vw, 1000px" /> : <span class="placeholder"><span>No figure recorded</span></span>}
+    <a class="run-btn" href={`/oneshots/${run.slug}/play/`} data-run-demo>▶ Run it</a>
+  </div>
+</div>
+<div class="stage-bar">
+  <span class="label">Runs in a sandbox: it can't touch this page, and it has no network.</span>
+  <a href={`/oneshots/${run.slug}/play/`}>Open full screen ↗</a>
+</div>
+<p class="vendor-note">
+  Served from this site at commit <code>{commit}</code>, unchanged except for {edits.length === 1 ? 'one edit' : `${edits.length} edits`}:{' '}
+  {edits.join('; ')}.
+</p>

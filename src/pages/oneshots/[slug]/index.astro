@@ -1,0 +1,91 @@
+---
+import { Image } from 'astro:assets';
+import Sheet from '../../../layouts/Sheet.astro';
+import DemoFrame from '../../../components/DemoFrame.astro';
+import { loadOneshots, runImage } from '../../../lib/oneshots/data';
+import { duration } from '../../../lib/oneshots/stats';
+import { EMBED_CSP } from '../../../lib/oneshots/vendor-map';
+import type { SyncedRun } from '../../../lib/oneshots/types';
+
+export function getStaticPaths() {
+  const data = loadOneshots();
+  const commit = data.source.sha.slice(0, 7);
+  return data.runs.map((run) => ({ params: { slug: run.slug }, props: { run, commit } }));
+}
+
+interface Props { run: SyncedRun; commit: string }
+const { run, commit } = Astro.props;
+const meta: [string, string][] = [
+  ['Model', run.agent.model],
+  ...(run.agent.modelId ? [['Model ID', run.agent.modelId] as [string, string]] : []),
+  ['Harness', run.agent.harness],
+  ...(run.agent.reasoning ? [['Reasoning', run.agent.reasoning] as [string, string]] : []),
+  ['Kind', run.kind],
+  ['Human turns', run.humanTurns === null ? 'not recorded' : `${run.humanTurns}, brief included`],
+  ['Wall clock', duration(run.wallClockMinutes)],
+  ['Date', run.date],
+  ['Medium', run.medium.join(', ')],
+];
+---
+<Sheet title={run.title} description={run.summary} current="oneshots">
+  <meta slot="head" http-equiv="Content-Security-Policy" content={EMBED_CSP} />
+  <article class="run-page">
+    <a class="back" href="/oneshots/">← Oneshots</a>
+    <header class="doc-head">
+      <div>
+        <div class="label">Run · {run.kind}{run.demo ? ' · runs here' : ''}</div>
+        <h1>{run.title}</h1>
+        <p class="dek">{run.summary}</p>
+      </div>
+      <dl class="meta" aria-label="Run manifest">
+        {meta.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}
+        <div><dt>Source</dt><dd><a href={run.links.tree}>oneshots @ {commit}</a></dd></div>
+      </dl>
+    </header>
+
+    {run.demo && <section aria-label="Demo"><DemoFrame run={run} commit={commit} /></section>}
+
+    {(!run.demo || run.assets.length > 0) && (
+        <section>
+          <div class="sec-head"><h2>Outputs</h2><span class="label">{run.release.url ? <a href={run.release.url}>GitHub release {run.release.tag}</a> : 'not published yet'}</span></div>
+          {run.assets.length > 0
+            ? <ul class="assets">{run.assets.map((a) => <li><span class="f">{a.url ? <a href={a.url}>{a.file}</a> : a.file}</span><span class="d">{a.description}</span>{!a.url && <span class="warn">not published yet</span>}</li>)}</ul>
+            : <p class="label">This run declares no full-size outputs.</p>}
+        </section>
+    )}
+
+    {(run.hero || run.previews.length > 0) && (
+      <section>
+        <div class="sec-head"><h2>Figures</h2><span class="label">From the run's preview images</span></div>
+        <div class="gallery">
+          {[...(run.hero && !run.demo ? [{ file: run.hero, caption: 'hero' }] : []), ...run.previews].map((p, i) => {
+            const img = runImage(run, p.file);
+            return img && <figure><Image src={img} alt={`${run.title}: ${p.caption}`} widths={[480, 960]} sizes="(max-width: 860px) 100vw, 50vw" loading="lazy" /><figcaption><b>FIG. {i + 1}</b> {p.caption}</figcaption></figure>;
+          })}
+        </div>
+      </section>
+    )}
+
+    {run.curatorNote && (
+      <section>
+        <div class="sec-head"><h2>Curator's note</h2><span class="label">Davis's verdict</span></div>
+        <p class="curator">{run.curatorNote}</p>
+      </section>
+    )}
+
+    <section>
+      <div class="sec-head"><h2>Brief</h2><span class="label">{run.brief ? 'The prompt, verbatim, as the run recorded it' : 'not recorded'}</span></div>
+      {run.brief ? <pre class="brief">{run.brief}</pre> : <p class="label">This run predates the run standard, so its brief wasn't kept.</p>}
+      {run.briefAfterDelivery && <p class="label brief-later">Messages sent after the work was delivered are left out here; the full brief on GitHub keeps them.</p>}
+      {(run.links.brief || run.links.log) && (
+        <p class="run-links">
+          {run.links.brief && <a href={run.links.brief}>Brief on GitHub</a>}
+          {run.links.log && <a href={run.links.log}>The agent's process log</a>}
+        </p>
+      )}
+    </section>
+  </article>
+  <script>
+    import '../../../scripts/demo';
+  </script>
+</Sheet>

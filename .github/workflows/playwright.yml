@@ -1,0 +1,68 @@
+name: Site checks
+
+# GitHub-hosted runners: a public repository must never run pull requests
+# from forks on a machine it doesn't throw away after each job.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          clean: true
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 10.28.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: "24"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Type check
+        run: pnpm check
+
+      - name: Unit tests, fixture build, e2e, and link check
+        run: pnpm test
+
+      # The real site: oneshots at the pinned commit, then every demo played
+      # in its sandbox, failing on any request to another host.
+      - name: Production build
+        run: pnpm build
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Play every oneshot demo
+        run: node scripts/check-demos.mjs
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30

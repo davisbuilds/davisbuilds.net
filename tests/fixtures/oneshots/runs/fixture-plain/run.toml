@@ -1,0 +1,17 @@
+# Test fixture: a runnable single file with no hero and nothing recorded.
+schema = 1
+slug = "fixture-plain"
+title = "Fixture Plain"
+summary = "A runnable fixture with no hero image, so the card shows the placeholder plate."
+date = 2026-09-15
+kind = "single-file"
+medium = ["web"]
+entry = "index.html"
+
+[agent]
+model = "Other Model"
+harness = "unrecorded"
+
+[run]
+brief = "unrecorded"
+human_turns = "unrecorded"

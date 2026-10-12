@@ -1,0 +1,25 @@
+---
+import { LINKS } from '../lib/site';
+import { readRevision } from '../lib/revision';
+
+const rev = readRevision();
+// The sheet's address, so the title names the page it's on. The 404 page
+// serves any missing address, so it keeps the bare domain.
+// Each path segment is its own box, so a long title breaks at a slash rather
+// than inside a slug.
+const here = Astro.url.pathname.replace(/\/?$/, '/');
+const segments = here === '/' || here === '/404/' ? [] : here.split('/').filter(Boolean).map((s) => `${s}/`);
+---
+<footer class="titleblock" aria-label="Title block">
+  <div><span class="label">Title</span><span class="v title">davisbuilds.net{segments.length > 0 && '/'}{segments.map((s) => <span>{s}</span>)}</span></div>
+  <div><span class="label">Drawn</span><span class="v">D. Gee</span></div>
+  <div><span class="label">Rev.</span><span class="v rev" title={rev?.dirty ? 'Built with uncommitted changes' : 'Commit this build came from'}>{rev ? <><span class="sha">{rev.sha}{rev.dirty && '+'}</span><span class="date">{rev.date}</span></> : 'unrecorded'}</span></div>
+  <div><span class="label">Theme</span><button class="theme-btn" type="button" id="theme-btn">System</button></div>
+  <div class="status-cell"><span class="label">Operator status · ET</span><span class="v"><span class="live"><i></i></span><span id="op-status">—</span></span></div>
+  <div class="wide">
+    <div><span class="label">Contact · davis at this domain</span>
+      <span class="links">{LINKS.map((l) => <a href={l.href}>{l.label}</a>)}</span>
+    </div>
+    <div class="zone-cell"><span class="label">Cursor zone</span><span id="zone-readout">—</span></div>
+  </div>
+</footer>

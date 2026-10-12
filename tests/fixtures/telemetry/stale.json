@@ -1,0 +1,115 @@
+{
+  "schema": 1,
+  "generated_at": "2026-10-07T21:00:00Z",
+  "producer": "snapshot",
+  "sources": {
+    "github": {
+      "status": "stale",
+      "read_at": "2026-10-07T15:30:00Z",
+      "year": 2026,
+      "contributions_ytd": 5755,
+      "contributions_by_year": [
+        {
+          "year": 2024,
+          "total": 21
+        },
+        {
+          "year": 2025,
+          "total": 248
+        },
+        {
+          "year": 2026,
+          "total": 5755
+        }
+      ],
+      "pull_requests_52w": 414,
+      "weekly_contributions": {
+        "bucket": "week",
+        "start": "2025-10-05",
+        "counts": [
+          0,
+          0,
+          0,
+          12,
+          16,
+          57,
+          47,
+          10,
+          9,
+          10,
+          19,
+          14,
+          8,
+          52,
+          36,
+          37,
+          64,
+          75,
+          121,
+          163,
+          139,
+          58,
+          30,
+          47,
+          50,
+          66,
+          81,
+          55,
+          96,
+          47,
+          80,
+          71,
+          43,
+          258,
+          56,
+          86,
+          254,
+          245,
+          311,
+          263,
+          209,
+          220,
+          223,
+          219,
+          245,
+          223,
+          157,
+          224,
+          165,
+          153,
+          299,
+          348,
+          63
+        ]
+      }
+    },
+    "agents": {
+      "status": "stale",
+      "read_at": "2026-10-05T08:00:00Z",
+      "hosts": [
+        {
+          "host": "macbook",
+          "status": "stale",
+          "read_at": "2026-10-05T08:00:00Z",
+          "since": "2026-02-04",
+          "sessions_30d": 287,
+          "tokens_30d": 4606685151,
+          "harness": [
+            {
+              "name": "Codex",
+              "sessions": 985
+            },
+            {
+              "name": "Claude Code",
+              "sessions": 239
+            },
+            {
+              "name": "Antigravity",
+              "sessions": 62
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

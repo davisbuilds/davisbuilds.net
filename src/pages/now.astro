@@ -1,0 +1,41 @@
+---
+// Now: a status grid of current focus, and the site's revision history.
+import Sheet from '../layouts/Sheet.astro';
+import { NOW, REVISIONS } from '../data/now';
+import { getPublishedEssays } from '../lib/writing';
+
+const latest = (await getPublishedEssays())[0];
+---
+<Sheet title="Now" description="What Davis Gee is focused on currently." current="now">
+  <header>
+    <div class="label">Status report · {NOW.updated}</div>
+    <h1 class="page-title">Now</h1>
+    <p class="page-intro">What I'm focused on currently.</p>
+  </header>
+  <section class="now-grid">
+    <div><span class="label">{NOW.entries[0].label}</span><span class="v">{NOW.entries[0].value}</span><p>{NOW.entries[0].note}</p></div>
+    <div>
+      <span class="label">Writing</span>
+      {latest
+        ? <Fragment><span class="v"><a href={latest.href}>{latest.entry.data.title}</a></span><p>Latest in the register, {latest.entry.data.status}.</p></Fragment>
+        : <Fragment><span class="v">Nothing published yet</span><p>The register lists essays as they're published.</p></Fragment>}
+    </div>
+    {NOW.entries.slice(1).map((e) => (
+      <div>
+        <span class="label">{e.label}</span><span class="v">{e.value}</span>
+        <p>{e.note}{e.link && <Fragment> <a href={e.link.href}>{e.link.label}</a>.</Fragment>}</p>
+      </div>
+    ))}
+  </section>
+  <section>
+    <div class="sec-head"><h2>Revision history</h2><span class="label">This site, as a drawing</span></div>
+    <div class="reg-wrap">
+      <table class="register">
+        <thead><tr><th>Rev</th><th>Description</th><th>Date</th></tr></thead>
+        <tbody>
+          {REVISIONS.map((r) => <tr><td class="m">{r.rev}</td><td class="t">{r.description}</td><td class="m">{r.date}</td></tr>)}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</Sheet>

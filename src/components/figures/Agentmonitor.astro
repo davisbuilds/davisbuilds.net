@@ -1,0 +1,21 @@
+---
+// The harness-mix bar is telemetry: it stays "unavailable" until the
+// telemetry reader fills it from the published document.
+---
+<svg class="fig" viewBox="0 0 300 150" role="img" aria-label="Diagram: agent sessions, tool calls and costs flow into a local SQLite store">
+  <rect class="box" x="12" y="14" width="76" height="22"/><text class="t" x="19" y="29">sessions</text>
+  <rect class="box" x="12" y="44" width="76" height="22"/><text class="t" x="19" y="59">tool calls</text>
+  <rect class="box" x="12" y="74" width="76" height="22"/><text class="t" x="19" y="89">costs</text>
+  <path class="flow" d="M88 25 C110 25 110 52 130 52" marker-end="url(#arr)"/>
+  <path class="flow" d="M88 55 L130 55" marker-end="url(#arr)"/>
+  <path class="flow" d="M88 85 C110 85 110 58 130 58" marker-end="url(#arr)"/>
+  <ellipse class="box" cx="160" cy="38" rx="28" ry="7"/><path class="ink" d="M132 38 L132 70 A28 7 0 0 0 188 70 L188 38"/>
+  <text class="t" x="160" y="60" text-anchor="middle">SQLite</text>
+  <text x="202" y="44">local only</text><text x="202" y="56">FTS search</text><text x="202" y="68">iOS reader</text>
+  <g data-readout="harness-mix">
+    <rect class="ink" x="12" y="104" width="276" height="14" stroke-dasharray="3 2"/>
+    <g data-bar></g>
+    <text x="12" y="132" data-empty>harness mix unavailable</text>
+    <text x="12" y="146"><tspan data-total></tspan><tspan data-read>no reading yet</tspan></text>
+  </g>
+</svg>

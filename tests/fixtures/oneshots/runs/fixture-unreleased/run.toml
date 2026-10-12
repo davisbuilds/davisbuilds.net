@@ -1,0 +1,24 @@
+# Test fixture: a long-horizon pipeline run whose release doesn't exist yet.
+schema = 1
+slug = "fixture-unreleased"
+title = "Fixture Unreleased"
+summary = "A pipeline fixture that declares assets before any release exists."
+date = 2026-09-10
+kind = "long-horizon"
+medium = ["render"]
+hero = "preview/hero.webp"
+entry = "src/build.py"
+
+[agent]
+model = "GPT-6 Astra"
+harness = "Codex"
+
+[run]
+brief = "unrecorded"
+human_turns = 1
+wall_clock_minutes = 600
+log = "process/PROGRESS.md"
+
+[[assets]]
+file = "render.png"
+description = "A render that isn't published yet"

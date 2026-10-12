@@ -1,0 +1,22 @@
+---
+// The essay's metadata block, after gwern.net's, plus how the
+// piece was written.
+import { isoDate, statusSlug, type Arranged } from '../lib/essays';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props { essay: Arranged<CollectionEntry<'writing'>> }
+const { essay } = Astro.props;
+const { data } = essay.entry;
+const alsoOn = data.also_on ? new URL(data.also_on) : null;
+---
+<dl class="meta" aria-label="Essay metadata">
+  <div><dt>Created</dt><dd><time datetime={isoDate(data.created)}>{isoDate(data.created)}</time></dd></div>
+  <div><dt>Published</dt><dd><time datetime={isoDate(essay.published)}>{isoDate(essay.published)}</time></dd></div>
+  <div><dt>Updated</dt><dd><time datetime={isoDate(data.updated)}>{isoDate(data.updated)}</time></dd></div>
+  <div><dt>Status</dt><dd><span class={`chip ${statusSlug(data.status)}`}>{data.status}</span></dd></div>
+  <div><dt>Confidence</dt><dd>{data.confidence}</dd></div>
+  <div><dt>Importance</dt><dd><span class="bar" aria-hidden="true">{Array.from({ length: 10 }, (_, i) => <i class={i < data.importance ? 'on' : undefined} />)}</span>{data.importance} / 10</dd></div>
+  <div><dt>Length</dt><dd>{essay.words.toLocaleString('en-US')} words · {essay.minutes} min</dd></div>
+  <div><dt>Written</dt><dd>{data.written_by}</dd></div>
+  {alsoOn && <div><dt>Also on</dt><dd><a href={alsoOn.href}>{alsoOn.hostname.replace(/^www\./, '')}</a></dd></div>}
+</dl>

@@ -1,0 +1,110 @@
+---
+// Home: the hero and its readout, telemetry tiles, the system diagram, the
+// oneshots strip and the writing register. Readouts are telemetry: they
+// render "unavailable" here, never a number, and the telemetry reader fills
+// each [data-readout] from the published document.
+import { Image } from 'astro:assets';
+import Sheet from '../layouts/Sheet.astro';
+import SystemDiagram from '../components/SystemDiagram.astro';
+import { getPublishedEssays } from '../lib/writing';
+import { isoDate, statusSlug } from '../lib/essays';
+import { loadOneshots, runImage } from '../lib/oneshots/data';
+
+const TILES = [
+  { key: 'agent-sessions-30d', label: 'Agent sessions · 30d', src: ['agentmonitor · sessions'], warn: 'blind spot: MacBook only' },
+  { key: 'tokens-30d', label: 'Tokens · 30d', src: ['agentmonitor · token usage'], warn: 'blind spot: MacBook only' },
+  { key: 'pull-requests-52w', label: 'Pull requests · 52w', src: ['GitHub GraphQL', 'all repos, public + private'] },
+];
+
+const { runs } = loadOneshots();
+// The four newest runs; a run without a hero gets the placeholder plate.
+const strip = [...runs]
+  .sort((a, b) => b.date.localeCompare(a.date) || a.slug.localeCompare(b.slug))
+  .slice(0, 4)
+  .map((run) => ({ run, img: runImage(run, run.hero) }));
+const essays = (await getPublishedEssays()).slice(0, 3);
+---
+<Sheet title="Home" current="home" description="Davis Gee is a systems engineer who builds AI infrastructure and context-engineering tools, and writes about working with agents.">
+  <section class="hero">
+    <div>
+      <div class="label">Spec. 001 · Operator</div>
+      <h1>Hi, I'm <em>Davis</em></h1>
+      <p class="sub">Systems engineer who got obsessed with <em>building</em>.</p>
+      <p>I care less about what something can do in a demo than whether it holds up once it's actually running, and most of my work now lives in that gap.</p>
+      <p>By day, Senior AI/ML Engineer. Off the clock, AI infrastructure and context engineering: the plumbing that makes autonomous workflows predictable enough to trust with real work.</p>
+    </div>
+    <aside class="readout" aria-label="Contributions readout" data-readout="contributions-ytd">
+      <header><span class="label">Readout · GitHub</span><span class="label" data-state>no reading</span></header>
+      <div class="big unavailable" data-value>unavailable</div>
+      <div class="unit">contributions, <span data-year>this year</span> to date</div>
+      <div class="years" data-years hidden></div>
+      <div class="prov"><b>SRC</b> GitHub GraphQL contributionCalendar · <b>READ</b> <span data-read>no reading yet</span><br /><b>SCOPE</b> public + private repos, @davisbuilds</div>
+    </aside>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Telemetry</h2></div>
+    <div class="telemetry three">
+      {TILES.map((t) => (
+        <div class="tile" data-readout={t.key}>
+          <span class="label">{t.label}</span>
+          <span class="v unavailable" data-value>unavailable</span>
+          {t.src.map((s) => <span class="src">{s}</span>)}
+          <span class="src" data-read>no reading yet</span>
+          {t.warn && <span class="warn">{t.warn}</span>}
+          {t.warn && <span class="warn" data-hosts hidden></span>}
+        </div>
+      ))}
+    </div>
+    <div class="chart-wrap fits" data-readout="weekly-contributions">
+      <div class="chart-cap"><span class="label">Weekly contributions · trailing 53 weeks · <span data-read>no reading yet</span></span><span class="label" data-cross></span></div>
+      <div data-chart><p class="label chart-empty unavailable" data-value>unavailable</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Systems</h2><a class="more" href="/systems/">Full parts list →</a></div>
+    <SystemDiagram />
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Oneshots</h2><a class="more" href="/oneshots/">Test log →</a></div>
+    <div class="strip">
+      {strip.map(({ run, img }) => (
+        <a href={`/oneshots/${run.slug}/`}>
+          <span class="frame">
+            {img
+              ? <Image src={img} alt="" widths={[320, 640]} sizes="(max-width: 860px) 50vw, 25vw" loading="lazy" />
+              : <span class="placeholder"><span>No figure recorded</span></span>}
+          </span>
+          <span class="t">{run.title}</span>
+          <span class="m">{run.agent.model} · {run.humanTurns === null ? 'turns not recorded' : `${run.humanTurns} human turn${run.humanTurns === 1 ? '' : 's'}`}</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Writing register</h2><a class="more" href="/writing/">All entries →</a></div>
+    {essays.length > 0 ? (
+      <div class="reg-wrap">
+        <table class="register">
+          <thead><tr><th>Doc</th><th>Title</th><th>Status</th><th>Confidence</th><th>Published</th></tr></thead>
+          <tbody>
+            {essays.map((e) => (
+              <tr>
+                <td class="m">{e.doc}</td>
+                <td class="t"><a href={e.href}>{e.entry.data.title}</a></td>
+                <td><span class={`chip ${statusSlug(e.entry.data.status)}`}>{e.entry.data.status}</span></td>
+                <td class="m">{e.entry.data.confidence}</td>
+                <td class="m">{isoDate(e.published)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <p class="label">No essays published yet.</p>
+    )}
+  </section>
+</Sheet>

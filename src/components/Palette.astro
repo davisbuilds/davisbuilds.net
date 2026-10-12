@@ -1,0 +1,17 @@
+---
+import type { PaletteItem } from '../lib/site';
+interface Props { items: PaletteItem[] }
+const { items } = Astro.props;
+---
+<div class="palette-scrim" id="palette" hidden>
+  <div class="palette" role="dialog" aria-modal="true" aria-label="Command palette">
+    <label for="pal-q" class="label" style="position:absolute;left:-9999px">Search pages, essays, and projects</label>
+    <input id="pal-q" type="text" placeholder="Jump to a page, essay, or part…" autocomplete="off" />
+    <ul id="pal-list" role="listbox"></ul>
+    <div class="hint">↑↓ to move · enter to open · esc to close</div>
+  </div>
+</div>
+<script type="application/json" id="palette-items" set:html={JSON.stringify(items).replace(/</g, '\\u003c')} />
+<script>
+  import '../scripts/palette';
+</script>

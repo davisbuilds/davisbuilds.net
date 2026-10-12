@@ -1,0 +1,129 @@
+---
+// Systems: figure plates for the main parts, the parts list with GitHub
+// dates, and the applications built on top.
+import { Image } from 'astro:assets';
+import Sheet from '../layouts/Sheet.astro';
+import Plate from '../components/Plate.astro';
+import Engram from '../components/figures/Engram.astro';
+import Dojo from '../components/figures/Dojo.astro';
+import Agentmonitor from '../components/figures/Agentmonitor.astro';
+import Openbench from '../components/figures/Openbench.astro';
+import Fetchmd from '../components/figures/Fetchmd.astro';
+import { APPS, PARTS, repoUrl } from '../data/parts';
+import { loadSignals, weeksSince } from '../lib/github';
+import { loadOneshots, runImage } from '../lib/oneshots/data';
+import { ordered } from '../lib/oneshots/stats';
+
+const signals = await loadSignals();
+const signal = (repo: string) => (signals.status === 'ok' ? signals.byRepo.get(repo)! : null);
+const part = (repo: string) => PARTS.find((p) => p.repo === repo)!;
+const meta = (repo: string, note?: string) => {
+  const s = signal(repo);
+  return `${part(repo).lang} · ${note ?? (s ? `since ${s.created.slice(0, 7)}` : 'since unavailable')}`;
+};
+
+const { runs } = loadOneshots();
+const { long, single } = ordered(runs);
+const mosaic = [...long, ...single].flatMap((r) => {
+  const img = runImage(r, r.hero);
+  return img ? [{ run: r, img }] : [];
+}).slice(0, 6);
+const BARS = 8;
+---
+<Sheet title="Systems" description="The tools Davis Gee builds to make coding agents dependable, and the apps built on top." current="systems">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <marker id="arr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L8 4L0 8z" style="fill:var(--signal)" /></marker>
+    </defs>
+  </svg>
+  <header>
+    <div class="label">Parts list · rev D</div>
+    <h1 class="page-title">Systems</h1>
+    <p class="page-intro">The tools I build to make coding agents dependable, and the apps built on top.</p>
+  </header>
+
+  <section>
+    <div class="sec-head"><h2>Drawings</h2><span class="label">How the main parts work. Hover a plate to run it.</span></div>
+    <div class="plates">
+      <Plate fig={1} name="engram" kind="memory" meta={meta('engram')} href={repoUrl('engram')}>
+        <Engram />
+        <Fragment slot="cap"><span><b>1</b>One store, one writer.</span><span><b>2</b>Rendered into each harness's native memory.</span></Fragment>
+      </Plate>
+      <Plate fig={2} name="dojo" kind="skills" meta={meta('dojo')} href={repoUrl('dojo')}>
+        <Dojo />
+        <Fragment slot="cap"><span><b>1</b>Skills are written once, in markdown.</span><span><b>2</b>Contract checks, then adapters per harness.</span></Fragment>
+      </Plate>
+      <Plate fig={3} name="agentmonitor" kind="observability" meta={meta('agentmonitor')} href={repoUrl('agentmonitor')}>
+        <Agentmonitor />
+        <Fragment slot="cap"><span>Everything stays on the machine. The bar is the measured harness mix, from published telemetry.</span></Fragment>
+      </Plate>
+      <Plate fig={4} name="openbench" kind="evaluation" meta={meta('openbench', 'fork, extended')} href={repoUrl('openbench')}>
+        <Openbench />
+        <Fragment slot="cap"><span><b>1</b>Same model.</span><span><b>2</b>Different wrapper: codex, pi, opencode, cursor, devin.</span></Fragment>
+      </Plate>
+      <Plate fig={5} name="fetchmd" kind="cli" meta={meta('fetchmd')} href={repoUrl('fetchmd')}>
+        <Fetchmd />
+        <Fragment slot="cap"><span><b>1</b>Only the content survives: fewer tokens for the agent to read.</span></Fragment>
+      </Plate>
+      <Plate fig={6} name="oneshots" kind="demos" meta={`${runs.length} runs`} href="/oneshots/" linkLabel="Test log →">
+        <div class="mosaic">
+          {mosaic.map(({ run, img }) => <Image src={img} alt={run.title} widths={[160, 320]} sizes="120px" loading="lazy" />)}
+        </div>
+        <Fragment slot="cap"><span>One brief, one agent, whatever comes back. Each run records its model and how many times a human stepped in.</span></Fragment>
+      </Plate>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Parts</h2>
+      <span class="label" data-read-at={signals.status === 'ok' ? signals.readAt : undefined}>
+        {signals.status === 'ok'
+          ? `Freshness bars drain one per week without a push · GitHub read ${signals.readAt.slice(0, 10)}`
+          : 'Last signals unavailable: GitHub could not be read'}
+      </span>
+    </div>
+    <div class="spec-wrap">
+      <table class="spec">
+        <thead><tr><th>P/N</th><th>Part</th><th>Function</th><th>Lang</th><th>Created</th><th>Last signal</th></tr></thead>
+        <tbody>
+          {PARTS.map((p) => {
+            const s = signal(p.repo);
+            const weeks = s && signals.status === 'ok' ? weeksSince(s.pushed, signals.readAt) : null;
+            return (
+              <tr data-part={p.repo}>
+                <td class="m">{p.pn}</td>
+                <td class="t"><a href={repoUrl(p.repo)}>{p.repo}</a></td>
+                <td class="f">{p.function}</td>
+                <td class="m">{p.lang}</td>
+                <td class="m">{s ? s.created : 'unavailable'}</td>
+                <td class="m" data-last-signal>
+                  {weeks !== null && (
+                    <span class="age" title={`${weeks} week${weeks === 1 ? '' : 's'} since last push`} aria-hidden="true">
+                      {Array.from({ length: BARS }, (_, i) => <i class:list={[{ on: i >= weeks }]}></i>)}
+                    </span>
+                  )}
+                  {s ? s.pushed : 'unavailable'}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Applications</h2><span class="label">Products on top of the tooling</span></div>
+    <div class="apps" style="margin-top:0">
+      {APPS.map((a) => {
+        const inner = (
+          <Fragment><span class="pn"><span>APP</span><span>{a.kind}</span></span><span class="t">{a.name}</span><span class="d">{a.description}</span></Fragment>
+        );
+        return a.repo
+          ? <a class="part" href={repoUrl(a.repo)}>{inner}</a>
+          : <div class="part dev">{inner}</div>;
+      })}
+    </div>
+  </section>
+</Sheet>

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fixture hostile</title>
+<meta http-equiv="refresh" content="3;url=https://example.com/refreshed">
+</head>
+<body>
+<pre id="results">running</pre>
+<script>
+  // Each attempt records what happened; the e2e test reads the results.
+  const r = {};
+  const attempt = (name, fn) => { try { fn(); r[name] = 'no error'; } catch (e) { r[name] = 'blocked: ' + e.name; } };
+  attempt('parentDom', () => { parent.document.body.dataset.pwned = 'yes'; });
+  attempt('parentStorage', () => { parent.localStorage.setItem('pwned', 'yes'); });
+  attempt('topNavigation', () => { top.location.href = 'https://example.com/escaped'; });
+  r.popup = window.open('https://example.com/popup') === null ? 'blocked' : 'opened';
+  const host = ['https://', 'example', '.com'].join('');
+  fetch(host + '/beacon').then(() => { r.fetch = 'sent'; }, () => { r.fetch = 'blocked'; });
+  const s = document.createElement('script');
+  s.src = host + '/injected.js';
+  s.onload = () => { r.script = 'loaded'; };
+  s.onerror = () => { r.script = 'blocked'; };
+  document.head.append(s);
+  const img = new Image();
+  img.onload = () => { r.image = 'loaded'; };
+  img.onerror = () => { r.image = 'blocked'; };
+  img.src = host + '/pixel.png';
+  setTimeout(() => { document.getElementById('results').textContent = JSON.stringify(r); }, 1500);
+  // After reporting, try to navigate this frame away; the test checks it stays.
+  setTimeout(() => { location.href = host + '/navigated'; }, 2000);
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+---
+import { NAV, type NavKey } from '../lib/site';
+interface Props { current?: NavKey }
+const { current } = Astro.props;
+---
+<header class="masthead">
+  <a class="mark" href="/"><span class="stamp">DG</span><span class="name">Davis Gee</span></a>
+  <nav class="nav" aria-label="Site">
+    {NAV.map((n) => (
+      <a href={n.href} aria-current={current === n.key ? 'page' : undefined}>{n.label}</a>
+    ))}
+    <button class="kbd" type="button" data-open-palette aria-label="Open command palette">⌘K</button>
+  </nav>
+</header>

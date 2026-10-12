@@ -1,0 +1,83 @@
+---
+// The drawing sheet every page sits on: framed and zoned, with a masthead and
+// a title block, plus the site-wide interactions (theme, zones, palette,
+// status, console hello).
+import '@fontsource-variable/archivo/wdth.css';
+import '@fontsource-variable/jetbrains-mono/index.css';
+import '@fontsource-variable/source-serif-4/opsz.css';
+import '@fontsource-variable/source-serif-4/opsz-italic.css';
+import '../styles/tokens.css';
+import '../styles/global.css';
+import Masthead from '../components/Masthead.astro';
+import TitleBlock from '../components/TitleBlock.astro';
+import Palette from '../components/Palette.astro';
+import { basePaletteItems, type NavKey, type PaletteItem } from '../lib/site';
+import { getPublishedEssays } from '../lib/writing';
+import { loadOneshots } from '../lib/oneshots/data';
+import { PARTS, repoUrl } from '../data/parts';
+
+interface Props {
+  title: string;
+  description: string;
+  current?: NavKey;
+  paletteItems?: PaletteItem[];
+  canonical?: string;
+  ogType?: 'website' | 'article';
+}
+const { title, description, current, paletteItems = [], ogType = 'website' } = Astro.props;
+const fullTitle = current === 'home' ? 'Davis Gee' : `${title} · Davis Gee`;
+const canonical = Astro.props.canonical ?? new URL(Astro.url.pathname, Astro.site).href;
+const essays = (await getPublishedEssays()).map((e) => ({ label: e.entry.data.title, kind: 'essay', href: e.href }));
+const runs = loadOneshots().runs.map((r) => ({ label: r.title, kind: 'oneshot', href: `/oneshots/${r.slug}/` }));
+const parts = PARTS.map((p) => ({ label: p.repo, kind: 'part', href: repoUrl(p.repo) }));
+const items = [...basePaletteItems(), ...essays, ...runs, ...parts, ...paletteItems];
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:type" content={ogType} />
+    <link rel="alternate" type="application/rss+xml" title="Davis Gee · Writing" href="/rss.xml" />
+    <script is:inline>
+      // Apply an explicit theme choice before first paint to avoid a flash.
+      try {
+        const t = localStorage.getItem('dg-theme');
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    </script>
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <slot name="before-sheet" />
+    <div class="sheet" id="sheet">
+      <div class="zones" aria-hidden="true">
+        <div class="top" id="zx"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span></div>
+        <div class="left" id="zy"><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span></div>
+      </div>
+      <div class="inner">
+        <Masthead current={current} />
+        <main id="main" class="view">
+          <slot />
+        </main>
+        <TitleBlock />
+      </div>
+    </div>
+    <Palette items={items} />
+    <script>
+      import '../scripts/theme';
+      import '../scripts/zones';
+      import '../scripts/status';
+      import '../scripts/hello';
+      import '../scripts/telemetry-reader';
+    </script>
+  </body>
+</html>

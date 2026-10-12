@@ -1,0 +1,30 @@
+# Test fixture: a long-horizon pipeline run with a partly published release.
+schema = 1
+slug = "fixture-film"
+title = "Fixture Film"
+summary = "A pipeline fixture whose film is published and whose still is not."
+date = 2026-09-20
+kind = "long-horizon"
+medium = ["film", "python"]
+hero = "preview/hero.webp"
+entry = "src/build.py"
+curator_note = "A fixture curator note, shown as plain text."
+
+[agent]
+model = "Claude Opus 5.5"
+model_id = "claude-opus-5-5"
+harness = "Claude Code (cloud session)"
+
+[run]
+brief = "brief.md"
+human_turns = 2
+wall_clock_minutes = 90
+log = "process/PROGRESS.md"
+
+[[assets]]
+file = "fixture_film.mp4"
+description = "The fixture film"
+
+[[assets]]
+file = "fixture_still.png"
+description = "A still that was never published"

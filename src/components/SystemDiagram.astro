@@ -1,0 +1,33 @@
+---
+// The Home system diagram: context parts feed the harness bus, evidence parts
+// read from it. Parts come from src/data/parts.ts; the per-harness session
+// counts are telemetry, "unavailable" until the reader fills
+// them.
+import { PARTS, repoUrl, type Lane } from '../data/parts';
+const lane = (l: Lane) => PARTS.filter((p) => p.lane === l);
+---
+<div class="system">
+  {(['context', 'evidence'] as const).map((l, i) => (
+    <Fragment>
+      {i === 1 && (
+        <div class="lane" style="border-inline:0">
+          <div class="bus">
+            <span class="wire in" aria-hidden="true"></span><span class="wire out" aria-hidden="true"></span>
+            <span class="label">Harness bus</span>
+            <h3>Coding agents, all day</h3>
+            <div data-readout="harness-sessions">
+              <div class="harness"><div><span>sessions by harness</span><span class="unavailable" data-value>unavailable</span></div></div>
+              <span class="label" style="font-size:10px"><span data-since>sessions</span> · agentmonitor · <span data-read>no reading yet</span></span>
+            </div>
+          </div>
+        </div>
+      )}
+      <div class="lane">
+        <span class="label">{l === 'context' ? 'Context in' : 'Evidence out'}</span>
+        {lane(l).map((p) => (
+          <a class="part" href={repoUrl(p.repo)}><span class="pn"><span>P/N {p.pn}</span><span>{p.kind}</span></span><span class="t">{p.repo}</span><span class="d">{p.blurb}</span></a>
+        ))}
+      </div>
+    </Fragment>
+  ))}
+</div>

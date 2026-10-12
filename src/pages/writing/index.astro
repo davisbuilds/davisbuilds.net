@@ -1,0 +1,55 @@
+---
+import Sheet from '../../layouts/Sheet.astro';
+import { getPublishedEssays } from '../../lib/writing';
+import { CONFIDENCES, STATUSES } from '../../lib/essay-schema';
+import { isoDate, statusSlug } from '../../lib/essays';
+
+const essays = await getPublishedEssays();
+---
+<Sheet title="Writing" description="Essays by Davis Gee on building with agents, measurement, and engineering practice." current="writing">
+  <header>
+    <div class="label">Register · W-series</div>
+    <h1 class="page-title">Writing</h1>
+    <p class="page-intro">Essays on building with agents, measurement, and whatever else I'm working through. Drafts are listed with their status, so you know what you're reading.</p>
+  </header>
+  <section>
+    {essays.length > 0 && (
+      <div class="filters" role="group" aria-label="Filter by status" hidden data-filters>
+        <button type="button" data-filter="all" aria-pressed="true">All</button>
+        {STATUSES.map((s) => <button type="button" data-filter={statusSlug(s)} aria-pressed="false">{s}</button>)}
+      </div>
+    )}
+    {essays.length > 0 ? (
+      <div class="reg-wrap">
+        <table class="register">
+          <thead><tr><th>Doc</th><th>Title</th><th>Status</th><th>Confidence</th><th>Importance</th><th>Words</th><th>Published</th></tr></thead>
+          <tbody id="reg-all">
+            {essays.map((e) => (
+              <tr data-status={statusSlug(e.entry.data.status)}>
+                <td class="m">{e.doc}</td>
+                <td class="t"><a href={e.href}>{e.entry.data.title}</a></td>
+                <td><span class={`chip ${statusSlug(e.entry.data.status)}`}>{e.entry.data.status}</span></td>
+                <td class="m">{e.entry.data.confidence}</td>
+                <td class="m">{e.entry.data.importance} / 10</td>
+                <td class="m">{e.words.toLocaleString('en-US')}</td>
+                <td class="m">{isoDate(e.published)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : null}
+    <p class="label reg-empty" id="reg-empty" hidden={essays.length > 0}>{essays.length > 0 ? 'Nothing with this status yet.' : 'No essays published yet.'}</p>
+  </section>
+  <section>
+    <div class="sec-head"><h2>The metadata</h2></div>
+    <div class="legend-grid">
+      <div><span class="label">Status</span><p>How settled the piece is. Drafts are public on purpose.</p><div class="scale">{STATUSES.map((s) => <span>{s}</span>)}</div></div>
+      <div><span class="label">Confidence</span><p>How likely I think the main claim is to hold up.</p><div class="scale">{CONFIDENCES.map((c) => <span>{c}</span>)}</div></div>
+      <div><span class="label">Written</span><p>Every piece says how it was written. Agents may suggest edits; the words are mine.</p></div>
+    </div>
+  </section>
+  <script>
+    import '../../scripts/writing-filters';
+  </script>
+</Sheet>

@@ -1,0 +1,36 @@
+---
+// One essay: the document head with its metadata block, the
+// prose with margin notes, and the reading ruler pinned to the top edge.
+import Sheet from './Sheet.astro';
+import MetaBlock from '../components/MetaBlock.astro';
+import type { Arranged } from '../lib/essays';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props { essay: Arranged<CollectionEntry<'writing'>> }
+const { essay } = Astro.props;
+const { data } = essay.entry;
+const canonical = data.canonical ?? new URL(essay.href, Astro.site).href;
+---
+<Sheet title={data.title} description={data.description} current="writing" canonical={canonical} ogType="article">
+  <div slot="before-sheet" class="ruler" id="ruler" hidden aria-hidden="true" data-words={essay.words}>
+    <div class="fill" id="ruler-fill"></div><div class="ticks"></div><span class="pos" id="ruler-pos"></span>
+  </div>
+  <article class="essay-page">
+    <a class="back" href="/writing/">← Writing register</a>
+    <header class="doc-head">
+      <div>
+        <div class="label">Doc {essay.doc}{data.tags.length > 0 && ` · ${data.tags.join(', ')}`}</div>
+        <h1>{data.title}</h1>
+        <p class="dek">{data.description}</p>
+      </div>
+      <MetaBlock essay={essay} />
+    </header>
+    <div class="prose" id="prose">
+      <slot />
+    </div>
+  </article>
+  <script>
+    import '../scripts/ruler';
+    import '../scripts/sidenotes';
+  </script>
+</Sheet>

@@ -1,0 +1,32 @@
+---
+// One run in the Oneshots test log: its figure, summary and manifest readouts.
+import { Image } from 'astro:assets';
+import { runImage } from '../lib/oneshots/data';
+import { duration } from '../lib/oneshots/stats';
+import type { SyncedRun } from '../lib/oneshots/types';
+
+interface Props { run: SyncedRun; fig: number; wide?: boolean }
+const { run, fig, wide = false } = Astro.props;
+const hero = runImage(run, run.hero);
+const href = `/oneshots/${run.slug}/`;
+---
+<article class:list={["run", { wide }]} data-kind={run.kind} data-lab={run.lab} data-runnable={String(run.demo !== null)}>
+  <a class="img" href={href} tabindex="-1" aria-hidden="true">
+    {hero
+      ? <Image src={hero} alt="" widths={[480, 960]} sizes={wide ? '(max-width: 860px) 100vw, 66vw' : '(max-width: 860px) 100vw, 33vw'} loading="lazy" />
+      : <span class="placeholder"><span>No figure recorded</span></span>}
+    <span class="no">FIG. {String(fig).padStart(2, '0')}</span><span class="crop tr"></span><span class="crop bl"></span><span class="crop br"></span>
+  </a>
+  <div class="body">
+    <h3><a href={href}>{run.title}</a></h3>
+    <p>{run.summary}</p>
+    <dl>
+      <dt>Model</dt><dd>{run.agent.model}{run.agent.reasoning && ` · ${run.agent.reasoning}`}</dd>
+      <dt>Kind</dt><dd>{run.kind}</dd>
+      <dt>Human</dt><dd>{run.humanTurns === null ? 'not recorded' : <><span class="turns" aria-hidden="true">{Array.from({ length: 4 }, (_, k) => <i class={k < run.humanTurns! ? 'on' : undefined} />)}</span>{run.humanTurns} {run.humanTurns === 1 ? 'turn' : 'turns'}</>}</dd>
+      <dt>Clock</dt><dd>{duration(run.wallClockMinutes)}</dd>
+      <dt>Date</dt><dd>{run.date}</dd>
+    </dl>
+    <div class="links"><a href={href}>{run.demo ? 'Run it →' : 'Outputs →'}</a></div>
+  </div>
+</article>

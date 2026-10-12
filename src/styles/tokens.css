@@ -1,0 +1,33 @@
+/* Design tokens for the Instrument direction.
+   Layout concept: the page is an engineering drawing sheet (framed, zoned, with a
+   title block), and every data readout carries its provenance.
+   Light values on bare :root; dark values for the system preference (unless the
+   visitor chose light) and for an explicit dark choice. */
+:root {
+  --paper: #e9ece8;
+  --sheet: #f4f5f2;
+  --ink: #16212b;
+  --muted: #5a6772;
+  --rule: #c2cbd2;
+  --grid: rgba(58, 98, 138, 0.07);
+  --signal: #b7460a; /* 4.5:1 on --paper and --sheet, for the small text that uses it */
+  --signal-soft: rgba(183, 70, 10, 0.12);
+  --code-bg: #dde2de; /* inline code chip, opaque so the grid doesn't show through */
+  --ok: #2e7a58;
+  --f-display: "Archivo Variable", "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --f-read: "Source Serif 4 Variable", "Source Serif 4", Georgia, serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0d1317; --sheet: #121a1f; --ink: #dbe3e7; --muted: #8796a0; --rule: #2a3740;
+    --grid: rgba(140, 180, 210, 0.05); --signal: #ff7a33; --signal-soft: rgba(255, 122, 51, 0.14); --code-bg: #1c262d; --ok: #5cc195;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0d1317; --sheet: #121a1f; --ink: #dbe3e7; --muted: #8796a0; --rule: #2a3740;
+  --grid: rgba(140, 180, 210, 0.05); --signal: #ff7a33; --signal-soft: rgba(255, 122, 51, 0.14); --code-bg: #1c262d; --ok: #5cc195;
+  color-scheme: dark;
+}

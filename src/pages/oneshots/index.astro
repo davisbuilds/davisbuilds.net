@@ -1,0 +1,55 @@
+---
+import Sheet from '../../layouts/Sheet.astro';
+import RunCard from '../../components/RunCard.astro';
+import AutonomyPlot from '../../components/AutonomyPlot.astro';
+import { loadOneshots } from '../../lib/oneshots/data';
+import { computeStats, duration, ordered, wideCards } from '../../lib/oneshots/stats';
+
+const data = loadOneshots();
+const stats = computeStats(data.runs);
+const { long, single } = ordered(data.runs);
+const wide = wideCards(long.length);
+const labs = new Set(data.runs.map((r) => r.lab));
+const source = `${data.source.repo.replace('https://', '')} @ ${data.source.sha.slice(0, 7)}`;
+---
+<Sheet title="Oneshots" description="Agent oneshots: one brief handed to a coding agent, and whatever came back. Most of them run right here." current="oneshots">
+  <header>
+    <div class="label">Test log · agent oneshots</div>
+    <h1 class="page-title">Oneshots</h1>
+    <p class="page-intro">One brief handed to an agent, no hand-holding, and whatever comes back. Every run records its model and how many times a human stepped in. The ones that are web pages run right here.</p>
+  </header>
+  <section>
+    <div class="telemetry">
+      <div class="tile"><span class="label">Runs</span><span class="v">{stats.runs}</span><span class="src">{source}</span></div>
+      <div class="tile"><span class="label">Models</span><span class="v">{stats.models}</span><span class="src">distinct models across runs</span></div>
+      <div class="tile"><span class="label">Median human turns</span><span class="v">{stats.medianTurns ?? '—'}</span><span class="src">brief included · {stats.turnsRecorded} of {stats.runs} runs recorded</span></div>
+      <div class="tile"><span class="label">Longest run</span><span class="v">{stats.longest ? duration(stats.longest.minutes) : '—'}</span><span class="src">{stats.longest ? stats.longest.title : 'not recorded'}</span></div>
+    </div>
+  </section>
+  <section>
+    <div class="filters" role="group" aria-label="Filter runs" hidden data-run-filters>
+      <button type="button" data-rf="all" aria-pressed="true">All</button>
+      <button type="button" data-rf="long-horizon" aria-pressed="false">Long-horizon</button>
+      <button type="button" data-rf="single-file" aria-pressed="false">Single-file</button>
+      {labs.has('anthropic') && <button type="button" data-rf="anthropic" aria-pressed="false">Anthropic</button>}
+      {labs.has('openai') && <button type="button" data-rf="openai" aria-pressed="false">OpenAI</button>}
+      <button type="button" data-rf="runnable" aria-pressed="false">Runs here</button>
+    </div>
+    {long.length > 0 && <>
+      <div class="sub-head" id="h-long" role="heading" aria-level="2"><span class="label">Long-horizon runs · hours of work, process logged</span></div>
+      <div class="runs" id="runs-long">{long.map((r, i) => <RunCard run={r} fig={i + 1} wide={wide[i]} />)}</div>
+    </>}
+    {single.length > 0 && <>
+      <div class="sub-head" id="h-single" role="heading" aria-level="2"><span class="label">Single-file runs · one HTML file each</span></div>
+      <div class="runs four" id="runs-single">{single.map((r, i) => <RunCard run={r} fig={long.length + i + 1} />)}</div>
+    </>}
+    <p class="runs-note">Runs before late September predate the run standard, so human turns show as "not recorded" rather than a guess.</p>
+  </section>
+  <section>
+    <div class="sec-head"><h2>Autonomy plot</h2><span class="label">Runs that recorded both: wall clock vs. human turns</span></div>
+    <AutonomyPlot runs={data.runs} />
+  </section>
+  <script>
+    import '../../scripts/run-filters';
+  </script>
+</Sheet>

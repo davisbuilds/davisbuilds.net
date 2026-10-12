@@ -1,0 +1,18 @@
+# Test fixture: a demo that tries to escape its sandbox.
+schema = 1
+slug = "fixture-hostile"
+title = "Fixture Hostile"
+summary = "A runnable fixture that tries to reach the parent page, the top window, a popup and another host. Its summary carries [a link](https://example.com/phish) and *emphasis*."
+date = 2026-09-29
+kind = "single-file"
+medium = ["web"]
+hero = "preview/hero.webp"
+entry = "index.html"
+
+[agent]
+model = "Unknown Model"
+harness = "unrecorded"
+
+[run]
+brief = "unrecorded"
+human_turns = "unrecorded"

@@ -1,0 +1,18 @@
+# Test fixture: a runnable demo with third-party loads the vendor map covers.
+schema = 1
+slug = "fixture-demo"
+title = "Fixture Demo"
+summary = "A runnable fixture that loads Google Fonts, d3 from cdnjs, a local script and web storage."
+date = 2026-09-30
+kind = "single-file"
+medium = ["web"]
+hero = "preview/hero.webp"
+entry = "index.html"
+
+[agent]
+model = "Claude Sonnet 5"
+harness = "unrecorded"
+
+[run]
+brief = "brief.md"
+human_turns = 1

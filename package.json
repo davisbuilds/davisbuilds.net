@@ -1,0 +1,54 @@
+{
+  "name": "davisbuilds.net",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.1",
+  "scripts": {
+    "dev": "node scripts/sync-oneshots.mjs && astro dev",
+    "build": "node scripts/sync-oneshots.mjs && astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "build:fixtures": "DAVISBUILDS_ONESHOTS=tests/fixtures/oneshots node scripts/sync-oneshots.mjs && DAVISBUILDS_FIXTURES=1 DAVISBUILDS_CONTENT=./tests/fixtures/writing astro build",
+    "test:unit": "vitest run",
+    "test:build-failure": "node scripts/expect-build-failure.mjs",
+    "test:e2e": "playwright test",
+    "test:links": "linkinator dist --recurse --silent --skip '^https?://(?!localhost[:/]|127\\.0\\.0\\.1[:/])'",
+    "test": "pnpm test:unit && pnpm build:fixtures && pnpm test:build-failure && pnpm test:e2e && pnpm test:links",
+    "sync": "node scripts/sync-oneshots.mjs"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp"
+    ]
+  },
+  "dependencies": {
+    "@astrojs/markdown-remark": "7.3.2",
+    "@astrojs/rss": "4.0.19",
+    "@astrojs/sitemap": "3.7.4",
+    "@fontsource-variable/archivo": "5.3.0",
+    "@fontsource-variable/doto": "5.3.0",
+    "@fontsource-variable/fraunces": "5.3.0",
+    "@fontsource-variable/ibm-plex-sans": "5.3.0",
+    "@fontsource-variable/jetbrains-mono": "5.3.0",
+    "@fontsource-variable/martian-mono": "5.3.0",
+    "@fontsource-variable/source-serif-4": "5.3.0",
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "astro": "7.3.6",
+    "d3": "7.8.5",
+    "parse5": "7.3.0",
+    "sharp": "0.35.5",
+    "smol-toml": "1.9.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "@playwright/test": "1.58.2",
+    "@types/node": "26.6.4",
+    "lighthouse": "13.5.0",
+    "linkinator": "8.1.0",
+    "mdast-util-from-markdown": "2.1.0",
+    "typescript": "6.0.3",
+    "vitest": "5.0.3",
+    "yaml": "2.9.1"
+  }
+}
