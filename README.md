@@ -17,3 +17,6 @@ pnpm test    # unit tests, fixture build, Playwright e2e, internal link check
 
 `AGENTS.md` has the conventions the code follows. This is a personal site, so
 I'm not taking contributions.
+
+© Davis Gee. All rights reserved. The source is public to read; the code,
+essays and images aren't licensed for reuse.

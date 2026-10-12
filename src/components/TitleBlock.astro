@@ -3,6 +3,7 @@ import { LINKS } from '../lib/site';
 import { readRevision } from '../lib/revision';
 
 const rev = readRevision();
+const year = new Date().getFullYear();
 // The sheet's address, so the title names the page it's on. The 404 page
 // serves any missing address, so it keeps the bare domain.
 // Each path segment is its own box, so a long title breaks at a slash rather
@@ -20,6 +21,7 @@ const segments = here === '/' || here === '/404/' ? [] : here.split('/').filter(
     <div><span class="label">Contact · davis at this domain</span>
       <span class="links">{LINKS.map((l) => <a href={l.href}>{l.label}</a>)}</span>
     </div>
+    <div><span class="label">Rights</span><span class="rights">© {year} Davis Gee. All rights reserved.</span></div>
     <div class="zone-cell"><span class="label">Cursor zone</span><span id="zone-readout">—</span></div>
   </div>
 </footer>

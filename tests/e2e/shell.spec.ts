@@ -143,6 +143,7 @@ test.describe('without JavaScript', () => {
     await page.goto('/');
     await expect(page.locator('h1')).toHaveText("Hi, I'm Davis");
     await expect(page.locator('.titleblock')).toContainText('davisbuilds.net');
+    await expect(page.locator('.titleblock .rights')).toHaveText(/^© \d{4} Davis Gee\. All rights reserved\.$/);
     await expect(page.locator('.titleblock .rev .sha')).toHaveText(/^[0-9a-f]{7,}\+?$/);
     await expect(page.locator('.titleblock .rev .date')).toHaveText(/^\d{4}-\d{2}-\d{2}$/);
   });
