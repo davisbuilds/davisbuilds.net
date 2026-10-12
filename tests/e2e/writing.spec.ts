@@ -141,3 +141,22 @@ test.describe('feeds and unpublished essays (asserted on dist/)', () => {
     await expect(page.locator('link[rel="alternate"][type="application/rss+xml"]')).toHaveAttribute('href', '/rss.xml');
   });
 });
+
+test.describe('subscribe line', () => {
+  for (const [where, path, after] of [['the end of an essay', ESSAY, '#prose'], ['Writing, after the metadata', '/writing/', '.legend-grid']] as const) {
+    test(`sits at ${where} and links Substack's signup page and the feed`, async ({ page }) => {
+      await page.goto(path);
+      const line = page.locator('aside.subscribe');
+      await expect(line).toHaveCount(1);
+      await expect(line.locator('a', { hasText: 'Subscribe on Substack' })).toHaveAttribute('href', 'https://davisbuilds.substack.com/subscribe');
+      await expect(line.locator('a', { hasText: 'Subscribe on Substack' })).toHaveAttribute('target', '_blank');
+      await expect(line.locator('a', { hasText: 'RSS' })).toHaveAttribute('href', '/rss.xml');
+      const below = await page.evaluate((sel) => {
+        const a = document.querySelector(sel)!.getBoundingClientRect();
+        const b = document.querySelector('aside.subscribe')!.getBoundingClientRect();
+        return b.top >= a.bottom;
+      }, after);
+      expect(below).toBe(true);
+    });
+  }
+});

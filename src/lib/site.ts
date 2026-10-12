@@ -12,10 +12,15 @@ export type NavKey = (typeof NAV)[number]['key'];
 
 export type PaletteItem = { label: string; kind: string; href: string };
 
+const SUBSTACK = 'https://davisbuilds.substack.com';
+// Substack's own signup page: a link, not an embedded form, so pages make no
+// third-party requests.
+export const SUBSCRIBE_URL = `${SUBSTACK}/subscribe`;
+
 export const LINKS = [
   { label: 'GitHub', href: 'https://github.com/davisbuilds' },
   { label: 'X', href: 'https://x.com/davis_builds' },
-  { label: 'Substack', href: 'https://davisbuilds.substack.com' },
+  { label: 'Substack', href: SUBSTACK },
   { label: 'LinkedIn', href: 'https://www.linkedin.com/in/nathaniel-davis-gee' },
   { label: 'Strava', href: 'https://www.strava.com/athletes/181121778' },
 ] as const;

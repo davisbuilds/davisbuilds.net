@@ -3,6 +3,7 @@
 // prose with margin notes, and the reading ruler pinned to the top edge.
 import Sheet from './Sheet.astro';
 import MetaBlock from '../components/MetaBlock.astro';
+import Subscribe from '../components/Subscribe.astro';
 import type { Arranged } from '../lib/essays';
 import type { CollectionEntry } from 'astro:content';
 
@@ -28,6 +29,7 @@ const canonical = data.canonical ?? new URL(essay.href, Astro.site).href;
     <div class="prose" id="prose">
       <slot />
     </div>
+    <Subscribe />
   </article>
   <script>
     import '../scripts/ruler';

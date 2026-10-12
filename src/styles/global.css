@@ -258,6 +258,11 @@ button { font: inherit; color: inherit; }
 .sidenote b { color: var(--ink); font-weight: 500; }
 .sidenote p { margin: 0 0 0.6em; }
 .sidenote p:last-child { margin-bottom: 0; }
+/* Subscribe line, after an essay and on Writing */
+.subscribe { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 24px; border: 1px solid var(--ink); padding: 12px 14px; }
+.subscribe .links { display: flex; flex-wrap: wrap; gap: 4px 18px; font-family: var(--f-mono); font-size: 12px; }
+.subscribe .links a { text-decoration: none; border-bottom: 1px solid var(--rule); }
+.subscribe .links a:hover { border-bottom-color: var(--signal); }
 .back { font-family: var(--f-mono); font-size: 12px; text-decoration: none; color: var(--muted); }
 .back:hover { color: var(--signal); }
 .ruler {
