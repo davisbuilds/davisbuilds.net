@@ -42,6 +42,7 @@ export const APPS: App[] = [
   { name: 'podsave', kind: 'cli', description: 'A YouTube URL becomes a curated Obsidian note.', repo: 'podsave' },
   { name: 'feed', kind: 'cli', description: 'Newsletter digest CLI.', repo: 'feed' },
   { name: 'compendium', kind: 'web', description: 'A curated collection of advice from successful entrepreneurs.', repo: 'compendium' },
+  { name: 'davisbuilds.net', kind: 'web', description: 'The source for this site, a static Astro build.', repo: 'davisbuilds.net' },
 ];
 
 export const GITHUB_OWNER = 'davisbuilds';

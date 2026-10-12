@@ -1,5 +1,6 @@
 ---
 import Sheet from '../../layouts/Sheet.astro';
+import Subscribe from '../../components/Subscribe.astro';
 import { getPublishedEssays } from '../../lib/writing';
 import { CONFIDENCES, STATUSES } from '../../lib/essay-schema';
 import { isoDate, statusSlug } from '../../lib/essays';
@@ -49,6 +50,7 @@ const essays = await getPublishedEssays();
       <div><span class="label">Written</span><p>Every piece says how it was written. Agents may suggest edits; the words are mine.</p></div>
     </div>
   </section>
+  <Subscribe />
   <script>
     import '../../scripts/writing-filters';
   </script>

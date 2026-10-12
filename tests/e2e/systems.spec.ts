@@ -40,7 +40,7 @@ test.describe('Systems', () => {
     await page.goto('/systems/');
     await expect(page.locator('.apps div.part', { hasText: 'Habits AI' })).toHaveCount(1);
     await expect(page.locator('.apps a.part', { hasText: 'Habits AI' })).toHaveCount(0);
-    for (const a of await page.locator('.apps a.part').all()) expect(await a.getAttribute('href')).toMatch(/^https:\/\/github\.com\/davisbuilds\/[\w-]+$/);
+    for (const a of await page.locator('.apps a.part').all()) expect(await a.getAttribute('href')).toMatch(/^https:\/\/github\.com\/davisbuilds\/[\w.-]+$/);
   });
 
   test('hovering a plate runs its flows', async ({ page }) => {
