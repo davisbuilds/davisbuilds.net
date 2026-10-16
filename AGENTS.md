@@ -146,5 +146,10 @@ the pinned version.
 - Commit coherent chunks and stage by explicit path. Push only when asked.
 - Pull requests run CI on GitHub-hosted runners only; never point a workflow
   at a self-hosted runner.
+- Merge with a merge commit, or rebase when clean commits read better; squash
+  is disabled, and merged branches are deleted. `main` requires the `test`
+  (Site checks) and `check` (Publication Hygiene) jobs to pass. Those names are
+  the required checks, so renaming either job means updating branch protection
+  in the same change.
 - Update a spec's lifecycle `status` as work lands, and
   `docs/system/OPERATIONS.md` when the deploy procedure changes.
