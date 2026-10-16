@@ -7,7 +7,11 @@ the repository is public.
 ## Public Repository, Private Companion
 
 This repository is public, so everything committed here is public: code,
-tests, fixtures, comments, commit messages and PR text.
+tests, fixtures, comments, commit messages and PR text. CI's Publication
+Hygiene workflow runs `python3 scripts/check_publication_hygiene.py`, which
+fails on a literal home path or on an email address that
+`.publication-hygiene.json` doesn't allow. It doesn't cover commit messages,
+PR text, or the built site; the deploy's private-name scan covers the build.
 
 The owner's checkout also holds a **private companion repository** at
 `private/`, with `docs/` linked into it (`docs -> private/docs`). Both paths
