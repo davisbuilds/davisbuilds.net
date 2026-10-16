@@ -32,7 +32,8 @@ path, and everything here builds and tests without them; only a deploy needs
 ```bash
 pnpm install --frozen-lockfile
 pnpm dev                    # local dev server
-pnpm check                  # astro check (TypeScript 6; astro check doesn't support TS 7 yet)
+pnpm check                  # the gate CI runs; run before pushing: typecheck, then test
+pnpm typecheck              # astro check (TypeScript 6; astro check doesn't support TS 7 yet)
 pnpm test                   # unit, bad-essay build failure, fixture build, e2e, internal link check
 node scripts/deploy.mjs     # deploy origin/main (owner only; see docs/system/OPERATIONS.md)
 node scripts/rollback.mjs   # back to the previous release

@@ -43,11 +43,9 @@ jobs:
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Type check
+      # The same gate AGENTS.md documents for pre-push.
+      - name: Type check, unit tests, fixture build, e2e, and link check
         run: pnpm check
-
-      - name: Unit tests, fixture build, e2e, and link check
-        run: pnpm test
 
       # The real site: oneshots at the pinned commit, then every demo played
       # in its sandbox, failing on any request to another host.
