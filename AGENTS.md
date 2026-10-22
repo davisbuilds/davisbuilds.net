@@ -45,9 +45,9 @@ node scripts/lighthouse.mjs # accessibility, Home's transfer budget, no third-pa
 node scripts/import-essay.mjs "<vault note>.md"  # copy a vault essay in (see Essays)
 ```
 
-pnpm is pinned to 10.28.1 via `packageManager`. The global pnpm may be 11,
-which ignores this repo's `pnpm.onlyBuiltDependencies`, so let corepack select
-the pinned version.
+pnpm is pinned to 11.28.6 via `packageManager`. Build-script approvals and the
+7-day release quarantine live in `pnpm-workspace.yaml` (`allowBuilds`,
+`minimumReleaseAge`); pnpm 11 ignores the `package.json` `pnpm` field.
 
 ## Implementation Guardrails
 
