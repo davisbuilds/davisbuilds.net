@@ -2,7 +2,7 @@
   "name": "davisbuilds.net",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@10.28.1",
+  "packageManager": "pnpm@11.28.5",
   "scripts": {
     "dev": "node scripts/sync-oneshots.mjs && astro dev",
     "build": "node scripts/sync-oneshots.mjs && astro build",
@@ -16,12 +16,6 @@
     "test:links": "linkinator dist --recurse --silent --skip '^https?://(?!localhost[:/]|127\\.0\\.0\\.1[:/])'",
     "test": "pnpm test:unit && pnpm build:fixtures && pnpm test:build-failure && pnpm test:e2e && pnpm test:links",
     "sync": "node scripts/sync-oneshots.mjs"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "sharp"
-    ]
   },
   "dependencies": {
     "@astrojs/markdown-remark": "7.3.2",

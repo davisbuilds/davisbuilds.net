@@ -2,3 +2,7 @@
 # For an urgent fix, list the package under minimumReleaseAgeExclude and remove
 # it once the release ages past the window.
 minimumReleaseAge: 10080
+
+allowBuilds:
+  esbuild: true
+  sharp: true
