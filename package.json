@@ -2,7 +2,7 @@
   "name": "davisbuilds.net",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@11.28.5",
+  "packageManager": "pnpm@11.28.6",
   "scripts": {
     "dev": "node scripts/sync-oneshots.mjs && astro dev",
     "build": "node scripts/sync-oneshots.mjs && astro build",
