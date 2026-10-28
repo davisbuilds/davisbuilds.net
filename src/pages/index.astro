@@ -9,6 +9,7 @@ import SystemDiagram from '../components/SystemDiagram.astro';
 import { getPublishedEssays } from '../lib/writing';
 import { isoDate, statusSlug } from '../lib/essays';
 import { loadOneshots, runImage } from '../lib/oneshots/data';
+import { STORAGE_KEY } from '../lib/intro';
 
 const TILES = [
   { key: 'agent-sessions-30d', label: 'Agent sessions · 30d', src: ['agentmonitor · sessions'], warn: 'blind spot: MacBook only' },
@@ -25,6 +26,21 @@ const strip = [...runs]
 const essays = (await getPublishedEssays()).slice(0, 3);
 ---
 <Sheet title="Home" current="home" description="Davis Gee is a systems engineer who builds AI infrastructure and context-engineering tools, and writes about working with agents.">
+  <script is:inline slot="head" define:vars={{ key: STORAGE_KEY }}>
+    // Decide before first paint whether the intro plays, so the page never
+    // flashes before it: a first visit or ?intro, but never with reduced motion,
+    // a link into the page, or an automated browser. Unreadable storage counts
+    // as seen. If the intro script never runs, the page shows after 5 s anyway.
+    try {
+      let seen = true;
+      try { seen = localStorage.getItem(key) === '1'; } catch (e) {}
+      const asked = new URLSearchParams(location.search).has('intro');
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches && (asked || (!seen && !location.hash && !navigator.webdriver))) {
+        document.documentElement.dataset.intro = 'play';
+        window.__introFailsafe = setTimeout(() => delete document.documentElement.dataset.intro, 5000);
+      }
+    } catch (e) {}
+  </script>
   <section class="hero">
     <div>
       <div class="label">Spec. 001 · Operator</div>
@@ -107,4 +123,7 @@ const essays = (await getPublishedEssays()).slice(0, 3);
       <p class="label">No essays published yet.</p>
     )}
   </section>
+  <script>
+    import '../scripts/intro';
+  </script>
 </Sheet>
