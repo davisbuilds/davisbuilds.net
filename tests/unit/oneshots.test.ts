@@ -1,6 +1,7 @@
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { parse } from 'parse5';
 import { afterEach, describe, expect, it } from 'vitest';
 import { collectDemo, reverseSubstitutions } from '../../src/lib/oneshots/demo';
 import { labOf, parseManifest } from '../../src/lib/oneshots/manifest';
@@ -322,6 +323,23 @@ describe('demo file set', () => {
   });
 });
 
+// What a page loads as separate scripts and stylesheets, read as a browser
+// parses it (so markup inside a comment doesn't count).
+type Parsed5 = { tagName?: string; attrs?: { name: string; value: string }[]; childNodes?: Parsed5[]; content?: Parsed5 };
+function separateLoads(html: string): string[] {
+  const out: string[] = [];
+  const walk = (node: Parsed5) => {
+    for (const el of [...(node.childNodes ?? []), ...(node.content ? [node.content] : [])]) {
+      const attr = (name: string) => el.attrs?.find((a) => a.name === name)?.value;
+      if (el.tagName === 'script' && attr('src') !== undefined) out.push(attr('src')!);
+      if (el.tagName === 'link' && /\bstylesheet\b/i.test(attr('rel') ?? '')) out.push(attr('href') ?? '');
+      walk(el);
+    }
+  };
+  walk(parse(html) as Parsed5);
+  return out;
+}
+
 describe('vendoring and disclosure', () => {
   const runDir = path.join(FIXTURES, 'runs/fixture-demo');
   const demo = collectDemo(runDir, 'fixture-demo', 'index.html', { nodeModules: NODE_MODULES });
@@ -338,7 +356,9 @@ describe('vendoring and disclosure', () => {
   });
   it('serves the demo as one page, with its script, d3 and fonts written in', () => {
     expect(demo.files.map((f) => f.rel)).toEqual(['index.html']);
-    expect(served.replace(/<!--[\s\S]*?-->/g, '')).not.toMatch(/<script\b[^>]*\bsrc=|<link\b[^>]*rel="stylesheet"/);
+    // Control first: the parser-based detector sees both kinds of load.
+    expect(separateLoads('<script src="a.js"></script><!-- <script src="c.js"></script> --><link rel="stylesheet" href="b.css">')).toEqual(['a.js', 'b.css']);
+    expect(separateLoads(served)).toEqual([]);
     expect(served).toContain(`<script>${readFileSync(path.join(NODE_MODULES, 'd3/dist/d3.min.js'), 'utf8')}</script>`);
     expect(served).toContain(`<script>${readFileSync(path.join(runDir, 'js/app.js'), 'utf8')}</script>`);
   });
