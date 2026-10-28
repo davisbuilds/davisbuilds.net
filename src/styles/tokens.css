@@ -14,6 +14,7 @@
   --signal-soft: rgba(183, 70, 10, 0.12);
   --code-bg: #dde2de; /* inline code chip, opaque so the grid doesn't show through */
   --ok: #2e7a58;
+  --agent: #ee6a1c; --agent-dark: #b9500f; --agent-hi: #ffb27a; /* the intro's pixel crew */
   --f-display: "Archivo Variable", "Archivo", "Helvetica Neue", Arial, sans-serif;
   --f-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, Menlo, monospace;
   --f-read: "Source Serif 4 Variable", "Source Serif 4", Georgia, serif;
@@ -23,11 +24,13 @@
   :root:not([data-theme="light"]) {
     --paper: #0d1317; --sheet: #121a1f; --ink: #dbe3e7; --muted: #8796a0; --rule: #2a3740;
     --grid: rgba(140, 180, 210, 0.05); --signal: #ff7a33; --signal-soft: rgba(255, 122, 51, 0.14); --code-bg: #1c262d; --ok: #5cc195;
+    --agent: #ff7a33; --agent-dark: #c4561a; --agent-hi: #ffc39a;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --paper: #0d1317; --sheet: #121a1f; --ink: #dbe3e7; --muted: #8796a0; --rule: #2a3740;
   --grid: rgba(140, 180, 210, 0.05); --signal: #ff7a33; --signal-soft: rgba(255, 122, 51, 0.14); --code-bg: #1c262d; --ok: #5cc195;
+  --agent: #ff7a33; --agent-dark: #c4561a; --agent-hi: #ffc39a;
   color-scheme: dark;
 }

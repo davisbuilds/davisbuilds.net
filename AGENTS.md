@@ -121,6 +121,21 @@ pnpm is pinned to 11.28.6 via `packageManager`. Build-script approvals and the
   part that isn't a public repository fails the production build; fixture
   builds read `tests/fixtures/github/repos.json`.
 
+## Home Intro
+
+- **First visit only:** a pixel crew builds Home's first screen, then the
+  page fades in (3 s). An inline script in `src/pages/index.astro` decides
+  before first paint and hides `.sheet .inner`. It never plays with reduced
+  motion, a link into the page (`#…`), unreadable storage, or an automated
+  browser (`navigator.webdriver`); `/?intro` (the palette's "Replay intro")
+  forces it. It shows the page after 5 s if the script never runs.
+- **Code:** `src/lib/intro.ts` plans the choreography from measured panel
+  rects (unit-tested). `src/scripts/intro.ts` measures the page and draws it.
+  Panels come from the page's own selectors, so a Home layout change changes
+  the choreography with it.
+- **Tests:** Playwright reports `navigator.webdriver`, so every test sees the
+  plain page. `tests/e2e/intro.spec.ts` opts in with an init script.
+
 ## Telemetry
 
 - **One document,** `/telemetry.json`, read in the browser by

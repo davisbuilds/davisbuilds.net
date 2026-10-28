@@ -29,5 +29,7 @@ export function basePaletteItems(): PaletteItem[] {
   return [
     ...NAV.map((n) => ({ label: n.label, kind: 'page', href: n.href })),
     ...LINKS.filter((l) => l.label === 'GitHub' || l.label === 'Substack').map((l) => ({ label: l.label, kind: 'link', href: l.href })),
+    // Home plays the first-visit intro again when asked with ?intro.
+    { label: 'Replay intro', kind: 'intro', href: '/?intro' },
   ];
 }
