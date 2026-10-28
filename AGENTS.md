@@ -106,6 +106,12 @@ pnpm is pinned to 11.28.6 via `packageManager`. Build-script approvals and the
   frames (`DEMO_SANDBOX`), behind a CSP that keeps them offline. A new CDN
   file or font goes into `src/lib/oneshots/vendor-map.ts` from a pinned
   package; anything unmapped fails the sync.
+- **A demo is served as one page.** The host's bot check answers any request
+  without its cookie with a challenge page, and a sandboxed frame never sends
+  that cookie, so only the frame's own page loads. The sync writes classic
+  scripts, vendored scripts and fonts into the page and fails on anything
+  else the page would load separately. `check-demos` fails a demo that makes
+  a second request, since local previews have no bot check.
 
 ## Systems
 

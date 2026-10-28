@@ -10,7 +10,8 @@ import type { SyncedRun } from '../lib/oneshots/types';
 interface Props { run: SyncedRun; commit: string }
 const { run, commit } = Astro.props;
 const hero = runImage(run, run.hero);
-const edits = run.demo!.substitutions.map((s) => s.label);
+// One entry per kind of edit: each written-in script is its own substitution.
+const edits = [...new Set(run.demo!.substitutions.map((s) => s.label))];
 ---
 <div class="stage" data-demo-src={run.demo!.src} data-demo-title={`${run.title}, running`} data-sandbox={DEMO_SANDBOX}>
   <div class="stage-poster">

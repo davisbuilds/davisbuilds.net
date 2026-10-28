@@ -276,7 +276,7 @@ describe('demo file set', () => {
   it('control: accepts well-formed comments, a BOM, an uppercase doctype and <html> attributes before <head>', () => {
     for (const pre of ['\uFEFF<!DOCTYPE html>', '<!doctype html><!-- a <script> in a comment --><html lang="en">\n<!-- and here -->\n']) {
       const { root } = makeRuns({ 'good/index.html': `${pre}<head><meta charset="utf-8"></head><body><p>ok</p></body></html>` });
-      const demo = collectDemo(path.join(root, 'runs/good'), 'good', 'index.html', { nodeModules: NODE_MODULES, urlBase: '/oneshots/' });
+      const demo = collectDemo(path.join(root, 'runs/good'), 'good', 'index.html', { nodeModules: NODE_MODULES });
       const served = demo.files[0].bytes.toString('utf8');
       expect(served.indexOf('<meta charset="utf-8">\n<meta http-equiv="Content-Security-Policy"')).toBeGreaterThan(0);
       expect(reverseSubstitutions(served, demo.substitutions)).toBe(readFileSync(path.join(root, 'runs/good/index.html'), 'utf8'));
@@ -284,7 +284,7 @@ describe('demo file set', () => {
   });
   it('inserts the policy once, even when "<head>" appears again later in the page', () => {
     const { root } = makeRuns({ 'good/index.html': '<!doctype html><html><head><meta charset="utf-8"></head><body><script>const doc = "<head><meta charset=\\"utf-8\\">";</script></body></html>' });
-    const demo = collectDemo(path.join(root, 'runs/good'), 'good', 'index.html', { nodeModules: NODE_MODULES, urlBase: '/oneshots/' });
+    const demo = collectDemo(path.join(root, 'runs/good'), 'good', 'index.html', { nodeModules: NODE_MODULES });
     const served = demo.files[0].bytes.toString('utf8');
     expect(served.split('Content-Security-Policy').length - 1).toBe(1);
     expect(served).toContain('const doc = "<head><meta charset=\\"utf-8\\">";');
@@ -293,22 +293,38 @@ describe('demo file set', () => {
   it('rejects a page with no <head>', () => {
     expectRejected(badRun(manifest('bad'), { 'bad/index.html': '<p>no head</p>' }), /no <head>/);
   });
-  it('ignores links and data: URLs, and follows local CSS and module imports', () => {
+  it('ignores links and data: URLs, and writes classic scripts into the page', () => {
     const { root } = makeRuns({
-      'good/index.html': '<!doctype html><html><head><meta charset="utf-8"><link rel="icon" href="data:,"><link rel="stylesheet" href="css/a.css"></head><body><a href="https://example.com/">out</a><script type="module" src="js/main.mjs"></script></body></html>',
-      'good/css/a.css': 'body { background: url("../img/bg.webp"); }',
-      'good/img/bg.webp': WEBP,
-      'good/js/main.mjs': 'import { x } from "./lib.mjs"; console.log(x);',
-      'good/js/lib.mjs': 'export const x = 1;',
+      'good/index.html': '<!doctype html><html><head><meta charset="utf-8"><link rel="icon" href="data:,"></head><body><a href="https://example.com/">out</a><script id="m" src="js/main.js"></script></body></html>',
+      'good/js/main.js': 'const s = "</script>"; window.ok = s;',
     });
-    const demo = collectDemo(path.join(root, 'runs/good'), 'good', 'index.html', { nodeModules: NODE_MODULES, urlBase: '/oneshots/' });
-    expect(demo.files.map((f) => f.rel).sort()).toEqual(['css/a.css', 'img/bg.webp', 'index.html', 'js/lib.mjs', 'js/main.mjs']);
+    const demo = collectDemo(path.join(root, 'runs/good'), 'good', 'index.html', { nodeModules: NODE_MODULES });
+    const served = demo.files[0].bytes.toString('utf8');
+    expect(demo.files.map((f) => f.rel)).toEqual(['index.html']);
+    expect(demo.sources.map((f) => f.rel).sort()).toEqual(['index.html', 'js/main.js']);
+    expect(served).toContain('<script id="m">const s = "<\\/script>"; window.ok = s;</script>');
+    expect(reverseSubstitutions(served, demo.substitutions)).toBe(readFileSync(path.join(root, 'runs/good/index.html'), 'utf8'));
+  });
+  // The host's bot check answers any request without its cookie with a
+  // challenge page, and a sandboxed frame never sends that cookie. So a demo
+  // gets exactly one request, its page, and anything else must be written in.
+  it('rejects a file the page would still load as a separate request', () => {
+    expectRejected(withPage('<link rel="stylesheet" href="a.css">', '', { 'bad/a.css': 'p{}' }), /loads a\.css as a separate request/);
+    expectRejected(withPage('', '<img src="x.webp">', { 'bad/x.webp': WEBP }), /loads x\.webp as a separate request/);
+    expectRejected(withPage('', '<iframe src="other.html"></iframe>', { 'bad/other.html': PAGE }), /loads other\.html as a separate request/);
+    expectRejected(withPage('<script src="a.js"></script>', '', { 'bad/a.js': 'new Worker("./w.js")', 'bad/w.js': '' }), /loads w\.js as a separate request/);
+  });
+  it('rejects a script that cannot be written in unchanged: a module, deferred, async, or holding "<!--"', () => {
+    expectRejected(withPage('<script type="module" src="a.js"></script>', '', { 'bad/a.js': '' }), /a\.js.*module/);
+    expectRejected(withPage('<script defer src="a.js"></script>', '', { 'bad/a.js': '' }), /a\.js.*defer/);
+    expectRejected(withPage('<script async src="a.js"></script>', '', { 'bad/a.js': '' }), /a\.js.*async/);
+    expectRejected(withPage('<script src="a.js"></script>', '', { 'bad/a.js': 'x = "<!--";' }), /a\.js.*<!--/);
   });
 });
 
 describe('vendoring and disclosure', () => {
   const runDir = path.join(FIXTURES, 'runs/fixture-demo');
-  const demo = collectDemo(runDir, 'fixture-demo', 'index.html', { nodeModules: NODE_MODULES, urlBase: '/oneshots/' });
+  const demo = collectDemo(runDir, 'fixture-demo', 'index.html', { nodeModules: NODE_MODULES });
   const original = readFileSync(path.join(runDir, 'index.html'), 'utf8');
   const served = demo.files.find((f) => f.rel === 'index.html')!.bytes.toString('utf8');
 
@@ -320,14 +336,19 @@ describe('vendoring and disclosure', () => {
     expect(served).toMatch(/<!--<link rel="preconnect" href="https:/);
     expect(served.replace(/<!--[\s\S]*?-->/g, '')).not.toMatch(/<(script|link)\b[^>]*(src|href)="https?:\/\//);
   });
-  it('serves d3 byte-identical to the pinned npm package, and renames fonts to the Google family names', () => {
-    const d3 = demo.vendor.find((v) => v.out === 'd3/7.8.5/d3.min.js')!;
-    expect(d3.bytes.equals(readFileSync(path.join(NODE_MODULES, 'd3/dist/d3.min.js')))).toBe(true);
-    const css = demo.vendor.find((v) => v.out.endsWith('.css'))!.bytes.toString('utf8');
+  it('serves the demo as one page, with its script, d3 and fonts written in', () => {
+    expect(demo.files.map((f) => f.rel)).toEqual(['index.html']);
+    expect(served.replace(/<!--[\s\S]*?-->/g, '')).not.toMatch(/<script\b[^>]*\bsrc=|<link\b[^>]*rel="stylesheet"/);
+    expect(served).toContain(`<script>${readFileSync(path.join(NODE_MODULES, 'd3/dist/d3.min.js'), 'utf8')}</script>`);
+    expect(served).toContain(`<script>${readFileSync(path.join(runDir, 'js/app.js'), 'utf8')}</script>`);
+  });
+  it('writes fonts in under the Google family names, as data', () => {
+    const css = served.slice(served.indexOf('<style>'), served.indexOf('</style>'));
     expect(css).toContain("font-family: 'Doto'");
     expect(css).toContain("font-family: 'IBM Plex Mono'");
     expect(css).not.toContain('Variable');
-    expect(css).not.toMatch(/url\(https?:/);
+    expect(css).toMatch(/url\(data:font\/woff2;base64,/);
+    expect(css).not.toMatch(/url\((?!data:)/);
   });
   it('puts the CSP after <meta charset> and before every script, with storage support when used', () => {
     const csp = served.indexOf('Content-Security-Policy');
@@ -336,7 +357,7 @@ describe('vendoring and disclosure', () => {
     expect(demo.substitutions.map((s) => s.label)).toContain('in-memory web storage, since the sandbox has none (nothing is saved between visits)');
   });
   it('control: a page without storage gets no stand-in', () => {
-    const plain = collectDemo(path.join(FIXTURES, 'runs/fixture-plain'), 'fixture-plain', 'index.html', { nodeModules: NODE_MODULES, urlBase: '/oneshots/' });
+    const plain = collectDemo(path.join(FIXTURES, 'runs/fixture-plain'), 'fixture-plain', 'index.html', { nodeModules: NODE_MODULES });
     expect(plain.substitutions.map((s) => s.label)).toEqual(['a content security policy that keeps the demo offline']);
   });
 });

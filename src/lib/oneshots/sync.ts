@@ -106,7 +106,7 @@ function stageRun(runsDir: string, dir: string, opts: SyncOptions): Staged {
   }
 
   const isHtml = /\.html?$/i.test(m.entry);
-  const demo = isHtml ? collectDemo(runDir, dir, m.entry, { nodeModules: opts.nodeModules, urlBase: '/oneshots/' }) : null;
+  const demo = isHtml ? collectDemo(runDir, dir, m.entry, { nodeModules: opts.nodeModules }) : null;
   if (!isHtml) confinedFile(runDir, m.entry, dir, 'entry');
 
   const tag = `run-${m.slug}`;
@@ -170,15 +170,10 @@ export function syncOneshots(opts: SyncOptions): SyncedData {
       mkdirSync(path.dirname(out), { recursive: true });
       writeFileSync(out, f.bytes);
     }
-    for (const v of demo.vendor) {
-      const out = path.join(opts.publicDir, '_vendor', ...v.out.split('/'));
-      mkdirSync(path.dirname(out), { recursive: true });
-      writeFileSync(out, v.bytes);
-    }
   }
   const data: SyncedData = { source: opts.source, runs: staged.map((s) => s.run) };
   const files = Object.fromEntries(
-    staged.flatMap(({ run, demo }) => (demo?.files ?? []).map((f) => [`${run.slug}/${f.rel}`, sha256(f.bytes)])),
+    staged.flatMap(({ run, demo }) => (demo?.sources ?? []).map((f) => [`${run.slug}/${f.rel}`, sha256(f.bytes)])),
   );
   writeFileSync(path.join(opts.generatedDir, 'runs.json'), JSON.stringify(data, null, 2));
   writeFileSync(path.join(opts.generatedDir, 'demo-files.json'), JSON.stringify({ source: opts.source.kind, files }, null, 2));
