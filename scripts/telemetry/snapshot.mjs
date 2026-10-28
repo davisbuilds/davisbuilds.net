@@ -65,7 +65,7 @@ async function readGithub() {
   const res = await fetch('https://api.github.com/graphql', {
     method: 'POST',
     headers: { authorization: `bearer ${token}`, 'content-type': 'application/json', 'user-agent': 'davisbuilds.net-telemetry' },
-    body: JSON.stringify({ query, variables: { prFrom: iso(now - 364 * DAY), now: iso(now) } }),
+    body: JSON.stringify({ query, variables: { prFrom: iso(now - 30 * DAY), now: iso(now) } }),
     signal: AbortSignal.timeout(30_000),
   });
   if (!res.ok) throw new Error(`GitHub GraphQL answered ${res.status}`);
@@ -83,7 +83,7 @@ async function readGithub() {
       year,
       contributions_ytd: byYear.at(-1).total,
       contributions_by_year: byYear,
-      pull_requests_52w: v.prs.totalPullRequestContributions,
+      pull_requests_30d: v.prs.totalPullRequestContributions,
       weekly_contributions: {
         bucket: 'week',
         start: weeks[0].firstDay,
@@ -165,7 +165,7 @@ if (errors.length) {
 }
 
 const g = document.sources.github, a = document.sources.agents;
-console.error(`github: ${g.status}${g.contributions_ytd !== undefined ? ` · ${g.contributions_ytd} contributions in ${g.year} · ${g.pull_requests_52w} PRs (52w)` : ''}`);
+console.error(`github: ${g.status}${g.contributions_ytd !== undefined ? ` · ${g.contributions_ytd} contributions in ${g.year} · ${g.pull_requests_30d} PRs (30d)` : ''}`);
 console.error(`agents: ${a.status} · ${a.hosts.map((h) => `${h.host} ${h.status}: ${h.sessions_30d} sessions, ${h.tokens_30d} tokens (30d)`).join('; ') || 'no hosts'}`);
 
 const json = `${JSON.stringify(document, null, 2)}\n`;

@@ -44,7 +44,7 @@ const allTime = (h: AgentHost) => h.harness.reduce((n, x) => n + x.sessions, 0);
 export const GITHUB_CONTROL = { year: 2024, total: 21 } as const;
 export const githubControlPasses = (s: GithubSource) =>
   s.contributions_by_year?.some((y) => y.year === GITHUB_CONTROL.year && y.total === GITHUB_CONTROL.total) ?? false;
-const GITHUB_COUNTS = ['contributions_ytd', 'pull_requests_52w'] as const;
+const GITHUB_COUNTS = ['contributions_ytd', 'pull_requests_30d'] as const;
 const AGENT_COUNTS = ['sessions_30d', 'tokens_30d'] as const;
 const zeroed = <T,>(next: T, prev: T, keys: readonly (keyof T)[]) => keys.filter((k) => next[k] === 0 && (prev[k] as number) > 0);
 const hostHeld = (next: AgentHost, prev: AgentHost) => allTime(next) > 0 && allTime(next) >= allTime(prev);

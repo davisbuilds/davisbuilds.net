@@ -29,7 +29,7 @@ export type GithubSource = {
   year?: number;
   contributions_ytd?: number;
   contributions_by_year?: Array<{ year: number; total: number }>;
-  pull_requests_52w?: number;
+  pull_requests_30d?: number;
   weekly_contributions?: { bucket: (typeof BUCKETS)[number]; start: string; counts: number[] };
   // An operator-accepted drop in the year-to-date total (validator --accept-decrease).
   accepted_decrease?: { reason: string; previous: number; at: string };
@@ -108,13 +108,13 @@ function head(x: Record<string, unknown>, path: string, e: Errors): boolean {
 
 function github(x: unknown, path: string, e: Errors): void {
   if (!isObject(x)) return void e.push(`${path}: not an object`);
-  const data = ['year', 'contributions_ytd', 'contributions_by_year', 'pull_requests_52w', 'weekly_contributions'];
+  const data = ['year', 'contributions_ytd', 'contributions_by_year', 'pull_requests_30d', 'weekly_contributions'];
   const bare = head(x, path, e) && data.every((k) => !(k in x));
   if (!keys(x, path, bare ? ['status', 'read_at'] : ['status', 'read_at', ...data], ['accepted_decrease'], e)) return;
   if (bare) return;
   count(x.year, `${path}.year`, e);
   count(x.contributions_ytd, `${path}.contributions_ytd`, e);
-  count(x.pull_requests_52w, `${path}.pull_requests_52w`, e);
+  count(x.pull_requests_30d, `${path}.pull_requests_30d`, e);
   list(x.contributions_by_year, `${path}.contributions_by_year`, 50, e, (y, p) => {
     if (!isObject(y)) return void e.push(`${p}: not an object`);
     if (!keys(y, p, ['year', 'total'], [], e)) return;
