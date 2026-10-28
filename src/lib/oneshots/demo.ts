@@ -1,9 +1,14 @@
-// The file set a runnable demo needs, and the edits made to serve it.
+// The page a runnable demo is served as, and the edits made to it.
 // Starting from the entry page, it follows local
 // references, confined to the run directory. Third-party loads are swapped for
 // vendored copies from vendor-map.ts or fail the build. Every served page gets
 // a CSP that keeps it offline.
-import { createHash } from 'node:crypto';
+//
+// A demo is served as that one page. The host's bot check answers any request
+// without its cookie with a challenge page, and a sandboxed frame (an opaque
+// origin) never sends the cookie, so every request after the page itself would
+// fail. Classic scripts, vendored scripts and fonts are written into the page;
+// anything else it would load separately fails the build.
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { parse, type DefaultTreeAdapterMap } from 'parse5';
@@ -13,8 +18,9 @@ import { DEMO_CSP, FONT_FAMILIES, GOOGLE_FONTS_CSS, PRECONNECT_HOSTS, SCRIPTS, S
 
 export type Substitution = { file: string; from: string; to: string; label: string };
 export type DemoFile = { rel: string; bytes: Buffer };
-export type VendorFile = { out: string; bytes: Buffer };
-export type Demo = { entry: string; files: DemoFile[]; vendor: VendorFile[]; substitutions: Substitution[] };
+// `files` is what's served: the entry page alone. `sources` is every file the
+// demo uses, as read from the run, for reviewing a lock bump.
+export type Demo = { entry: string; files: DemoFile[]; sources: DemoFile[]; substitutions: Substitution[] };
 
 // HTML is the only document type served, because only HTML pages get the
 // offline CSP. SVG is left out: opened as a document (in a frame, or by the
@@ -22,7 +28,7 @@ export type Demo = { entry: string; files: DemoFile[]; vendor: VendorFile[]; sub
 export const ALLOWED_EXTENSIONS = ['html', 'js', 'mjs', 'css', 'json', 'png', 'jpg', 'jpeg', 'webp', 'gif', 'woff2', 'wav', 'mp3', 'ogg'];
 export const MAX_DEMO_BYTES = 5 * 1024 * 1024;
 
-type Options = { nodeModules: string; urlBase: string };
+type Options = { nodeModules: string };
 
 const LOAD_RELS = new Set(['stylesheet', 'preload', 'modulepreload', 'icon', 'shortcut', 'apple-touch-icon', 'manifest', 'prefetch']);
 const HINT_RELS = new Set(['preconnect', 'dns-prefetch']);
@@ -35,7 +41,6 @@ const JS_IMPORT_RE = /(?:^|[^\w$.])import\s*(?:[\w*{}\s,$]+\s*from\s*)?(['"])([^
 
 const STORAGE_RE = /\b(?:localStorage|sessionStorage)\b/;
 const skippable = (u: string) => u === '' || u.startsWith('#') || /^(data|blob|about|javascript):/i.test(u);
-const sha8 = (s: string) => createHash('sha256').update(s).digest('hex').slice(0, 8);
 
 type Node = DefaultTreeAdapterMap['node'];
 type ParentNode = DefaultTreeAdapterMap['parentNode'];
@@ -62,12 +67,20 @@ function* elements(node: ParentNode): Generator<Element> {
 
 const textOf = (el: Element) => el.childNodes.map((n) => (n.nodeName === '#text' ? (n as DefaultTreeAdapterMap['textNode']).value : '')).join('');
 
+// Script text as an inline <script> body. "</script" would close the element
+// early; written "<\/script" it means the same in a string, template, regex or
+// comment, the only places it can appear. "<!--" can change how the rest of
+// the element parses and has no safe rewrite, so it fails instead.
+function inlineScriptBody(text: string, slug: string, what: string): string {
+  if (text.includes('<!--')) throw new RunError(slug, `${what} contains "<!--", so it can't be written into the page`);
+  return text.replace(/<\/(script)/gi, '<\\/$1');
+}
+
 // Rebuilds a Google Fonts css2 stylesheet from the mapped Fontsource packages,
 // keeping Google's family names so the demo's own CSS still matches.
-function googleFonts(url: string, slug: string, opts: Options): { css: VendorFile; files: VendorFile[]; out: string; families: string[] } {
+function googleFonts(url: string, slug: string, opts: Options): { css: string; families: string[] } {
   const u = new URL(url);
   const css: string[] = [];
-  const files: VendorFile[] = [];
   const families: string[] = [];
   for (const spec of u.searchParams.getAll('family')) {
     const [name, axisSpec = ''] = spec.split(':');
@@ -98,16 +111,20 @@ function googleFonts(url: string, slug: string, opts: Options): { css: VendorFil
       const file = path.join(pkgDir, sheet);
       if (!existsSync(file)) throw new RunError(slug, `vendored font sheet ${fam.pkg}/${sheet} is missing`);
       let text = readFileSync(file, 'utf8').replaceAll(`font-family: '${fam.sourceName}'`, `font-family: '${name}'`);
+      // Every browser that runs these demos reads woff2, so a woff fallback
+      // would only double the page.
+      text = text.replace(/,\s*url\(\.\/files\/[^)]+\.woff\)\s*format\('woff'\)/g, '');
       text = text.replace(/url\(\.\/files\/([^)]+)\)/g, (_, f: string) => {
-        files.push({ out: `fonts/files/${f}`, bytes: readFileSync(path.join(pkgDir, 'files', f)) });
-        return `url(files/${f})`;
+        if (!f.endsWith('.woff2')) throw new RunError(slug, `vendored font ${fam.pkg}/files/${f} is not woff2`);
+        return `url(data:font/woff2;base64,${readFileSync(path.join(pkgDir, 'files', f)).toString('base64')})`;
       });
       css.push(text);
     }
   }
   if (families.length === 0) throw new RunError(slug, `loads a Google Fonts stylesheet with no families: ${url}`);
-  const out = `fonts/${sha8(url)}.css`;
-  return { css: { out, bytes: Buffer.from(css.join('\n')) }, files, out, families };
+  const text = css.join('\n');
+  if (/<\/style/i.test(text)) throw new RunError(slug, `vendored fonts for ${families.join(', ')} contain "</style", so they can't be written into the page`);
+  return { css: text, families };
 }
 
 // Where the demo's policy goes: right after the page's <head> tag, or after a
@@ -136,24 +153,28 @@ export function collectDemo(runDir: string, slug: string, entry: string, opts: O
   if (!/\.html?$/i.test(entry)) throw new RunError(slug, `entry "${entry}" is not an HTML page`);
   const root = realpathSync(runDir);
   const files = new Map<string, DemoFile>();
-  const vendor = new Map<string, VendorFile>();
   const substitutions: Substitution[] = [];
-  const pages: Array<{ rel: string; html: string; parsed: Parsed; subs: Substitution[] }> = [];
+  // Local classic scripts to write in, once every file has been read.
+  type Inline = { whole: string; tag: string; ref: string; fromDir: string };
+  const pages: Array<{ rel: string; html: string; parsed: Parsed; subs: Substitution[]; inlines: Inline[] }> = [];
   let total = 0;
   const queue: Array<{ ref: string; fromDir: string; what: string }> = [{ ref: entry, fromDir: root, what: 'entry' }];
 
-  while (queue.length) {
-    const { ref, fromDir, what } = queue.shift()!;
-    const clean = ref.split(/[?#]/)[0];
+  const resolve = (ref: string, fromDir: string, what: string) => {
     let decoded: string;
     try {
-      decoded = decodeURIComponent(clean);
+      decoded = decodeURIComponent(ref.split(/[?#]/)[0]);
     } catch {
       throw new RunError(slug, `${what} "${ref}" is not a valid URL path`);
     }
     if (decoded.startsWith('/')) throw new RunError(slug, `${what} "${ref}" is an absolute path; demos may use relative paths only`);
     const abs = confinedFile(root, decoded, slug, what, fromDir);
-    const rel = path.relative(root, abs).split(path.sep).join('/');
+    return { abs, rel: path.relative(root, abs).split(path.sep).join('/') };
+  };
+
+  while (queue.length) {
+    const { ref, fromDir, what } = queue.shift()!;
+    const { abs, rel } = resolve(ref, fromDir, what);
     if (files.has(rel)) continue;
     const ext = path.extname(rel).slice(1).toLowerCase();
     if (ext === 'svg') throw new RunError(slug, `${what} "${rel}" is an SVG file; demos can't serve SVG, which runs script without the demo's content security policy`);
@@ -187,6 +208,7 @@ export function collectDemo(runDir: string, slug: string, entry: string, opts: O
     const html = bytes.toString('utf8');
     const parsed = parsePage(html);
     const subs: Substitution[] = [];
+    const inlines: Inline[] = [];
     for (const el of elements(parsed.doc)) {
       const name = el.tagName;
       const loc = el.sourceCodeLocation?.startTag;
@@ -218,37 +240,59 @@ export function collectDemo(runDir: string, slug: string, entry: string, opts: O
         if (!rels.some((r) => LOAD_RELS.has(r))) continue;
         if (isRemote(href) && rels.includes('stylesheet') && href.startsWith(`${GOOGLE_FONTS_CSS}?`)) {
           const g = googleFonts(href, slug, opts);
-          vendor.set(g.css.out, g.css);
-          for (const f of g.files) vendor.set(f.out, f);
-          subs.push({ file: rel, from: tag, to: withAttr('href', `${opts.urlBase}_vendor/${g.out}`), label: `fonts ${g.families.join(', ')} (instead of fonts.googleapis.com)` });
+          subs.push({ file: rel, from: tag, to: `<style>${g.css}</style>`, label: `fonts ${g.families.join(', ')} (instead of fonts.googleapis.com)` });
           continue;
         }
         if (isRemote(href)) throw new RunError(slug, `${rel} loads ${href} from another host, which the vendor map doesn't cover`);
         follow(href, 'link');
         continue;
       }
+      if (name === 'script' && a.has('src') && !skippable(a.get('src')!.trim())) {
+        const src = a.get('src')!.trim();
+        const end = el.sourceCodeLocation?.endTag;
+        if (!end) throw new RunError(slug, `${rel} has a <script src="${src}"> with no closing tag`);
+        const whole = html.slice(parsed.bom + loc.startOffset, parsed.bom + end.endOffset);
+        // The start tag without its src, keeping every other attribute.
+        const at = el.sourceCodeLocation!.attrs!.src;
+        const bare = `${tag.slice(0, at.startOffset - loc.startOffset).trimEnd()}${tag.slice(at.endOffset - loc.startOffset)}`;
+        // Written in, a script runs where it stands; these would change when.
+        const type = (a.get('type') ?? '').trim().toLowerCase();
+        if (type && !['text/javascript', 'application/javascript'].includes(type)) throw new RunError(slug, `${rel} loads ${src} as type "${type}" (a module can't be written into the page)`);
+        for (const flag of ['defer', 'async']) if (a.has(flag)) throw new RunError(slug, `${rel} loads ${src} with ${flag}, which a script written into the page would ignore`);
+        if (isRemote(src) && SCRIPTS[src]) {
+          const s = SCRIPTS[src];
+          const body = inlineScriptBody(readFileSync(path.join(opts.nodeModules, s.pkg, s.file), 'utf8'), slug, `vendored ${s.pkg}/${s.file}`);
+          subs.push({ file: rel, from: whole, to: `${bare}${body}</script>`, label: s.label });
+          continue;
+        }
+        if (!isRemote(src)) inlines.push({ whole, tag: bare, ref: src, fromDir: dir });
+      }
       for (const attr of URL_ATTRS[name]) {
         const v = a.get(attr);
         if (v === undefined) continue;
         const refs = attr === 'srcset' ? v.split(',').map((s) => s.trim().split(/\s+/)[0]) : [v.trim()];
-        for (const r of refs) {
-          if (name === 'script' && isRemote(r) && SCRIPTS[r]) {
-            const s = SCRIPTS[r];
-            vendor.set(s.out, { out: s.out, bytes: readFileSync(path.join(opts.nodeModules, s.pkg, s.file)) });
-            subs.push({ file: rel, from: tag, to: withAttr('src', `${opts.urlBase}_vendor/${s.out}`), label: s.label });
-            continue;
-          }
-          follow(r, `${name} ${attr}`);
-        }
+        for (const r of refs) follow(r, `${name} ${attr}`);
       }
     }
 
-    pages.push({ rel, html, parsed, subs });
+    pages.push({ rel, html, parsed, subs, inlines });
     files.set(rel, { rel, bytes });
+  }
+
+  const entryRel = resolve(entry, root, 'entry').rel;
+  const written = new Set<string>();
+  for (const { rel, subs, inlines } of pages) {
+    for (const { whole, tag, ref, fromDir } of inlines) {
+      const target = resolve(ref, fromDir, `script src in ${rel}`).rel;
+      const body = inlineScriptBody(files.get(target)!.bytes.toString('utf8'), slug, target);
+      subs.push({ file: rel, from: whole, to: `${tag}${body}</script>`, label: 'its scripts written into the page, so it loads as one file' });
+      written.add(target);
+    }
   }
 
   // Head insertions need the whole file set: the storage stand-in goes in only
   // if some file in the demo uses web storage.
+  const served = new Map<string, DemoFile>();
   const usesStorage = [...files.values()].some((f) => /\.(html?|m?js)$/.test(f.rel) && STORAGE_RE.test(f.bytes.toString('utf8')));
   for (const { rel, html: original, parsed, subs } of pages) {
     const { anchorAt, anchorEnd } = locateHead(original, parsed, rel, slug);
@@ -264,21 +308,25 @@ export function collectDemo(runDir: string, slug: string, entry: string, opts: O
       if (original.includes(s.to)) throw new RunError(slug, `${rel} already contains a substitution's output, so the edit couldn't be reversed`);
     }
     // Tag swaps apply everywhere; the head insertion only at its anchor.
-    const swapped = subs.reduce((text, s) => text.replaceAll(s.from, s.to), original);
+    // A function replacement, so "$&" and the like in script text stay literal.
+    const swapped = subs.reduce((text, s) => text.replaceAll(s.from, () => s.to), original);
     // Only a doctype and comments precede the anchor (locateHead). A swap
     // inside one of those comments would shift it, and fails here.
     if (!swapped.startsWith(anchor, anchorAt)) throw new RunError(slug, `${rel}: the <head> moved while editing, so the policy couldn't be placed`);
     const html = swapped.slice(0, anchorAt) + inserted + swapped.slice(anchorAt + anchor.length);
     subs.push(...headEdits);
     substitutions.push(...subs);
-    files.set(rel, { rel, bytes: Buffer.from(html) });
+    served.set(rel, { rel, bytes: Buffer.from(html) });
   }
 
-  return { entry: path.relative(root, confinedFile(root, entry, slug, 'entry')).split(path.sep).join('/'), files: [...files.values()], vendor: [...vendor.values()], substitutions };
+  for (const rel of files.keys()) {
+    if (rel !== entryRel && !written.has(rel)) throw new RunError(slug, `the demo loads ${rel} as a separate request, which the host's bot check blocks inside the sandbox; only classic scripts and vendored scripts and fonts can be written into the page`);
+  }
+  return { entry: entryRel, files: [...served.values()], sources: [...files.values()], substitutions };
 }
 
 // Undoes a page's substitutions, newest first. Tests use it to show the served
 // page is the original plus exactly the recorded edits.
 export function reverseSubstitutions(served: string, subs: Substitution[]): string {
-  return [...subs].reverse().reduce((text, s) => text.replaceAll(s.to, s.from), served);
+  return [...subs].reverse().reduce((text, s) => text.replaceAll(s.to, () => s.from), served);
 }

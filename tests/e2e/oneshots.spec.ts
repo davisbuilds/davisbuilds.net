@@ -119,6 +119,10 @@ test.describe('autonomy plot on a touch screen', () => {
 test.describe('runnable demos', () => {
   test('Run loads the demo in a scripts-only sandbox, with vendored d3, fonts and storage, and nothing offsite', async ({ page }) => {
     const hits = offsite(page);
+    // The host's bot check blocks every request a sandboxed frame makes after
+    // its page, so the page must be the only one.
+    const fromFrame: string[] = [];
+    page.on('request', (req) => { if (req.frame() !== page.mainFrame() && /^https?:/.test(req.url())) fromFrame.push(new URL(req.url()).pathname); });
     await page.goto('/oneshots/fixture-demo/');
     await expect(page.locator('.vendor-note')).toContainText('d3 7.8.5 (instead of cdnjs.cloudflare.com)');
     await page.getByRole('link', { name: '▶ Run it' }).click();
@@ -127,6 +131,7 @@ test.describe('runnable demos', () => {
     await expect.poll(async () => (await frameFor(page, 'fixture-demo')?.locator('#status').textContent()) ?? '').toContain('{');
     const status = JSON.parse((await frameFor(page, 'fixture-demo')!.locator('#status').textContent())!);
     expect(status).toEqual({ d3: '7.8.5', doto: true, visits: '1' });
+    expect(fromFrame).toEqual(['/oneshots/fixture-demo/files/index.html']);
     expect(hits.attempted()).toEqual([]);
   });
 

@@ -1,5 +1,5 @@
-// The fixed map from third-party URLs that demos load to copies this site
-// serves. A third-party load that isn't covered here fails the
+// The fixed map from third-party URLs that demos load to pinned copies, which
+// the sync writes into the demo's page. A third-party load that isn't covered here fails the
 // build, so adding a run that uses a new CDN file means adding it here, from a
 // pinned package, in a reviewed commit.
 

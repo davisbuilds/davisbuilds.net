@@ -11,9 +11,11 @@
 //
 //   pnpm build && node scripts/check-demos.mjs [--shots <dir>] [--seconds 6]
 //
-// Exits non-zero if any demo requests another host, hits its CSP, throws or
-// logs an error, or draws nothing: a demo that doesn't work in its sandbox must
-// not be published as runnable.
+// Exits non-zero if any demo requests another host or anything after its own
+// page, hits its CSP, throws or logs an error, or draws nothing: a demo that
+// doesn't work in its sandbox must not be published as runnable. In production
+// the host's bot check blocks every request a sandboxed frame makes after its
+// page, so a second request here is a demo that breaks there.
 import { spawn } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -60,12 +62,14 @@ try {
     });
     const page = await context.newPage();
     const offsite = new Set();
+    const separate = new Set();
     const errors = [];
     const csp = [];
     page.on('request', (req) => {
       const u = new URL(req.url());
-      if (!['http:', 'https:'].includes(u.protocol) || u.origin === origin) return;
-      offsite.add(u.host);
+      if (!['http:', 'https:'].includes(u.protocol)) return;
+      if (u.origin !== origin) offsite.add(u.host);
+      else if (req.frame() !== page.mainFrame() && u.pathname !== run.demo.src) separate.add(u.pathname);
     });
     page.on('console', (msg) => {
       const text = msg.text();
@@ -137,10 +141,10 @@ try {
       errors.push(`check failed: ${String(err).split('\n')[0].slice(0, 160)}`);
     }
     const drew = drawn >= MIN_DRAWN_PIXELS;
-    const ok = Boolean(frame) && offsite.size === 0 && csp.length === 0 && errors.length === 0 && drew;
+    const ok = Boolean(frame) && offsite.size === 0 && separate.size === 0 && csp.length === 0 && errors.length === 0 && drew;
     failed ||= !ok;
-    console.log(`${ok ? 'OK  ' : 'FAIL'} ${run.slug.padEnd(20)} frame=${Boolean(frame)} offsite=${[...offsite].join(',') || 0} csp=${csp.length} errors=${errors.length} drawn=${drawn}px via ${via}`);
-    for (const e of [...csp, ...errors].slice(0, 4)) console.log(`       ${e}`);
+    console.log(`${ok ? 'OK  ' : 'FAIL'} ${run.slug.padEnd(20)} frame=${Boolean(frame)} offsite=${[...offsite].join(',') || 0} separate=${separate.size} csp=${csp.length} errors=${errors.length} drawn=${drawn}px via ${via}`);
+    for (const e of [...[...separate].map((p) => `separate request: ${p}`), ...csp, ...errors].slice(0, 4)) console.log(`       ${e}`);
     await context.close();
   }
 } finally {
