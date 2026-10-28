@@ -3,10 +3,10 @@
 // published essays instead, so it can't name an unpublished draft.
 
 export const NOW = {
-  updated: '2026-10-07',
+  updated: '2026-10-28',
   entries: [
     { label: 'Building', value: 'Context and verification tooling for coding agents', note: 'dojo, engram, and agentmonitor, mostly.' },
-    { label: 'Reading', value: 'How To Write With An LLM', note: "sockpuppet.org. The rules this site's essays follow." },
+    { label: 'Reading', value: 'How to be more ambitious: A tutorial for humans with models', note: 'By Felix Rieseberg, on', link: { label: 'felixrieseberg.com', href: 'https://felixrieseberg.com/how-to-be-more-ambitious-a-tutorial-for-humans-with-models/' } },
     { label: 'Off the clock', value: 'Lifting, running, golf', note: 'Runs on', link: { label: 'Strava', href: 'https://www.strava.com/athletes/181121778' } },
   ],
 };
