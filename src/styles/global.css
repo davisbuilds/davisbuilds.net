@@ -41,10 +41,12 @@ button { font: inherit; color: inherit; }
 .masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: center; justify-content: space-between; }
 .mark { display: flex; align-items: center; gap: 12px; text-decoration: none; }
 .stamp {
-  display: grid; place-items: center; width: 40px; height: 40px; border: 2px solid var(--ink);
-  font-weight: 900; font-stretch: 125%; font-size: 15px; letter-spacing: -0.02em; transition: transform 0.3s ease;
+  display: grid; place-items: center; width: 40px; height: 40px;
+  font-weight: 900; font-stretch: 125%; font-size: 11px; letter-spacing: -0.02em;
 }
-.mark:hover .stamp { transform: rotate(-8deg); }
+.stamp > * { grid-area: 1 / 1; }
+.stamp .gear { width: 100%; height: 100%; overflow: visible; fill: none; stroke: var(--ink); stroke-width: 2; transition: transform 0.4s ease; }
+.mark:hover .stamp .gear { transform: rotate(45deg); }
 .mark .name { font-weight: 800; font-stretch: 125%; font-size: 15px; letter-spacing: 0.14em; text-transform: uppercase; }
 .nav { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; }
 .nav a { font-family: var(--f-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; color: var(--muted); padding-block: 4px; border-bottom: 1px solid transparent; }
