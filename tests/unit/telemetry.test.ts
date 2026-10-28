@@ -37,8 +37,8 @@ describe('checkDocument (the validator gate)', () => {
   });
 
   it.each([
-    ['a negative count', (d: any) => (d.sources.github.pull_requests_52w = -1)],
-    ['a fractional count', (d: any) => (d.sources.github.pull_requests_52w = 1.5)],
+    ['a negative count', (d: any) => (d.sources.github.pull_requests_30d = -1)],
+    ['a fractional count', (d: any) => (d.sources.github.pull_requests_30d = 1.5)],
     ['a numeric string', (d: any) => (d.sources.agents.hosts[0].sessions_30d = '287')],
     ['a series finer than a day', (d: any) => (d.sources.github.weekly_contributions.bucket = 'hour')],
     ['a daily series where the weekly one belongs', (d: any) => (d.sources.github.weekly_contributions.bucket = 'day')],
@@ -187,7 +187,7 @@ describe('applyRules, with the zero control', () => {
     const failed = applyRules(z, ok(), { now, githubControlOk: false }).document;
     expect(failed.sources.github).toEqual({ ...ok().sources.github, status: 'unavailable' });
     const passed = applyRules(z, ok(), { now, githubControlOk: true }).document;
-    expect(passed.sources.github.pull_requests_52w).toBe(0);
+    expect(passed.sources.github.pull_requests_30d).toBe(0);
   });
 
   it('treats an agent host zero as believable only if its all-time sessions did not fall', () => {
@@ -234,7 +234,7 @@ describe('checkAgainstPrevious (the validator re-check)', () => {
     z.sources.agents = ok().sources.agents;
     expect(checkAgainstPrevious(z, ok())).toEqual([]);
     z.sources.github.contributions_by_year[0].total = 0;
-    expect(checkAgainstPrevious(z, ok()).join('\n')).toMatch(/pull_requests_52w/);
+    expect(checkAgainstPrevious(z, ok()).join('\n')).toMatch(/pull_requests_30d/);
   });
 
   it('rejects an agent zero after a non-zero when that host\'s all-time sessions fell', () => {

@@ -11,7 +11,7 @@ test.describe('Home', () => {
     const readouts = page.locator('[data-readout]');
     expect(await readouts.count()).toBeGreaterThanOrEqual(6);
     expect(await page.locator('.telemetry .tile').evaluateAll((ts) => ts.map((t) => t.getAttribute('data-readout'))))
-      .toEqual(['agent-sessions-30d', 'tokens-30d', 'pull-requests-52w']);
+      .toEqual(['agent-sessions-30d', 'tokens-30d', 'pull-requests-30d']);
     for (const r of await readouts.all()) {
       await expect(r).toContainText('unavailable');
     }

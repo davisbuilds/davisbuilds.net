@@ -85,8 +85,8 @@ const RENDER: Record<string, Render> = {
     }));
     years.hidden = false;
   },
-  'pull-requests-52w'(el, { github }, now) {
-    if (state(el, github, now)) value(el, fmt(github!.pull_requests_52w!), true);
+  'pull-requests-30d'(el, { github }, now) {
+    if (state(el, github, now)) value(el, fmt(github!.pull_requests_30d!), true);
   },
   'weekly-contributions'(el, { github }, now) {
     if (!state(el, github, now)) return;
@@ -172,7 +172,7 @@ function render(sources: Sources): void {
 
 // Keep every age and the stale state current without re-rendering values:
 // state() only touches a value to say "unavailable", which it already says.
-const GITHUB_READOUTS = ['contributions-ytd', 'pull-requests-52w', 'weekly-contributions'];
+const GITHUB_READOUTS = ['contributions-ytd', 'pull-requests-30d', 'weekly-contributions'];
 function tick(sources: Sources): void {
   const now = Date.now();
   for (const el of document.querySelectorAll<HTMLElement>('[data-readout]')) {

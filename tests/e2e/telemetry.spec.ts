@@ -26,7 +26,7 @@ test.describe('telemetry reader', () => {
     await expect(readout(page, 'contributions-ytd').locator('.yr .n')).toHaveText(['21', '248', '5,755']);
     await expect(value(page, 'agent-sessions-30d')).toHaveText('287');
     await expect(value(page, 'tokens-30d')).toHaveText('4.6B');
-    await expect(value(page, 'pull-requests-52w')).toHaveText('414');
+    await expect(value(page, 'pull-requests-30d')).toHaveText('414');
     await expect(readout(page, 'agent-sessions-30d').locator('[data-read]')).toHaveText('2026-10-07 · 10m ago');
     await expect(readout(page, 'agent-sessions-30d').locator('[data-hosts]')).toBeHidden();
     await expect(readout(page, 'harness-sessions').locator('.harness > div')).toHaveText(['Codex985', 'Claude Code239', 'Antigravity62']);
