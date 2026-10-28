@@ -255,19 +255,17 @@ export function collectDemo(runDir: string, slug: string, entry: string, opts: O
         // The start tag without its src, keeping every other attribute.
         const at = el.sourceCodeLocation!.attrs!.src;
         const bare = `${tag.slice(0, at.startOffset - loc.startOffset).trimEnd()}${tag.slice(at.endOffset - loc.startOffset)}`;
+        // Written in, a script runs where it stands; these would change when.
+        const type = (a.get('type') ?? '').trim().toLowerCase();
+        if (type && !['text/javascript', 'application/javascript'].includes(type)) throw new RunError(slug, `${rel} loads ${src} as type "${type}" (a module can't be written into the page)`);
+        for (const flag of ['defer', 'async']) if (a.has(flag)) throw new RunError(slug, `${rel} loads ${src} with ${flag}, which a script written into the page would ignore`);
         if (isRemote(src) && SCRIPTS[src]) {
           const s = SCRIPTS[src];
           const body = inlineScriptBody(readFileSync(path.join(opts.nodeModules, s.pkg, s.file), 'utf8'), slug, `vendored ${s.pkg}/${s.file}`);
           subs.push({ file: rel, from: whole, to: `${bare}${body}</script>`, label: s.label });
           continue;
         }
-        if (!isRemote(src)) {
-          // Written in, it runs in the same place; these would change when.
-          const type = (a.get('type') ?? '').trim().toLowerCase();
-          if (type && !['text/javascript', 'application/javascript'].includes(type)) throw new RunError(slug, `${rel} loads ${src} as type "${type}" (a module can't be written into the page)`);
-          for (const flag of ['defer', 'async']) if (a.has(flag)) throw new RunError(slug, `${rel} loads ${src} with ${flag}, which a script written into the page would ignore`);
-          inlines.push({ whole, tag: bare, ref: src, fromDir: dir });
-        }
+        if (!isRemote(src)) inlines.push({ whole, tag: bare, ref: src, fromDir: dir });
       }
       for (const attr of URL_ATTRS[name]) {
         const v = a.get(attr);

@@ -320,6 +320,7 @@ describe('demo file set', () => {
     expectRejected(withPage('<script defer src="a.js"></script>', '', { 'bad/a.js': '' }), /a\.js.*defer/);
     expectRejected(withPage('<script async src="a.js"></script>', '', { 'bad/a.js': '' }), /a\.js.*async/);
     expectRejected(withPage('<script src="a.js"></script>', '', { 'bad/a.js': 'x = "<!--";' }), /a\.js.*<!--/);
+    expectRejected(withPage('<script defer src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>'), /d3\.min\.js.*defer/);
   });
 });
 
