@@ -1,3 +1,4 @@
+import { browserUse } from './scripts/browser-runtime.cjs';
 import { defineConfig, devices } from '@playwright/test';
 
 // E2E runs against `astro preview` of the fixture build (`pnpm build:fixtures`),
@@ -5,6 +6,7 @@ import { defineConfig, devices } from '@playwright/test';
 // its own port and never reuses a running server, so a `pnpm dev` on 4321 can't
 // stand in for the build.
 export default defineConfig({
+  globalSetup: './scripts/browser-runtime.cjs',
   testDir: './tests/e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -21,5 +23,5 @@ export default defineConfig({
     reuseExistingServer: false,
     timeout: 60_000,
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], ...browserUse } }],
 });

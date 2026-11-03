@@ -19,7 +19,7 @@
 import { spawn } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { chromium } from '@playwright/test';
+import { launchPatchedChromium } from './browser-runtime.cjs';
 import { drawnPixels, MIN_DRAWN_PIXELS } from '../src/lib/oneshots/pixels.ts';
 
 const args = process.argv.slice(2);
@@ -45,7 +45,7 @@ for (let i = 0; ; i++) {
 }
 
 // Software WebGL, so WebGL2 demos render in headless Chromium without a GPU.
-const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await launchPatchedChromium({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 if (shots) mkdirSync(shots, { recursive: true });
 let failed = false;
 try {
