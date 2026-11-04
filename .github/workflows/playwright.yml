@@ -41,7 +41,11 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm exec playwright install-deps chromium
+      - name: Install pinned patched Chrome for Testing
+        run: bash scripts/install-browser-ci.sh
+      - name: Test browser version guard
+        run: pnpm test:browser-runtime
 
       # The same gate AGENTS.md documents for pre-push.
       - name: Type check, unit tests, fixture build, e2e, and link check

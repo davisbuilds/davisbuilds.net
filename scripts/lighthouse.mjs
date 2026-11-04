@@ -20,13 +20,12 @@
 //
 // Before trusting a clean result, a control page with a third-party image and
 // known accessibility faults must trip both detectors.
-import { spawn, spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
-import os from 'node:os';
 import path from 'node:path';
 import { gzipSync } from 'node:zlib';
-import { chromium } from '@playwright/test';
+import { launchPatchedChromium } from './browser-runtime.cjs';
 import lighthouse, { desktopConfig } from 'lighthouse';
 
 const args = process.argv.slice(2);
@@ -94,35 +93,25 @@ function build(script) {
   if (r.status !== 0) throw new Error(`pnpm ${script} failed`);
 }
 
-// Playwright's own Chromium, with a debugging port Lighthouse connects to.
-// `scheme` sets prefers-color-scheme (Blink: 0 dark, 1 light); left alone,
-// headless Chrome follows the operating system's setting.
+// Patched Chrome, with an isolated Playwright profile and debugging port for Lighthouse.
+// `scheme` sets prefers-color-scheme (Blink: 0 dark, 1 light).
 async function startChrome(scheme) {
-  const profile = mkdtempSync(path.join(os.tmpdir(), 'dbs-lh-'));
-  const proc = spawn(chromium.executablePath(), [
-    '--headless=new', `--blink-settings=preferredColorScheme=${scheme === 'dark' ? 0 : 1}`, `--remote-debugging-port=${DEBUG_PORT}`, `--user-data-dir=${profile}`,
-    '--no-first-run', '--no-default-browser-check', '--disable-extensions', 'about:blank',
-  ], { stdio: ['ignore', 'ignore', process.env.LH_CHROME_LOG ? 'inherit' : 'ignore'] });
-  // Listen from spawn: if Chromium dies mid-audit, a listener attached later
-  // would never fire and the cleanup would wait forever.
-  const exited = new Promise((r) => proc.once('exit', r));
-  for (let i = 0; ; i++) {
-    try {
-      if ((await fetch(`http://127.0.0.1:${DEBUG_PORT}/json/version`)).ok) break;
-    } catch {}
-    if (i > 100) {
-      proc.kill();
-      throw new Error('Chromium did not open its debugging port');
+  const browser = await launchPatchedChromium({
+    args: [`--blink-settings=preferredColorScheme=${scheme === 'dark' ? 0 : 1}`, `--remote-debugging-port=${DEBUG_PORT}`],
+  });
+  try {
+    for (let i = 0; ; i++) {
+      try {
+        if ((await fetch(`http://127.0.0.1:${DEBUG_PORT}/json/version`)).ok) break;
+      } catch {}
+      if (i > 100) throw new Error('Chrome did not open its debugging port');
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
-    await new Promise((r) => setTimeout(r, 100));
+    return () => browser.close();
+  } catch (error) {
+    await browser.close();
+    throw error;
   }
-  // Wait for the exit: until then the old process still answers on the
-  // debugging port, and the next run's readiness check would find it.
-  return async () => {
-    proc.kill();
-    await exited;
-    rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
-  };
 }
 
 async function audit(pathname, form, scheme) {
