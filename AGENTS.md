@@ -171,6 +171,7 @@ pnpm is pinned to 11.28.6 via `packageManager`. Build-script approvals and the
   is disabled, and merged branches are deleted. `main` requires the `test`
   (Site checks) and `check` (Publication Hygiene) jobs to pass. Those names are
   the required checks, so renaming either job means updating branch protection
-  in the same change.
+  in the same change. Site checks' `test` job only requires its gate and demo
+  jobs, which run in parallel; add any new Site checks job to its `needs`.
 - Update a spec's lifecycle `status` as work lands, and
   `docs/system/OPERATIONS.md` when the deploy procedure changes.
