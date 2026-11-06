@@ -18,6 +18,7 @@ import { parseArgs } from 'node:util';
 import { checkDocument, HOSTS, SCHEMA_VERSION } from '../../src/lib/telemetry-schema.ts';
 import { CANDIDATE, PUBLISHED } from './state.mjs';
 import { applyRules, carryForward, checkAgainstPrevious, GITHUB_CONTROL, githubControlPasses, mergeHosts } from '../../src/lib/telemetry-rules.ts';
+import { countMergedPullRequests } from '../../src/lib/telemetry-github.ts';
 
 const { values } = parseArgs({
   options: {
@@ -51,27 +52,44 @@ function loadPrevious() {
 // the per-year totals, so the published document carries its own proof.
 const FIRST_YEAR = GITHUB_CONTROL.year;
 
-async function readGithub() {
-  const year = new Date(now).getUTCFullYear();
-  const years = Array.from({ length: year - FIRST_YEAR + 1 }, (_, i) => FIRST_YEAR + i);
-  const query = `query($prFrom: DateTime!, $now: DateTime!) {
-    viewer {
-      ${years.map((y) => `y${y}: contributionsCollection(from: "${y}-01-01T00:00:00Z", to: "${y === year ? iso(now) : `${y}-12-31T23:59:59Z`}") { contributionCalendar { totalContributions } }`).join('\n      ')}
-      weekly: contributionsCollection { contributionCalendar { weeks { firstDay contributionDays { contributionCount } } } }
-      prs: contributionsCollection(from: $prFrom, to: $now) { totalPullRequestContributions }
-    }
-  }`;
+async function graphql(query, variables = {}) {
   const token = execFileSync('gh', ['auth', 'token'], { encoding: 'utf8' }).trim();
   const res = await fetch('https://api.github.com/graphql', {
     method: 'POST',
     headers: { authorization: `bearer ${token}`, 'content-type': 'application/json', 'user-agent': 'davisbuilds.net-telemetry' },
-    body: JSON.stringify({ query, variables: { prFrom: iso(now - 30 * DAY), now: iso(now) } }),
+    body: JSON.stringify({ query, variables }),
     signal: AbortSignal.timeout(30_000),
   });
   if (!res.ok) throw new Error(`GitHub GraphQL answered ${res.status}`);
   const body = await res.json();
   if (body.errors?.length) throw new Error(`GitHub GraphQL: ${body.errors.map((e) => e.message).join('; ')}`);
-  const v = body.data.viewer;
+  return body.data;
+}
+
+// Authored pull requests merged in the last 30 days, in every repository the
+// login can read (see src/lib/telemetry-github.ts).
+const MERGED_PRS = `query($cursor: String) {
+  viewer { pullRequests(states: MERGED, first: 100, after: $cursor, orderBy: { field: UPDATED_AT, direction: DESC }) {
+    nodes { id mergedAt updatedAt }
+    pageInfo { hasNextPage endCursor }
+  } }
+}`;
+
+async function readGithub() {
+  const year = new Date(now).getUTCFullYear();
+  const years = Array.from({ length: year - FIRST_YEAR + 1 }, (_, i) => FIRST_YEAR + i);
+  const query = `query {
+    viewer {
+      ${years.map((y) => `y${y}: contributionsCollection(from: "${y}-01-01T00:00:00Z", to: "${y === year ? iso(now) : `${y}-12-31T23:59:59Z`}") { contributionCalendar { totalContributions } }`).join('\n      ')}
+      weekly: contributionsCollection { contributionCalendar { weeks { firstDay contributionDays { contributionCount } } } }
+    }
+  }`;
+  const v = (await graphql(query)).viewer;
+  const mergedPrs = await countMergedPullRequests(
+    async (cursor) => (await graphql(MERGED_PRS, { cursor })).viewer.pullRequests,
+    now - 30 * DAY,
+    now,
+  );
   const byYear = years.map((y) => ({ year: y, total: v[`y${y}`].contributionCalendar.totalContributions }));
   const control = byYear.find((y) => y.year === GITHUB_CONTROL.year).total;
   const weeks = v.weekly.contributionCalendar.weeks;
@@ -83,7 +101,7 @@ async function readGithub() {
       year,
       contributions_ytd: byYear.at(-1).total,
       contributions_by_year: byYear,
-      pull_requests_30d: v.prs.totalPullRequestContributions,
+      pull_requests_30d: mergedPrs,
       weekly_contributions: {
         bucket: 'week',
         start: weeks[0].firstDay,
@@ -165,7 +183,7 @@ if (errors.length) {
 }
 
 const g = document.sources.github, a = document.sources.agents;
-console.error(`github: ${g.status}${g.contributions_ytd !== undefined ? ` · ${g.contributions_ytd} contributions in ${g.year} · ${g.pull_requests_30d} PRs (30d)` : ''}`);
+console.error(`github: ${g.status}${g.contributions_ytd !== undefined ? ` · ${g.contributions_ytd} contributions in ${g.year} · ${g.pull_requests_30d} PRs merged (30d)` : ''}`);
 console.error(`agents: ${a.status} · ${a.hosts.map((h) => `${h.host} ${h.status}: ${h.sessions_30d} sessions, ${h.tokens_30d} tokens (30d)`).join('; ') || 'no hosts'}`);
 
 const json = `${JSON.stringify(document, null, 2)}\n`;
