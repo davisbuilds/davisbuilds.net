@@ -11,7 +11,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // GitHub-hosted runners for public repositories have 4 vCPUs.
+  workers: process.env.CI ? 4 : undefined,
   reporter: process.env.CI ? [['html', { open: 'never' }], ['list']] : 'list',
   use: {
     baseURL: 'http://localhost:4391',
