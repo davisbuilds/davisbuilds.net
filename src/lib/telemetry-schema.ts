@@ -29,6 +29,7 @@ export type GithubSource = {
   year?: number;
   contributions_ytd?: number;
   contributions_by_year?: Array<{ year: number; total: number }>;
+  // Authored pull requests merged in the last 30 days, any repository the login can read.
   pull_requests_30d?: number;
   weekly_contributions?: { bucket: (typeof BUCKETS)[number]; start: string; counts: number[] };
   // An operator-accepted drop in the year-to-date total (validator --accept-decrease).

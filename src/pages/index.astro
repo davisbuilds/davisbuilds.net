@@ -14,7 +14,7 @@ import { STORAGE_KEY } from '../lib/intro';
 const TILES = [
   { key: 'agent-sessions-30d', label: 'Agent sessions · 30d', src: ['agentmonitor · sessions'], warn: 'blind spot: MacBook only' },
   { key: 'tokens-30d', label: 'Tokens · 30d', src: ['agentmonitor · token usage'], warn: 'blind spot: MacBook only' },
-  { key: 'pull-requests-30d', label: 'Pull requests · 30d', src: ['GitHub GraphQL', 'all repos, public + private'] },
+  { key: 'pull-requests-30d', label: 'PRs merged · 30d', src: ['GitHub GraphQL', 'authored, all repos, public + private'] },
 ];
 
 const { runs } = loadOneshots();
