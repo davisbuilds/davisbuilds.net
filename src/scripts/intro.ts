@@ -84,7 +84,10 @@ function start() {
     show(skipped);
   };
   const skip = () => finish(true);
-  const listeners: Array<[string, () => void]> = ['keydown', 'pointerdown', 'touchstart', 'wheel', 'scroll', 'resize'].map((type) => [type, skip]);
+  const resize = () => {
+    if (innerWidth !== vp.w || innerHeight !== vp.h) skip();
+  };
+  const listeners: Array<[string, () => void]> = ['keydown', 'pointerdown', 'touchstart', 'wheel', 'scroll', 'resize'].map((type) => [type, type === 'resize' ? resize : skip]);
   for (const [type, fn] of listeners) addEventListener(type, fn, { capture: true, passive: true });
   raf = requestAnimationFrame(frame);
 }
