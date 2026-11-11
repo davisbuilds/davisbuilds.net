@@ -6,3 +6,10 @@ minimumReleaseAge: 10080
 allowBuilds:
   esbuild: true
   sharp: true
+
+# Temporary exact exception for retiring the reviewed browser replacement.
+# Remove after playwright-core 1.65.0 reaches seven days (2026-11-12 20:17 UTC).
+minimumReleaseAgeExclude:
+  - '@playwright/test@1.65.0'
+  - 'playwright@1.65.0'
+  - 'playwright-core@1.65.0'
