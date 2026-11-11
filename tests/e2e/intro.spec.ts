@@ -49,6 +49,20 @@ test.describe('landing intro', () => {
     await finished(page, 800);
   });
 
+  test('only a changed viewport skips it on resize', async ({ page }) => {
+    await asVisitor(page);
+    await page.goto('/');
+    expect(await intro(page)).toBe('play');
+    // Browsers can dispatch resize after load without changing the viewport.
+    await page.evaluate(() => dispatchEvent(new Event('resize')));
+    expect(await intro(page)).toBe('play');
+    await expect(page.locator('canvas.intro')).toHaveCount(1);
+    await page.setViewportSize({ width: 1100, height: 700 });
+    await finished(page, 800);
+    await expect(page.locator('canvas.intro')).toHaveCount(0);
+    expect(await pageOpacity(page)).toBe('1');
+  });
+
   test('reduced motion never plays it, even when asked to replay', async ({ page }) => {
     await asVisitor(page);
     await page.emulateMedia({ reducedMotion: 'reduce' });
