@@ -240,3 +240,36 @@ test.describe('without JavaScript', () => {
     await expect(page.getByRole('link', { name: '▶ Run it' })).toHaveAttribute('href', '/oneshots/fixture-demo/play/');
   });
 });
+
+// Link previews (X, Slack, iMessage) read these tags without running scripts,
+// so they're checked in the served HTML, not the rendered page.
+test.describe('link preview tags', () => {
+  const meta = (html: string, attr: 'property' | 'name', key: string) =>
+    html.match(new RegExp(`<meta ${attr}="${key}" content="([^"]*)"`))?.[1] ?? null;
+
+  for (const path of ['/oneshots/fixture-demo/', '/oneshots/fixture-demo/play/', '/oneshots/fixture-film/']) {
+    test(`${path} names its hero as a large card image that loads`, async ({ request }) => {
+      const html = await (await request.get(path)).text();
+      expect(meta(html, 'name', 'twitter:card')).toBe('summary_large_image');
+      const image = meta(html, 'property', 'og:image');
+      expect(image).toMatch(/^https:\/\/davisbuilds\.net\/_astro\/hero\.[^/]+\.jpg$/);
+      expect(meta(html, 'property', 'og:image:width')).toBe('1200');
+      expect(meta(html, 'property', 'og:image:height')).toBe('630');
+      expect(meta(html, 'property', 'og:image:alt')).toBeTruthy();
+      expect(meta(html, 'name', 'twitter:image:alt')).toBe(meta(html, 'property', 'og:image:alt'));
+      expect(meta(html, 'property', 'og:title')).toBeTruthy();
+      const res = await request.get(new URL(image!).pathname);
+      expect(res.status()).toBe(200);
+      expect(res.headers()['content-type']).toBe('image/jpeg');
+      expect((await res.body()).length).toBeLessThan(5 * 1024 * 1024);
+    });
+  }
+
+  for (const path of ['/oneshots/fixture-plain/', '/now/']) {
+    test(`${path} has no image, so it asks for the small card`, async ({ request }) => {
+      const html = await (await request.get(path)).text();
+      expect(meta(html, 'name', 'twitter:card')).toBe('summary');
+      expect(meta(html, 'property', 'og:image')).toBeNull();
+    });
+  }
+});
