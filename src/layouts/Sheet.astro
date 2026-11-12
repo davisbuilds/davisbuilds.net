@@ -11,6 +11,8 @@ import '../styles/global.css';
 import Masthead from '../components/Masthead.astro';
 import TitleBlock from '../components/TitleBlock.astro';
 import Palette from '../components/Palette.astro';
+import SocialMeta from '../components/SocialMeta.astro';
+import type { SocialImage } from '../lib/oneshots/social';
 import { basePaletteItems, type NavKey, type PaletteItem } from '../lib/site';
 import { getPublishedEssays } from '../lib/writing';
 import { loadOneshots } from '../lib/oneshots/data';
@@ -23,8 +25,10 @@ interface Props {
   paletteItems?: PaletteItem[];
   canonical?: string;
   ogType?: 'website' | 'article';
+  // The link-preview image; pages without one get the small text card.
+  image?: SocialImage | null;
 }
-const { title, description, current, paletteItems = [], ogType = 'website' } = Astro.props;
+const { title, description, current, paletteItems = [], ogType = 'website', image = null } = Astro.props;
 const fullTitle = current === 'home' ? 'Davis Gee' : `${title} · Davis Gee`;
 const canonical = Astro.props.canonical ?? new URL(Astro.url.pathname, Astro.site).href;
 const essays = (await getPublishedEssays()).map((e) => ({ label: e.entry.data.title, kind: 'essay', href: e.href }));
@@ -45,6 +49,7 @@ const items = [...basePaletteItems(), ...essays, ...runs, ...parts, ...paletteIt
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:type" content={ogType} />
+    <SocialMeta image={image} />
     <link rel="alternate" type="application/rss+xml" title="Davis Gee · Writing" href="/rss.xml" />
     <script is:inline>
       // Apply an explicit theme choice before first paint to avoid a flash.

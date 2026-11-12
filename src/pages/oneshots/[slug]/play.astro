@@ -2,7 +2,9 @@
 // Full-viewport page for one demo: a thin bar and the sandboxed frame.
 import '@fontsource-variable/jetbrains-mono/index.css';
 import '../../../styles/tokens.css';
+import SocialMeta from '../../../components/SocialMeta.astro';
 import { loadOneshots } from '../../../lib/oneshots/data';
+import { runSocialImage } from '../../../lib/oneshots/social';
 import { DEMO_SANDBOX, EMBED_CSP } from '../../../lib/oneshots/vendor-map';
 import type { SyncedRun } from '../../../lib/oneshots/types';
 
@@ -12,6 +14,9 @@ export function getStaticPaths() {
 
 interface Props { run: SyncedRun }
 const { run } = Astro.props;
+const title = `${run.title} · Oneshots · Davis Gee`;
+const canonical = new URL(`/oneshots/${run.slug}/`, Astro.site).href;
+const social = await runSocialImage(run, Astro.site);
 ---
 <!doctype html>
 <html lang="en">
@@ -19,10 +24,16 @@ const { run } = Astro.props;
     <meta charset="utf-8" />
     <meta http-equiv="Content-Security-Policy" content={EMBED_CSP} />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{run.title} · Oneshots · Davis Gee</title>
+    <title>{title}</title>
     <meta name="description" content={run.summary} />
     <meta name="robots" content="noindex" />
-    <link rel="canonical" href={new URL(`/oneshots/${run.slug}/`, Astro.site)} />
+    <link rel="canonical" href={canonical} />
+    <!-- A shared play link still previews as the run: its title, summary and hero. -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={run.summary} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:type" content="website" />
+    <SocialMeta image={social} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <style>
       html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); }
