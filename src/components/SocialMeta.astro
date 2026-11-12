@@ -1,0 +1,19 @@
+---
+// Card tags for link previews. With an image, ask for the large card; without
+// one, the small card, so a preview never shows an empty image frame.
+import type { SocialImage } from '../lib/oneshots/social';
+
+interface Props { image?: SocialImage | null }
+const { image } = Astro.props;
+---
+{image
+  ? <>
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta property="og:image" content={image.url} />
+      <meta property="og:image:type" content="image/jpeg" />
+      <meta property="og:image:width" content={String(image.width)} />
+      <meta property="og:image:height" content={String(image.height)} />
+      <meta property="og:image:alt" content={image.alt} />
+      <meta name="twitter:image:alt" content={image.alt} />
+    </>
+  : <meta name="twitter:card" content="summary" />}

@@ -3,6 +3,7 @@ import { Image } from 'astro:assets';
 import Sheet from '../../../layouts/Sheet.astro';
 import DemoFrame from '../../../components/DemoFrame.astro';
 import { loadOneshots, runImage } from '../../../lib/oneshots/data';
+import { runSocialImage } from '../../../lib/oneshots/social';
 import { duration } from '../../../lib/oneshots/stats';
 import { EMBED_CSP } from '../../../lib/oneshots/vendor-map';
 import type { SyncedRun } from '../../../lib/oneshots/types';
@@ -15,6 +16,7 @@ export function getStaticPaths() {
 
 interface Props { run: SyncedRun; commit: string }
 const { run, commit } = Astro.props;
+const social = await runSocialImage(run, Astro.site);
 const meta: [string, string][] = [
   ['Model', run.agent.model],
   ...(run.agent.modelId ? [['Model ID', run.agent.modelId] as [string, string]] : []),
@@ -27,7 +29,7 @@ const meta: [string, string][] = [
   ['Medium', run.medium.join(', ')],
 ];
 ---
-<Sheet title={run.title} description={run.summary} current="oneshots">
+<Sheet title={run.title} description={run.summary} current="oneshots" image={social}>
   <meta slot="head" http-equiv="Content-Security-Policy" content={EMBED_CSP} />
   <article class="run-page">
     <a class="back" href="/oneshots/">← Oneshots</a>

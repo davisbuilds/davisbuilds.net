@@ -106,6 +106,11 @@ pnpm is pinned to 11.28.6 via `packageManager`. Build-script approvals and the
   frames (`DEMO_SANDBOX`), behind a CSP that keeps them offline. A new CDN
   file or font goes into `src/lib/oneshots/vendor-map.ts` from a pinned
   package; anything unmapped fails the sync.
+- **Link previews use the hero.** Run and play pages name a 1200×630 JPEG
+  of the run's hero (attention crop, `src/lib/oneshots/social.ts`) as
+  `og:image` with a large `twitter:card`; pages without an image ask for the
+  small card. Cards won't render live while the host's bot check answers
+  preview fetchers with its challenge page.
 - **A demo is served as one page.** The host's bot check answers any request
   without its cookie with a challenge page, and a sandboxed frame never sends
   that cookie, so only the frame's own page loads. The sync writes classic
