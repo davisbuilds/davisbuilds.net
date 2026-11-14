@@ -310,10 +310,30 @@ describe('demo file set', () => {
   // challenge page, and a sandboxed frame never sends that cookie. So a demo
   // gets exactly one request, its page, and anything else must be written in.
   it('rejects a file the page would still load as a separate request', () => {
-    expectRejected(withPage('<link rel="stylesheet" href="a.css">', '', { 'bad/a.css': 'p{}' }), /loads a\.css as a separate request/);
+    expectRejected(withPage('<link rel="stylesheet" href="a.css">', '', { 'bad/a.css': 'p{background:url(x.webp)}', 'bad/x.webp': WEBP }), /loads x\.webp as a separate request/);
     expectRejected(withPage('', '<img src="x.webp">', { 'bad/x.webp': WEBP }), /loads x\.webp as a separate request/);
     expectRejected(withPage('', '<iframe src="other.html"></iframe>', { 'bad/other.html': PAGE }), /loads other\.html as a separate request/);
     expectRejected(withPage('<script src="a.js"></script>', '', { 'bad/a.js': 'new Worker("./w.js")', 'bad/w.js': '' }), /loads w\.js as a separate request/);
+  });
+  it('writes local stylesheets into the page, in place and keeping their media', () => {
+    const { root } = makeRuns({
+      'good/index.html': '<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="css/a.css"><style>q{}</style><link href="b.css" rel="stylesheet" media="print and (min-width: 1px)"></head><body><p>ok</p></body></html>',
+      'good/css/a.css': 'p { color: red; background: url(data:,x); }',
+      'good/b.css': 'p { color: black; }',
+    });
+    const demo = collectDemo(path.join(root, 'runs/good'), 'good', 'index.html', { nodeModules: NODE_MODULES });
+    const served = demo.files[0].bytes.toString('utf8');
+    expect(demo.files.map((f) => f.rel)).toEqual(['index.html']);
+    expect(demo.sources.map((f) => f.rel).sort()).toEqual(['b.css', 'css/a.css', 'index.html']);
+    expect(separateLoads(served)).toEqual([]);
+    expect(served).toContain('<style>p { color: red; background: url(data:,x); }</style><style>q{}</style><style media="print and (min-width: 1px)">p { color: black; }</style>');
+    expect(reverseSubstitutions(served, demo.substitutions)).toBe(readFileSync(path.join(root, 'runs/good/index.html'), 'utf8'));
+  });
+  it('rejects a stylesheet that cannot be written in unchanged', () => {
+    expectRejected(withPage('<link rel="stylesheet" href="a.css">', '', { 'bad/a.css': 'p::after{content:"</style>"}' }), /a\.css.*<\/style/);
+    expectRejected(withPage('<link rel="alternate stylesheet" title="x" href="a.css">', '', { 'bad/a.css': 'p{}' }), /a\.css.*alternate stylesheet/);
+    expectRejected(withPage('<link rel="stylesheet" href="a.css" disabled>', '', { 'bad/a.css': 'p{}' }), /a\.css.*disabled/);
+    expectRejected(withPage('<link rel="stylesheet" href="a.css" onload="go()">', '', { 'bad/a.css': 'p{}' }), /a\.css.*onload/);
   });
   it('rejects a script that cannot be written in unchanged: a module, deferred, async, or holding "<!--"', () => {
     expectRejected(withPage('<script type="module" src="a.js"></script>', '', { 'bad/a.js': '' }), /a\.js.*module/);
