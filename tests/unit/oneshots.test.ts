@@ -335,6 +335,11 @@ describe('demo file set', () => {
     expectRejected(withPage('<link rel="stylesheet" href="a.css" disabled>', '', { 'bad/a.css': 'p{}' }), /a\.css.*disabled/);
     expectRejected(withPage('<link rel="stylesheet" href="a.css" onload="go()">', '', { 'bad/a.css': 'p{}' }), /a\.css.*onload/);
   });
+  it('finds CSS loads in any letter case, as browsers do', () => {
+    expectRejected(withPage('<link rel="stylesheet" href="a.css">', '', { 'bad/a.css': 'p{background:URL(x.webp)}', 'bad/x.webp': WEBP }), /x\.webp as a separate request/);
+    expectRejected(withPage('<link rel="stylesheet" href="a.css">', '', { 'bad/a.css': '@IMPORT "b.css";', 'bad/b.css': 'p{}' }), /b\.css as a separate request/);
+    expectRejected(withPage('<style>@Import "https://cdn.example.com/x.css";</style>'), /cdn\.example\.com/);
+  });
   it('rejects a file that is written in once but still requested from elsewhere', () => {
     // Writing b.css into the page doesn't answer an @import or import() that
     // still names it: that reference is a request of its own.

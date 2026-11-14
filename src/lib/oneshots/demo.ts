@@ -36,7 +36,8 @@ const URL_ATTRS: Record<string, string[]> = {
   script: ['src'], img: ['src', 'srcset'], source: ['src', 'srcset'], audio: ['src'], video: ['src', 'poster'],
   track: ['src'], iframe: ['src'], embed: ['src'], object: ['data'], input: ['src'], link: ['href'],
 };
-const CSS_URL_RE = /url\(\s*(['"]?)([^'")]+)\1\s*\)|@import\s+(['"])([^'"]+)\3/g;
+// CSS keywords and functions are case-insensitive: URL( and @IMPORT load too.
+const CSS_URL_RE = /url\(\s*(['"]?)([^'")]+)\1\s*\)|@import\s+(['"])([^'"]+)\3/gi;
 const JS_IMPORT_RE = /(?:^|[^\w$.])import\s*(?:[\w*{}\s,$]+\s*from\s*)?(['"])([^'"\n]+)\1|\bimport\(\s*(['"])([^'"\n]+)\3\s*\)|\bnew\s+(?:Shared)?Worker\(\s*(['"])([^'"\n]+)\5/g;
 
 const STORAGE_RE = /\b(?:localStorage|sessionStorage)\b/;
