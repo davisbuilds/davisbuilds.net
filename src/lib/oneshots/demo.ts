@@ -160,6 +160,10 @@ export function collectDemo(runDir: string, slug: string, entry: string, opts: O
   const pages: Array<{ rel: string; html: string; parsed: Parsed; subs: Substitution[]; inlines: Inline[]; styles: Inline[] }> = [];
   let total = 0;
   const queue: Array<{ ref: string; fromDir: string; what: string }> = [{ ref: entry, fromDir: root, what: 'entry' }];
+  // References still in the served page as loads: everything except the
+  // script and stylesheet tags that are replaced by the file's text. A file
+  // written in once is still a separate request if any of these names it.
+  const requested: Array<{ ref: string; fromDir: string; what: string }> = [];
 
   const resolve = (ref: string, fromDir: string, what: string) => {
     let decoded: string;
@@ -184,10 +188,11 @@ export function collectDemo(runDir: string, slug: string, entry: string, opts: O
     total += bytes.length;
     if (total > MAX_DEMO_BYTES) throw new RunError(slug, `demo files exceed 5 MB`);
     const dir = path.dirname(abs);
-    const follow = (r: string, kind: string) => {
+    const follow = (r: string, kind: string, writtenIn = false) => {
       if (skippable(r)) return;
       if (isRemote(r)) throw new RunError(slug, `${rel} loads ${r} from another host, which the vendor map doesn't cover`);
       queue.push({ ref: r, fromDir: dir, what: `${kind} in ${rel}` });
+      if (!writtenIn) requested.push({ ref: r, fromDir: dir, what: `${kind} in ${rel}` });
     };
     const scanCss = (text: string) => {
       for (const m of text.matchAll(CSS_URL_RE)) follow((m[2] ?? m[4]).trim(), 'stylesheet reference');
@@ -257,6 +262,8 @@ export function collectDemo(runDir: string, slug: string, entry: string, opts: O
           const media = el.sourceCodeLocation!.attrs!.media;
           const open = media ? `<style ${tag.slice(media.startOffset - loc.startOffset, media.endOffset - loc.startOffset)}>` : '<style>';
           styles.push({ whole: tag, tag: open, ref: href, fromDir: dir });
+          follow(href, 'link', true);
+          continue;
         }
         follow(href, 'link');
         continue;
@@ -285,7 +292,9 @@ export function collectDemo(runDir: string, slug: string, entry: string, opts: O
         const v = a.get(attr);
         if (v === undefined) continue;
         const refs = attr === 'srcset' ? v.split(',').map((s) => s.trim().split(/\s+/)[0]) : [v.trim()];
-        for (const r of refs) follow(r, `${name} ${attr}`);
+        // A local script's src is replaced by its text; nothing else here is.
+        const writtenIn = name === 'script' && attr === 'src';
+        for (const r of refs) follow(r, `${name} ${attr}`, writtenIn);
       }
     }
 
@@ -343,8 +352,9 @@ export function collectDemo(runDir: string, slug: string, entry: string, opts: O
     served.set(rel, { rel, bytes: Buffer.from(html) });
   }
 
+  const stillRequested = new Set(requested.map(({ ref, fromDir, what }) => resolve(ref, fromDir, what).rel));
   for (const rel of files.keys()) {
-    if (rel !== entryRel && !written.has(rel)) throw new RunError(slug, `the demo loads ${rel} as a separate request, which the host's bot check blocks inside the sandbox; only classic scripts, plain stylesheets, and vendored scripts and fonts can be written into the page`);
+    if (rel !== entryRel && (!written.has(rel) || stillRequested.has(rel))) throw new RunError(slug, `the demo loads ${rel} as a separate request, which the host's bot check blocks inside the sandbox; only classic scripts, plain stylesheets, and vendored scripts and fonts can be written into the page`);
   }
   return { entry: entryRel, files: [...served.values()], sources: [...files.values()], substitutions };
 }

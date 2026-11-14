@@ -335,6 +335,13 @@ describe('demo file set', () => {
     expectRejected(withPage('<link rel="stylesheet" href="a.css" disabled>', '', { 'bad/a.css': 'p{}' }), /a\.css.*disabled/);
     expectRejected(withPage('<link rel="stylesheet" href="a.css" onload="go()">', '', { 'bad/a.css': 'p{}' }), /a\.css.*onload/);
   });
+  it('rejects a file that is written in once but still requested from elsewhere', () => {
+    // Writing b.css into the page doesn't answer an @import or import() that
+    // still names it: that reference is a request of its own.
+    expectRejected(withPage('<link rel="stylesheet" href="a.css"><link rel="stylesheet" href="b.css">', '', { 'bad/a.css': '@import "b.css";', 'bad/b.css': 'p{}' }), /b\.css as a separate request/);
+    expectRejected(withPage('<style>@import "b.css";</style><link rel="stylesheet" href="b.css">', '', { 'bad/b.css': 'p{}' }), /b\.css as a separate request/);
+    expectRejected(withPage('<script src="a.js"></script><script src="b.js"></script>', '', { 'bad/a.js': 'import("./b.js");', 'bad/b.js': '' }), /b\.js as a separate request/);
+  });
   it('rejects a script that cannot be written in unchanged: a module, deferred, async, or holding "<!--"', () => {
     expectRejected(withPage('<script type="module" src="a.js"></script>', '', { 'bad/a.js': '' }), /a\.js.*module/);
     expectRejected(withPage('<script defer src="a.js"></script>', '', { 'bad/a.js': '' }), /a\.js.*defer/);
