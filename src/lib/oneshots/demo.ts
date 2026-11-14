@@ -7,8 +7,8 @@
 // A demo is served as that one page. The host's bot check answers any request
 // without its cookie with a challenge page, and a sandboxed frame (an opaque
 // origin) never sends the cookie, so every request after the page itself would
-// fail. Classic scripts, vendored scripts and fonts are written into the page;
-// anything else it would load separately fails the build.
+// fail. Classic scripts, plain stylesheets, vendored scripts and fonts are
+// written into the page; anything else it would load separately fails the build.
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { parse, type DefaultTreeAdapterMap } from 'parse5';
@@ -154,9 +154,10 @@ export function collectDemo(runDir: string, slug: string, entry: string, opts: O
   const root = realpathSync(runDir);
   const files = new Map<string, DemoFile>();
   const substitutions: Substitution[] = [];
-  // Local classic scripts to write in, once every file has been read.
+  // Local classic scripts and stylesheets to write in, once every file has
+  // been read. `tag` is the opening tag the file's text goes after.
   type Inline = { whole: string; tag: string; ref: string; fromDir: string };
-  const pages: Array<{ rel: string; html: string; parsed: Parsed; subs: Substitution[]; inlines: Inline[] }> = [];
+  const pages: Array<{ rel: string; html: string; parsed: Parsed; subs: Substitution[]; inlines: Inline[]; styles: Inline[] }> = [];
   let total = 0;
   const queue: Array<{ ref: string; fromDir: string; what: string }> = [{ ref: entry, fromDir: root, what: 'entry' }];
 
@@ -209,6 +210,7 @@ export function collectDemo(runDir: string, slug: string, entry: string, opts: O
     const parsed = parsePage(html);
     const subs: Substitution[] = [];
     const inlines: Inline[] = [];
+    const styles: Inline[] = [];
     for (const el of elements(parsed.doc)) {
       const name = el.tagName;
       const loc = el.sourceCodeLocation?.startTag;
@@ -244,6 +246,18 @@ export function collectDemo(runDir: string, slug: string, entry: string, opts: O
           continue;
         }
         if (isRemote(href)) throw new RunError(slug, `${rel} loads ${href} from another host, which the vendor map doesn't cover`);
+        if (rels.includes('stylesheet')) {
+          // Written in as a <style>, it applies where the link stood; only
+          // media carries over, so anything else would change what it does.
+          if (rels.length !== 1) throw new RunError(slug, `${rel} loads ${href} as "${a.get('rel')}"; only a plain stylesheet can be written into the page`);
+          for (const attr of a.keys()) {
+            if (attr === 'type' && ['', 'text/css'].includes(a.get('type')!.trim().toLowerCase())) continue;
+            if (!['rel', 'href', 'media'].includes(attr)) throw new RunError(slug, `${rel} loads ${href} with ${attr}, which a stylesheet written into the page would lose`);
+          }
+          const media = el.sourceCodeLocation!.attrs!.media;
+          const open = media ? `<style ${tag.slice(media.startOffset - loc.startOffset, media.endOffset - loc.startOffset)}>` : '<style>';
+          styles.push({ whole: tag, tag: open, ref: href, fromDir: dir });
+        }
         follow(href, 'link');
         continue;
       }
@@ -275,17 +289,27 @@ export function collectDemo(runDir: string, slug: string, entry: string, opts: O
       }
     }
 
-    pages.push({ rel, html, parsed, subs, inlines });
+    pages.push({ rel, html, parsed, subs, inlines, styles });
     files.set(rel, { rel, bytes });
   }
 
   const entryRel = resolve(entry, root, 'entry').rel;
   const written = new Set<string>();
-  for (const { rel, subs, inlines } of pages) {
+  for (const { rel, subs, inlines, styles } of pages) {
     for (const { whole, tag, ref, fromDir } of inlines) {
       const target = resolve(ref, fromDir, `script src in ${rel}`).rel;
       const body = inlineScriptBody(files.get(target)!.bytes.toString('utf8'), slug, target);
       subs.push({ file: rel, from: whole, to: `${tag}${body}</script>`, label: 'its scripts written into the page, so it loads as one file' });
+      written.add(target);
+    }
+    for (const { whole, tag, ref, fromDir } of styles) {
+      const target = resolve(ref, fromDir, `stylesheet in ${rel}`).rel;
+      if (!target.endsWith('.css')) throw new RunError(slug, `${rel} loads ${target} as a stylesheet; only a .css file can be written into the page`);
+      // "</style" would end the element early, and there's no rewrite of it
+      // that keeps every CSS context (string, comment, selector) the same.
+      const css = files.get(target)!.bytes.toString('utf8');
+      if (/<\/style/i.test(css)) throw new RunError(slug, `${target} contains "</style", so it can't be written into the page`);
+      subs.push({ file: rel, from: whole, to: `${tag}${css}</style>`, label: 'its stylesheets written into the page, so it loads as one file' });
       written.add(target);
     }
   }
@@ -320,7 +344,7 @@ export function collectDemo(runDir: string, slug: string, entry: string, opts: O
   }
 
   for (const rel of files.keys()) {
-    if (rel !== entryRel && !written.has(rel)) throw new RunError(slug, `the demo loads ${rel} as a separate request, which the host's bot check blocks inside the sandbox; only classic scripts and vendored scripts and fonts can be written into the page`);
+    if (rel !== entryRel && !written.has(rel)) throw new RunError(slug, `the demo loads ${rel} as a separate request, which the host's bot check blocks inside the sandbox; only classic scripts, plain stylesheets, and vendored scripts and fonts can be written into the page`);
   }
   return { entry: entryRel, files: [...served.values()], sources: [...files.values()], substitutions };
 }
