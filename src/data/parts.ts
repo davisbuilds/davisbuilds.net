@@ -41,7 +41,7 @@ export const APPS: App[] = [
   { name: 'Habits AI', kind: 'in development', description: 'Habit tracking with weekly AI insight reports.' },
   { name: 'podsave', kind: 'cli', description: 'A YouTube URL becomes a curated Obsidian note.', repo: 'podsave' },
   { name: 'feed', kind: 'cli', description: 'Newsletter digest CLI.', repo: 'feed' },
-  { name: 'compendium', kind: 'web', description: 'A curated collection of advice from successful entrepreneurs.', repo: 'compendium' },
+  { name: 'Influence Index', kind: 'web', description: 'A curated collection of advice from successful entrepreneurs.', repo: 'influence-index' },
   { name: 'davisbuilds.net', kind: 'web', description: 'The source for this site, a static Astro build.', repo: 'davisbuilds.net' },
 ];
 
