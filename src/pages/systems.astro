@@ -3,6 +3,7 @@
 // dates, and the applications built on top.
 import { Image } from 'astro:assets';
 import Sheet from '../layouts/Sheet.astro';
+import AppCard from '../components/AppCard.astro';
 import Plate from '../components/Plate.astro';
 import Engram from '../components/figures/Engram.astro';
 import Dojo from '../components/figures/Dojo.astro';
@@ -113,17 +114,10 @@ const BARS = 8;
     </div>
   </section>
 
-  <section>
-    <div class="sec-head"><h2>Applications</h2><span class="label">Products on top of the tooling</span></div>
+  <section id="applications">
+    <div class="sec-head"><h2>Applications</h2><span class="label">Products and experiments</span></div>
     <div class="apps" style="margin-top:0">
-      {APPS.map((a) => {
-        const inner = (
-          <Fragment><span class="pn"><span>APP</span><span>{a.kind}</span></span><span class="t">{a.name}</span><span class="d">{a.description}</span></Fragment>
-        );
-        return a.repo
-          ? <a class="part" href={repoUrl(a.repo)}>{inner}</a>
-          : <div class="part dev">{inner}</div>;
-      })}
+      {APPS.map((app) => <AppCard app={app} />)}
     </div>
   </section>
 </Sheet>

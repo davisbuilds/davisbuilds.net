@@ -37,7 +37,12 @@ export async function GET({ site }: APIContext) {
     '',
     `- [Systems](${url('/systems/')}): drawings of the main parts, the parts list with GitHub dates, and the applications built on them`,
     ...PARTS.map((p) => `- [${text(p.repo)}](${repoUrl(p.repo)}): ${text(p.function)}`),
-    ...APPS.map((a) => (a.repo ? `- [${text(a.name)}](${repoUrl(a.repo)}): ${text(a.description)}` : `- ${text(a.name)} (${text(a.kind)}): ${text(a.description)}`)),
+    ...APPS.map((a) => {
+      const href = a.url ?? (a.repo ? repoUrl(a.repo) : undefined);
+      const name = href ? `[${text(a.name)}](${href})` : `${text(a.name)} (${text(a.kind)})`;
+      const source = a.url && a.repo ? ` [Source](${repoUrl(a.repo)})` : '';
+      return `- ${name}: ${text(a.description)}${source}`;
+    }),
     '',
     '## Pages',
     '',

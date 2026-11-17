@@ -1,0 +1,23 @@
+---
+import type { App } from '../data/parts';
+import { repoUrl } from '../data/parts';
+interface Props { app: App; }
+const { app } = Astro.props;
+---
+<article class:list={['part', { dev: !app.url && !app.repo }]}>
+  <div class="pn"><span>APP</span><span>{app.kind}</span></div>
+  <h3 class="t">{app.name}</h3>
+  <p class="d">{app.description}</p>
+  {(app.url || app.repo) && (
+    <div class="app-links">
+      {app.url && <a class="visit" href={app.url}>Visit site <span aria-hidden="true">↗</span></a>}
+      {app.repo && <a href={repoUrl(app.repo)}>Source <span aria-hidden="true">↗</span></a>}
+    </div>
+  )}
+</article>
+<style>
+  article { grid-template-rows: auto auto 1fr auto; align-content: start; }
+  h3, p { margin: 0; }
+  .app-links { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: auto; padding-top: 12px; font-family: var(--f-mono); font-size: 12px; }
+  .visit { font-weight: 700; color: var(--signal); }
+</style>

@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
-import { PARTS } from '../../src/data/parts';
+import { APPS, PARTS } from '../../src/data/parts';
 
 const fixture = JSON.parse(readFileSync('tests/fixtures/github/repos.json', 'utf8')) as {
   read_at: string;
@@ -36,11 +36,39 @@ test.describe('Systems', () => {
     await expect(page.locator('tr[data-part="envdiff"] .age i.on')).toHaveCount(2);
   });
 
-  test('Habits AI is named without a link, and every other app links to its public repository', async ({ page }) => {
+  test('applications offer live destinations and only curated public source links', async ({ page }) => {
     await page.goto('/systems/');
-    await expect(page.locator('.apps div.part', { hasText: 'Habits AI' })).toHaveCount(1);
-    await expect(page.locator('.apps a.part', { hasText: 'Habits AI' })).toHaveCount(0);
-    for (const a of await page.locator('.apps a.part').all()) expect(await a.getAttribute('href')).toMatch(/^https:\/\/github\.com\/davisbuilds\/[\w.-]+$/);
+    const apps = page.locator('#applications .part');
+    await expect(apps).toHaveCount(APPS.length);
+    const influence = apps.filter({ has: page.getByRole('heading', { name: 'Influence Index', exact: true }) });
+    await expect(influence.getByRole('link', { name: 'Visit site' })).toHaveAttribute('href', 'https://influence-index-eta.vercel.app');
+    await expect(influence.getByRole('link', { name: 'Source' })).toHaveAttribute('href', 'https://github.com/davisbuilds/influence-index');
+    const postcards = apps.filter({ has: page.getByRole('heading', { name: 'Postcards', exact: true }) });
+    await expect(postcards.getByRole('link', { name: 'Visit site' })).toHaveAttribute('href', 'https://davis-postcards.vercel.app');
+    await expect(postcards.getByRole('link')).toHaveCount(1);
+    await expect(apps.filter({ hasText: 'Habits AI' }).getByRole('link')).toHaveCount(0);
+    await expect(apps.filter({ has: page.getByRole('heading', { name: 'podsave', exact: true }) }).getByRole('link', { name: 'Source' })).toHaveAttribute('href', 'https://github.com/davisbuilds/podsave');
+  });
+
+  test('Home features two live apps between Systems and Oneshots, and llms.txt uses the live URLs', async ({ page, request }) => {
+    await page.goto('/');
+    const headings = await page.locator('main h2').allTextContents();
+    expect(headings.indexOf('Apps & experiments')).toBe(headings.indexOf('Systems') + 1);
+    expect(headings.indexOf('Oneshots')).toBe(headings.indexOf('Apps & experiments') + 1);
+    const section = page.locator('section', { has: page.getByRole('heading', { name: 'Apps & experiments' }) });
+    await expect(section.locator('.part')).toHaveCount(2);
+    await expect(section.getByRole('heading', { name: 'Influence Index', exact: true })).toBeVisible();
+    await expect(section.getByRole('heading', { name: 'Postcards', exact: true })).toBeVisible();
+    await expect(section.getByRole('link', { name: 'All applications' })).toHaveAttribute('href', '/systems/#applications');
+    for (const link of await section.getByRole('link', { name: 'Visit site' }).all()) {
+      await expect(link).toHaveAttribute('target', '_blank');
+      await expect(link).toHaveAttribute('rel', 'noopener');
+    }
+    const body = await (await request.get('/llms.txt')).text();
+    expect(body).toContain('[Influence Index](https://influence-index-eta.vercel.app)');
+    expect(body).toContain('[Postcards](https://davis-postcards.vercel.app)');
+    expect(body).toContain('Postcards from the places that stayed with me.');
+    expect(body).toContain('[Source](https://github.com/davisbuilds/influence-index)');
   });
 
   test('hovering a plate runs its flows', async ({ page }) => {
