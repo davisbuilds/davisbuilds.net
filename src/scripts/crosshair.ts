@@ -4,7 +4,7 @@
 const NS = 'http://www.w3.org/2000/svg';
 // The chart is drawn at its box's width (one unit is about one CSS pixel), so
 // labels keep their size and nothing scrolls on a phone. Redrawn on resize.
-const W_MIN = 260, W_MAX = 760, L = 40, R = 8, T = 18, B = 26;
+const W_MIN = 260, W_MAX = 760, L_MIN = 40, R = 8, T = 18, B = 26;
 const MONTH_GAP = 26; // a three-letter month label at 10px, plus air
 const WEEK = 7 * 86_400_000;
 
@@ -16,17 +16,19 @@ function svg<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Attrs, parent?
   return el;
 }
 
-// A round axis top: the first 1, 2 or 5 step that fits the peak in 4 ticks.
-// Bounded, so a value that isn't a finite count can't spin it forever.
-function axisMax(peak: number): { max: number; step: number } {
-  if (!Number.isFinite(peak) || peak < 1) peak = 1;
-  for (let mag = 1; mag < 1e15; mag *= 10) {
-    for (const m of [1, 2, 5]) {
-      const step = m * mag;
-      if (step * 4 >= peak) return { max: step * 4, step };
-    }
-  }
-  return { max: 4, step: 1 };
+// Leave 20% above the measured peak, then round to readable integer ticks.
+// Varying the tick count avoids the old four-tick jump from 400 to 800.
+export function axisMax(peak: number): { max: number; step: number } {
+  if (!Number.isFinite(peak) || peak < 1) return { max: 4, step: 1 };
+  const target = peak * 1.2;
+  const magnitude = 10 ** Math.floor(Math.log10(target / 5));
+  const options = [1, 2, 2.5, 5, 10].map((m) => {
+    const step = Math.max(1, m * magnitude);
+    const ticks = Math.ceil(target / step);
+    return { max: ticks * step, step, ticks };
+  }).filter(({ ticks }) => ticks <= 6);
+  const { max, step } = options.reduce((best, next) => next.max < best.max ? next : best);
+  return { max, step };
 }
 
 const fmt = (n: number) => n.toLocaleString('en-US');
@@ -50,7 +52,9 @@ function chart(W: number, read: HTMLElement, series: { start: string; counts: nu
   const start = Date.parse(`${series.start}T00:00:00Z`);
   const weekOf = (i: number) => new Date(start + i * WEEK).toISOString().slice(0, 10);
   const peak = counts.reduce((best, v, i) => (v > counts[best] ? i : best), 0);
-  const { max, step } = axisMax(Math.max(1, counts[peak]));
+  const { max, step } = axisMax(counts[peak]);
+  // The 10px mono labels need about six pixels per character, including commas.
+  const L = Math.max(L_MIN, fmt(max).length * 6 + 10);
   const pw = W - L - R, ph = H - T - B, bw = pw / counts.length;
   const y = (v: number) => T + ph - (v / max) * ph;
 

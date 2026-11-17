@@ -27,6 +27,10 @@ const source = `${data.source.repo.replace('https://', '')} @ ${data.source.sha.
     </div>
   </section>
   <section>
+    <div class="sec-head"><h2>Autonomy plot</h2><span class="label">Runs that recorded both: wall clock vs. human turns</span></div>
+    <AutonomyPlot runs={data.runs} />
+  </section>
+  <section>
     <div class="filters" role="group" aria-label="Filter runs" hidden data-run-filters>
       <button type="button" data-rf="all" aria-pressed="true">All</button>
       <button type="button" data-rf="long-horizon" aria-pressed="false">Long-horizon</button>
@@ -44,10 +48,6 @@ const source = `${data.source.repo.replace('https://', '')} @ ${data.source.sha.
       <div class="runs four" id="runs-single">{single.map((r, i) => <RunCard run={r} fig={long.length + i + 1} />)}</div>
     </>}
     <p class="runs-note">Runs before late September predate the run standard, so human turns show as "not recorded" rather than a guess.</p>
-  </section>
-  <section>
-    <div class="sec-head"><h2>Autonomy plot</h2><span class="label">Runs that recorded both: wall clock vs. human turns</span></div>
-    <AutonomyPlot runs={data.runs} />
   </section>
   <script>
     import '../../scripts/run-filters';

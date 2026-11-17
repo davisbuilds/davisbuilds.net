@@ -42,6 +42,8 @@ test.describe('telemetry reader', () => {
     const chart = readout(page, 'weekly-contributions');
     await expect(chart.locator('svg rect.bar')).toHaveCount(53);
     await expect(chart.locator('[data-cross]')).toHaveText('Peak 348 · week of 2026-09-27 · hover to read any week');
+    const ticks = await chart.locator('svg text.axis').allTextContents();
+    expect(ticks.filter((t) => /^[\d,]+$/.test(t))).toEqual(['0', '100', '200', '300', '400', '500']);
     const box = (await chart.locator('svg').boundingBox())!;
     await chart.locator('svg').hover({ position: { x: box.width - 12, y: box.height / 2 } });
     await expect(chart.locator('[data-cross]')).toHaveText('Week of 2026-10-04 · 63 contributions · in progress');
@@ -68,6 +70,31 @@ test.describe('telemetry reader', () => {
     await chart.locator('svg').click({ position: { x: box.width - 3, y: box.height / 2 } });
     await expect(chart.locator('[data-cross]')).toHaveText('Week of 2026-10-04 · 63 contributions · in progress');
   });
+
+  for (const [name, peak, top] of [['the published 460-contribution peak', 460, 600], ['just above the old boundary', 401, 500], ['larger weeks', 500, 600], ['all-zero weeks', 0, 4], ['large counts', 10_000, 12_000]] as const) {
+    test(`the weekly axis fits ${name} with readable ticks and no clipped bars`, async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      const body = JSON.parse(fixture('ok'));
+      body.sources.github.weekly_contributions.counts = Array.from({ length: 53 }, (_, i) => i === 30 ? peak : 0);
+      await serve(page, JSON.stringify(body));
+      await page.goto('/');
+      const chart = readout(page, 'weekly-contributions');
+      await expect(chart.locator('svg rect.bar')).toHaveCount(53);
+      const ticks = await chart.locator('svg text.axis').allTextContents();
+      expect(ticks.filter((t) => /^[\d,]+$/.test(t)).at(-1)).toBe(top.toLocaleString('en-US'));
+      const svg = chart.locator('svg');
+      const svgBox = (await svg.boundingBox())!;
+      for (const label of await svg.locator('text.axis').all()) {
+        const box = (await label.boundingBox())!;
+        expect(box.x).toBeGreaterThanOrEqual(svgBox.x);
+        expect(box.height).toBeGreaterThanOrEqual(9);
+      }
+      const bars = await chart.locator('svg rect.bar').evaluateAll((els) => els.map((el) => ({ y: Number(el.getAttribute('y')), h: Number(el.getAttribute('height')) })));
+      expect(bars.every(({ y, h }) => y >= 18 && h >= 0)).toBe(true);
+      if (peak > 0) expect(bars[30].h).toBeGreaterThan(80);
+      await expect(chart.locator('[data-cross]')).toContainText(`Peak ${peak.toLocaleString('en-US')}`);
+    });
+  }
 
   test('ok: the Systems figure draws the harness mix', async ({ page }) => {
     await serve(page, fixture('ok'));
