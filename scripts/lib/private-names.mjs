@@ -100,14 +100,25 @@ export function findPrivateNames(texts, names, apps = APPS) {
     // An approved display name is not permission to expose a source URL,
     // another host, or a build path. Only the curated live destination is OK.
     const protectedTexts = texts.map(([file, content]) => {
-      const normalized = content.replace(/\\\//g, '/');
+      const liveUrl = approved.get(name.toLowerCase());
+      // Remove only a complete curated URL, before collecting path tokens.
+      // Prefix/suffix matches must not hide a different destination.
+      const normalized = content.replace(/\\\//g, '/').replaceAll(liveUrl, (url, offset, full) => {
+        const boundary = (c) => c === undefined || /[\s<>"'`()[\]]/.test(c);
+        return boundary(full[offset - 1]) && boundary(full[offset + url.length]) ? '' : url;
+      });
       const destinations = [
+        // Inspect path-like tokens in every format, including CSS, srcset,
+        // data attributes, Markdown references, JS strings and ordinary prose.
+        // Angle brackets delimit HTML text, so closing tags cannot turn a
+        // standalone display name into a path. Backslashes count as paths too.
+        ...(normalized.match(/(?:[a-z0-9._~@%:+-]*[\/\\])+[a-z0-9._~@%:+/\\-]+/gi) ?? []),
+        ...(normalized.match(/(?:[a-z0-9_~@%+-]+\.)+[a-z0-9_~@%+-]+/gi) ?? []),
         ...(normalized.match(/(?:https?:\/\/|\/\/|\b(?:[a-z0-9-]+\.)+[a-z]{2,}[/:])[^\s<>"'`\)\]]+/gi) ?? []),
-        ...Array.from(content.matchAll(/\b(?:href|src|action)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi), (m) => m[1] ?? m[2] ?? m[3]),
-        ...Array.from(content.matchAll(/\]\(([^)\s]+)/g), (m) => m[1]),
+        ...Array.from(normalized.matchAll(/\b(?:href|src|action)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi), (m) => m[1] ?? m[2] ?? m[3]),
+        ...Array.from(normalized.matchAll(/\]\(([^)\s]+)/g), (m) => m[1]),
       ];
-      return [file, file === 'built paths' ? content : destinations
-        .filter((url) => url !== approved.get(name.toLowerCase())).join('\n')];
+      return [file, file === 'built paths' ? content : destinations.join('\n')];
     });
     hits.push(...findNames(protectedTexts, [name]));
   }

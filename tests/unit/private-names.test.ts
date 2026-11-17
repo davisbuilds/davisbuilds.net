@@ -76,11 +76,18 @@ describe('explicit published application brands', () => {
     ], ['approved-widget', 'secret-tool'], apps)).toEqual(['index.html: secret-tool']);
   });
 
+  it('permits an exact live URL with the brand in its hostname, without exempting a longer destination', () => {
+    const host = [{ ...base, url: 'https://approved-widget.example.com', publishedBrand: true }];
+    expect(findPrivateNames([['index.html', '<a href="https://approved-widget.example.com">approved-widget</a>']], ['approved-widget'], host)).toEqual([]);
+    expect(findPrivateNames([['index.html', '<a href="https://approved-widget.example.com/source">Source</a>']], ['approved-widget'], host)).toEqual(['index.html: approved-widget']);
+  });
+
   it('does not permit source associations, other destinations or built paths for a published brand', () => {
     // All destinations here are synthetic policy fixtures.
     expect(findPrivateNames([
       ['source.html', '<a href="https://github.com/example/approved-widget">Source</a>'],
       ['other.html', 'https://other.example/approved-widget'],
+      ['suffix.html', 'https://example.com/approved-widget/source'],
       ['bare.html', 'github.com/example/approved-widget'],
       ['escaped.json', String.raw`{"source":"https:\/\/github.com/example/approved-widget"}`],
       ['relative.html', '//github.com/example/approved-widget'],
@@ -88,11 +95,25 @@ describe('explicit published application brands', () => {
       ['markdown.md', '[Source](/source/approved-widget)'],
       ['built paths', 'images/approved-widget.png'],
     ], ['approved-widget'], apps)).toEqual([
-      'source.html: approved-widget', 'other.html: approved-widget',
+      'source.html: approved-widget', 'other.html: approved-widget', 'suffix.html: approved-widget',
       'bare.html: approved-widget', 'escaped.json: approved-widget',
       'relative.html: approved-widget', 'local.html: approved-widget',
       'markdown.md: approved-widget', 'built paths: approved-widget',
     ]);
+  });
+
+  it('keeps path and source references protected across arbitrary text formats', () => {
+    const texts: [string, string][] = [
+      ['styles.css', '.preview { background: url(/source/approved-widget.png) }'],
+      ['srcset.html', '<img srcset="/source/approved-widget.png 2x">'],
+      ['data.html', '<div data-source="/source/approved-widget">'],
+      ['reference.md', '[repo]: /source/approved-widget'],
+      ['script.js', 'const source = "/source/approved-widget";'],
+      ['plain.txt', 'Private source repository: example/approved-widget'],
+      ['windows.txt', String.raw`Source: example\approved-widget`],
+      ['filename.html', '<img srcset="approved-widget.png 2x">'],
+    ];
+    expect(findPrivateNames(texts, ['approved-widget'], apps)).toEqual(texts.map(([file]) => `${file}: approved-widget`));
   });
 
   it('requires explicit permission and a live URL, and matches only the complete brand', () => {

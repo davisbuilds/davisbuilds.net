@@ -38,7 +38,7 @@ export type App = {
   url?: string;
   featured?: boolean;
   // Explicit permission to publish this brand and its live URL. This does
-  // not permit source associations or other destinations in the deploy scan.
+  // not permit source URLs or other destinations in the deploy scan.
   publishedBrand?: boolean;
 };
 
