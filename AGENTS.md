@@ -185,7 +185,7 @@ pnpm is pinned to 11.28.6 via `packageManager`. Build-script approvals and the
   execution in their owning repository and keep lifecycle status current. Private
   working documents follow the companion-repository workflow described above. Preserve
   lasting decisions and open work in maintained references, repair incoming links,
-  then retire completed execution documents using this repository's archive policy.
+  then review and retire completed execution documents in their owning repository.
   Tracked content must suit the repository's audience; a handoff does not expand
   authority to push, deploy, or merge.
 
