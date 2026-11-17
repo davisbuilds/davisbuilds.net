@@ -181,17 +181,12 @@ pnpm is pinned to 11.28.6 via `packageManager`. Build-script approvals and the
   at a self-hosted runner.
 - Update a spec's lifecycle `status` as work lands, and
   `docs/system/OPERATIONS.md` when the deploy procedure changes.
-- **Planning and continuity.** Use the accepted conversation or existing task as
-  the contract when sufficient. Save a design, spec, or plan when coordination,
-  acceptance criteria, or execution sequencing needs persistence. When unfinished
-  work transfers between agents, sessions, or devices, preserve a concise handoff
-  unless existing context is sufficient. Commit documents needed for shared
-  execution in their owning repository and keep lifecycle status current. Private
-  working documents follow the companion-repository workflow described above. Preserve
-  lasting decisions and open work in maintained references, repair incoming links,
-  then review and retire completed execution documents in their owning repository.
-  Tracked content must suit the repository's audience; a handoff does not expand
-  authority to push, deploy, or merge.
+- **Planning and continuity.** Reuse clear task context; save planning docs when
+  decisions, acceptance, or coordination need persistence. Leave a brief handoff only
+  when needed to resume unfinished work. Commit shared docs and keep status current.
+  Before archiving, preserve lasting decisions and open work in maintained docs and
+  repair links.
+
 - Commit coherent chunks and stage by explicit path. Push only when asked.
 - Merge with a merge commit, or rebase when clean commits read better; squash
   is disabled, and merged branches are deleted. `main` requires the `test`
