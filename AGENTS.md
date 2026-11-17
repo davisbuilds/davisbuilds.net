@@ -177,14 +177,20 @@ pnpm is pinned to 11.28.6 via `packageManager`. Build-script approvals and the
 
 ## Working Agreement
 
-- Commit coherent chunks and stage by explicit path. Push only when asked.
 - Pull requests run CI on GitHub-hosted runners only; never point a workflow
   at a self-hosted runner.
+- Update a spec's lifecycle `status` as work lands, and
+  `docs/system/OPERATIONS.md` when the deploy procedure changes.
+- **Planning and continuity.** Reuse clear task context; save planning docs when
+  decisions, acceptance, or coordination need persistence. Leave a brief handoff only
+  when needed to resume unfinished work. Commit shared docs and keep status current.
+  Before archiving, preserve lasting decisions and open work in maintained docs and
+  repair links.
+
+- Commit coherent chunks and stage by explicit path. Push only when asked.
 - Merge with a merge commit, or rebase when clean commits read better; squash
   is disabled, and merged branches are deleted. `main` requires the `test`
   (Site checks) and `check` (Publication Hygiene) jobs to pass. Those names are
   the required checks, so renaming either job means updating branch protection
   in the same change. Site checks' `test` job only requires its gate and demo
   jobs, which run in parallel; add any new Site checks job to its `needs`.
-- Update a spec's lifecycle `status` as work lands, and
-  `docs/system/OPERATIONS.md` when the deploy procedure changes.
