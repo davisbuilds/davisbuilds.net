@@ -27,6 +27,25 @@ function offsite(page: Page) {
 const frameFor = (page: Page, slug: string) => page.frames().find((f) => f.url().includes(`/oneshots/${slug}/files/`));
 
 test.describe('Oneshots index', () => {
+  test('the Autonomy plot precedes the run figures and filters', async ({ page }) => {
+    await page.goto('/oneshots/');
+    const plot = page.locator('#plot');
+    await expect(plot).toBeVisible();
+    const order = await plot.evaluate((el) => {
+      const cards = document.querySelector('.runs')!;
+      const filters = document.querySelector('[data-run-filters]')!;
+      return {
+        beforeCards: Boolean(el.compareDocumentPosition(cards) & Node.DOCUMENT_POSITION_FOLLOWING),
+        beforeFilters: Boolean(el.compareDocumentPosition(filters) & Node.DOCUMENT_POSITION_FOLLOWING),
+        bottom: el.getBoundingClientRect().bottom,
+        cardsTop: cards.getBoundingClientRect().top,
+      };
+    });
+    expect(order.beforeCards).toBe(true);
+    expect(order.beforeFilters).toBe(true);
+    expect(order.bottom).toBeLessThan(order.cardsTop);
+  });
+
   test('one card per manifest, every figure loaded or a placeholder plate', async ({ page }) => {
     await page.goto('/oneshots/');
     const cards = page.locator('.runs .run');
