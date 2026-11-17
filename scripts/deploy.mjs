@@ -17,7 +17,7 @@ import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
-import { findNames, privateNames, publicNames, scanTargets } from './lib/private-names.mjs';
+import { findNames, findPrivateNames, privateNames, publicNames, scanTargets } from './lib/private-names.mjs';
 import { DEPLOY_HOST, files, ID_RE, MANIFEST, manifestOf, remote, requireServeCheck, rsyncBinary, RSYNC_SHELL, SNAPSHOTS, verifyRelease } from './lib/release.mjs';
 
 const { values } = parseArgs({
@@ -68,7 +68,7 @@ for (const f of ['index.html', '404.html']) if (!built.includes(f)) die(`dist/ h
 const self = JSON.parse(run('gh', ['repo', 'view', '--json', 'name'])).name;
 const texts = scanTargets(built, (f) => readFileSync(path.join('dist', f), 'utf8'));
 if (!findNames(texts, publicNames()).length) die('the private-name scan found no public repository names either; it is not reading the build');
-const leaks = findNames(texts, privateNames(self));
+const leaks = findPrivateNames(texts, privateNames(self));
 if (leaks.length) die(`dist/ names a private project:\n  ${leaks.join('\n  ')}`);
 
 // ---------- snapshot, manifest, upload ----------

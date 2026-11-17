@@ -35,13 +35,19 @@ export type App = {
   description: string;
   // A public repository, or none for a product whose repository is private.
   repo?: string;
+  url?: string;
+  featured?: boolean;
+  // Explicit permission to publish this brand and its live URL. This does
+  // not permit source associations or other destinations in the deploy scan.
+  publishedBrand?: boolean;
 };
 
 export const APPS: App[] = [
   { name: 'Habits AI', kind: 'in development', description: 'Habit tracking with weekly AI insight reports.' },
   { name: 'podsave', kind: 'cli', description: 'A YouTube URL becomes a curated Obsidian note.', repo: 'podsave' },
   { name: 'feed', kind: 'cli', description: 'Newsletter digest CLI.', repo: 'feed' },
-  { name: 'Influence Index', kind: 'web', description: 'An illustrated field guide to people who shaped industries, institutions, and culture.', repo: 'influence-index' },
+  { name: 'Influence Index', kind: 'web', description: 'An illustrated field guide to people who shaped industries, institutions, and culture.', repo: 'influence-index', url: 'https://influence-index-eta.vercel.app', featured: true },
+  { name: 'Postcards', kind: 'web', description: 'Postcards from the places that stayed with me.', url: 'https://davis-postcards.vercel.app', featured: true, publishedBrand: true },
   { name: 'davisbuilds.net', kind: 'web', description: 'The source for this site, a static Astro build.', repo: 'davisbuilds.net' },
 ];
 

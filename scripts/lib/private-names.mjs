@@ -5,6 +5,7 @@
 // that aren't on GitHub. A `github: <name>` line there names a private
 // repository the GitHub list must include: a login that can't see private
 // repositories returns an empty or partial list without failing.
+import { APPS } from '../../src/data/parts.ts';
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 
@@ -84,6 +85,31 @@ export function findNames(texts, names) {
   for (const name of names) {
     const re = tokenRe(name);
     for (const [file, text] of texts) if (re.test(text)) hits.push(`${file}: ${name}`);
+  }
+  return hits;
+}
+
+// Application brands may be deliberately published without publishing source.
+// Scope and canary validation still happen in privateNames before this scan.
+export function findPrivateNames(texts, names, apps = APPS) {
+  const brands = apps.filter((app) => app.publishedBrand === true && app.url);
+  const approved = new Map(brands.map((app) => [app.name.toLowerCase(), app.url]));
+  const ordinary = names.filter((name) => !approved.has(name.toLowerCase()));
+  const hits = findNames(texts, ordinary);
+  for (const name of names.filter((name) => approved.has(name.toLowerCase()))) {
+    // An approved display name is not permission to expose a source URL,
+    // another host, or a build path. Only the curated live destination is OK.
+    const protectedTexts = texts.map(([file, content]) => {
+      const normalized = content.replace(/\\\//g, '/');
+      const destinations = [
+        ...(normalized.match(/(?:https?:\/\/|\/\/|\b(?:[a-z0-9-]+\.)+[a-z]{2,}[/:])[^\s<>"'`\)\]]+/gi) ?? []),
+        ...Array.from(content.matchAll(/\b(?:href|src|action)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi), (m) => m[1] ?? m[2] ?? m[3]),
+        ...Array.from(content.matchAll(/\]\(([^)\s]+)/g), (m) => m[1]),
+      ];
+      return [file, file === 'built paths' ? content : destinations
+        .filter((url) => url !== approved.get(name.toLowerCase())).join('\n')];
+    });
+    hits.push(...findNames(protectedTexts, [name]));
   }
   return hits;
 }

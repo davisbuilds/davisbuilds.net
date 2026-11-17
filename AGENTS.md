@@ -57,7 +57,9 @@ pnpm is pinned to 11.28.6 via `packageManager`. Build-script approvals and the
   - unpublished essays;
   - credentials of any kind.
   `scripts/deploy.mjs` refuses a build that names any of the owner's private
-  projects; the list is read at deploy time, never stored here.
+  projects; the list is read at deploy time, never stored here. Explicit
+  `publishedBrand` entries in the curated applications may publish their
+  display name and live URL; other destinations and built paths stay guarded.
 - **Essays are the owner's words.** Agents may set up, format, and validate
   essays. They don't draft or rewrite essay prose, and they don't set an
   essay's `published` date without the owner's say-so.
@@ -123,6 +125,11 @@ pnpm is pinned to 11.28.6 via `packageManager`. Build-script approvals and the
 
 - **Parts:** `src/data/parts.ts` lists public repositories only, plus
   products the owner chose to name (Habits AI, without a link).
+- **Applications:** `APPS` in `src/data/parts.ts` drives the Systems catalogue,
+  featured Home cards, and `llms.txt`. `url` is the live destination; `repo`
+  is optional and always public. `featured` selects Home cards. A
+  `publishedBrand` exception requires the owner's explicit permission and
+  covers only that display name and curated live URL, never source URLs.
 - **Dates come from GitHub** (`src/lib/github.ts`), never from the file. A
   part that isn't a public repository fails the production build; fixture
   builds read `tests/fixtures/github/repos.json`.

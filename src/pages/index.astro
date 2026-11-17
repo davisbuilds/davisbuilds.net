@@ -5,6 +5,8 @@
 // each [data-readout] from the published document.
 import { Image } from 'astro:assets';
 import Sheet from '../layouts/Sheet.astro';
+import AppCard from '../components/AppCard.astro';
+import { APPS } from '../data/parts';
 import SystemDiagram from '../components/SystemDiagram.astro';
 import { getPublishedEssays } from '../lib/writing';
 import { isoDate, statusSlug } from '../lib/essays';
@@ -81,6 +83,13 @@ const essays = (await getPublishedEssays()).slice(0, 3);
   <section>
     <div class="sec-head"><h2>Systems</h2><a class="more" href="/systems/">Full parts list →</a></div>
     <SystemDiagram />
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Apps &amp; experiments</h2><a class="more" href="/systems/#applications">All applications →</a></div>
+    <div class="apps featured-apps">
+      {APPS.filter((app) => app.featured).map((app) => <AppCard app={app} />)}
+    </div>
   </section>
 
   <section>
