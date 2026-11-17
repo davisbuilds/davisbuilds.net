@@ -177,6 +177,18 @@ pnpm is pinned to 11.28.6 via `packageManager`. Build-script approvals and the
 
 ## Working Agreement
 
+- **Planning and continuity.** Use the accepted conversation or existing task as
+  the contract when sufficient. Save a design, spec, or plan when coordination,
+  acceptance criteria, or execution sequencing needs persistence. When unfinished
+  work transfers between agents, sessions, or devices, preserve a concise handoff
+  unless existing context is sufficient. Commit documents needed for shared
+  execution in their owning repository and keep lifecycle status current. Private
+  working documents follow the companion-repository workflow described above. Preserve
+  lasting decisions and open work in maintained references, repair incoming links,
+  then retire completed execution documents using this repository's archive policy.
+  Tracked content must suit the repository's audience; a handoff does not expand
+  authority to push, deploy, or merge.
+
 - Commit coherent chunks and stage by explicit path. Push only when asked.
 - Pull requests run CI on GitHub-hosted runners only; never point a workflow
   at a self-hosted runner.
