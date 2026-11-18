@@ -161,6 +161,9 @@ everything here builds and tests without them; only a deploy needs `private/`.
   only when needed to resume unfinished work. Commit shared docs and keep status
   current. Before archiving, preserve lasting decisions and open work in
   maintained docs and repair links.
+- **TDD:** red/green for features, major refactors and large changes; the red
+  test must fail on the behavior, not on a missing symbol. For smaller edits, run
+  the relevant existing checks.
 - **Commit and push.** Commit coherent chunks, staging by explicit path. Push
   your task branch and open a PR once the work is complete and the local gate
   passes; don't push directly to `main`.
