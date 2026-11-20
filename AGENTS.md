@@ -99,10 +99,12 @@ everything here builds and tests without them; only a deploy needs `private/`.
   anything unmapped fails the sync.
 - **A demo is served as one page.** The host's bot check answers any request
   without its cookie with a challenge page, and a sandboxed frame never sends
-  that cookie. So the sync writes classic scripts, plain stylesheets, vendored
-  scripts and fonts into the page and fails on anything else it would load
-  separately, including files a written-in stylesheet points at. Local
-  previews have no bot check, so `check-demos` fails any second request.
+  that cookie. So the sync writes scripts, plain stylesheets and fonts into the
+  page. An external module entry is bundled from relative `.js` and `.mjs`
+  imports confined to its run, and local TTF or WOFF2 files referenced by
+  stylesheets are embedded as data URLs. The lock bump's source review includes
+  those modules and fonts. Local previews have no bot check, so `check-demos`
+  fails any second request.
 - **Link previews** use a 1200×630 crop of the run's hero
   (`src/lib/oneshots/social.ts`) as `og:image` with a large `twitter:card`.
   Cards won't render live while the bot check answers preview fetchers.

@@ -70,7 +70,7 @@ export function splitBrief(text: string, dir: string): { brief: string; afterDel
 
 type Staged = { run: SyncedRun; images: { name: string; bytes: Buffer }[]; demo: Demo | null };
 
-function stageRun(runsDir: string, dir: string, opts: SyncOptions): Staged {
+async function stageRun(runsDir: string, dir: string, opts: SyncOptions): Promise<Staged> {
   const runDir = path.join(runsDir, dir);
   const m = parseManifest(dir, readFileSync(path.join(runDir, 'run.toml'), 'utf8'));
   const images: Staged['images'] = [];
@@ -106,7 +106,7 @@ function stageRun(runsDir: string, dir: string, opts: SyncOptions): Staged {
   }
 
   const isHtml = /\.html?$/i.test(m.entry);
-  const demo = isHtml ? collectDemo(runDir, dir, m.entry, { nodeModules: opts.nodeModules }) : null;
+  const demo = isHtml ? await collectDemo(runDir, dir, m.entry, { nodeModules: opts.nodeModules }) : null;
   if (!isHtml) confinedFile(runDir, m.entry, dir, 'entry');
 
   const tag = `run-${m.slug}`;
@@ -147,7 +147,7 @@ function stageRun(runsDir: string, dir: string, opts: SyncOptions): Staged {
   return { run, images, demo };
 }
 
-export function syncOneshots(opts: SyncOptions): SyncedData {
+export async function syncOneshots(opts: SyncOptions): Promise<SyncedData> {
   const dirs = readdirSync(opts.runsDir, { withFileTypes: true })
     .filter((d) => d.isDirectory() && existsSync(path.join(opts.runsDir, d.name, 'run.toml')))
     .map((d) => d.name)
@@ -155,7 +155,8 @@ export function syncOneshots(opts: SyncOptions): SyncedData {
   if (dirs.length === 0) throw new Error(`oneshots: no runs with a run.toml under ${opts.runsDir}`);
 
   // Phase 1: validate everything. Any RunError stops here, before any write.
-  const staged = dirs.map((d) => stageRun(opts.runsDir, d, opts));
+  const staged: Staged[] = [];
+  for (const dir of dirs) staged.push(await stageRun(opts.runsDir, dir, opts));
 
   // Phase 2: write.
   rmSync(opts.generatedDir, { recursive: true, force: true });
