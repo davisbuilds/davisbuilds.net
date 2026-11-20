@@ -7,11 +7,12 @@
 // A demo is served as that one page. The host's bot check answers any request
 // without its cookie with a challenge page, and a sandboxed frame (an opaque
 // origin) never sends the cookie, so every request after the page itself would
-// fail. Classic scripts, plain stylesheets, vendored scripts and fonts are
-// written into the page; anything else it would load separately fails the build.
+// fail. Scripts, plain stylesheets and fonts are written into the page;
+// anything else it would load separately fails the build.
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { parse, type DefaultTreeAdapterMap } from 'parse5';
+import { bundleModule } from './modules.ts';
 import { confinedFile, isRemote } from './files.ts';
 import { RunError } from './manifest.ts';
 import { DEMO_CSP, FONT_FAMILIES, GOOGLE_FONTS_CSS, PRECONNECT_HOSTS, SCRIPTS, STORAGE_SHIM } from './vendor-map.ts';
@@ -38,7 +39,9 @@ const URL_ATTRS: Record<string, string[]> = {
 };
 // CSS keywords and functions are case-insensitive: URL( and @IMPORT load too.
 const CSS_URL_RE = /url\(\s*(['"]?)([^'")]+)\1\s*\)|@import\s+(['"])([^'"]+)\3/gi;
-const JS_IMPORT_RE = /(?:^|[^\w$.])import\s*(?:[\w*{}\s,$]+\s*from\s*)?(['"])([^'"\n]+)\1|\bimport\(\s*(['"])([^'"\n]+)\3\s*\)|\bnew\s+(?:Shared)?Worker\(\s*(['"])([^'"\n]+)\5/g;
+const JS_IMPORT_RE = /(?:^|[^\w$.])import\s*(?:[\w*{}\s,$]+\s*from\s*)?(['"])([^'"\n]+)\1|\bimport\(\s*(['"])([^'"\n]+)\3\s*\)/g;
+const JS_WORKER_RE = /\bnew\s+(?:Shared)?Worker\(\s*(['"])([^'"\n]+)\1/g;
+const FONT_MIME: Record<string, string> = { '.ttf': 'font/ttf', '.woff2': 'font/woff2' };
 
 const STORAGE_RE = /\b(?:localStorage|sessionStorage)\b/;
 const skippable = (u: string) => u === '' || u.startsWith('#') || /^(data|blob|about|javascript):/i.test(u);
@@ -150,15 +153,17 @@ function locateHead(html: string, { doc, bom }: Parsed, rel: string, slug: strin
   return { anchorAt: bom + headTag.startOffset, anchorEnd: bom + end };
 }
 
-export function collectDemo(runDir: string, slug: string, entry: string, opts: Options): Demo {
+export async function collectDemo(runDir: string, slug: string, entry: string, opts: Options): Promise<Demo> {
   if (!/\.html?$/i.test(entry)) throw new RunError(slug, `entry "${entry}" is not an HTML page`);
   const root = realpathSync(runDir);
   const files = new Map<string, DemoFile>();
   const substitutions: Substitution[] = [];
-  // Local classic scripts and stylesheets to write in, once every file has
-  // been read. `tag` is the opening tag the file's text goes after.
+  // Local scripts and stylesheets to write in, once every file has been read.
   type Inline = { whole: string; tag: string; ref: string; fromDir: string };
-  const pages: Array<{ rel: string; html: string; parsed: Parsed; subs: Substitution[]; inlines: Inline[]; styles: Inline[] }> = [];
+  const pages: Array<{ rel: string; html: string; parsed: Parsed; subs: Substitution[]; inlines: Inline[]; modules: Inline[]; styles: Inline[] }> = [];
+  const read = new Set<string>();
+  const written = new Set<string>();
+  const stylesheetText = new Map<string, string>();
   let total = 0;
   const queue: Array<{ ref: string; fromDir: string; what: string }> = [{ ref: entry, fromDir: root, what: 'entry' }];
   // References still in the served page as loads: everything except the
@@ -178,16 +183,25 @@ export function collectDemo(runDir: string, slug: string, entry: string, opts: O
     return { abs, rel: path.relative(root, abs).split(path.sep).join('/') };
   };
 
-  while (queue.length) {
-    const { ref, fromDir, what } = queue.shift()!;
-    const { abs, rel } = resolve(ref, fromDir, what);
-    if (files.has(rel)) continue;
-    const ext = path.extname(rel).slice(1).toLowerCase();
-    if (ext === 'svg') throw new RunError(slug, `${what} "${rel}" is an SVG file; demos can't serve SVG, which runs script without the demo's content security policy`);
-    if (!ALLOWED_EXTENSIONS.includes(ext)) throw new RunError(slug, `${what} "${rel}" has a file type demos can't serve (.${ext})`);
+  const track = (abs: string, rel: string) => {
+    const existing = files.get(rel);
+    if (existing) return existing.bytes;
     const bytes = readFileSync(abs);
     total += bytes.length;
     if (total > MAX_DEMO_BYTES) throw new RunError(slug, `demo files exceed 5 MB`);
+    files.set(rel, { rel, bytes });
+    return bytes;
+  };
+
+  while (queue.length) {
+    const { ref, fromDir, what } = queue.shift()!;
+    const { abs, rel } = resolve(ref, fromDir, what);
+    if (read.has(rel)) continue;
+    read.add(rel);
+    const ext = path.extname(rel).slice(1).toLowerCase();
+    if (ext === 'svg') throw new RunError(slug, `${what} "${rel}" is an SVG file; demos can't serve SVG, which runs script without the demo's content security policy`);
+    if (!ALLOWED_EXTENSIONS.includes(ext)) throw new RunError(slug, `${what} "${rel}" has a file type demos can't serve (.${ext})`);
+    const bytes = track(abs, rel);
     const dir = path.dirname(abs);
     const follow = (r: string, kind: string, writtenIn = false) => {
       if (skippable(r)) return;
@@ -195,27 +209,35 @@ export function collectDemo(runDir: string, slug: string, entry: string, opts: O
       queue.push({ ref: r, fromDir: dir, what: `${kind} in ${rel}` });
       if (!writtenIn) requested.push({ ref: r, fromDir: dir, what: `${kind} in ${rel}` });
     };
-    const scanCss = (text: string) => {
-      for (const m of text.matchAll(CSS_URL_RE)) follow((m[2] ?? m[4]).trim(), 'stylesheet reference');
-    };
+    const scanCss = (text: string, inlineFonts = false) => text.replace(CSS_URL_RE, (matched, _quote, url: string | undefined, _importQuote, css: string | undefined) => {
+      const ref = (url ?? css!).trim();
+      const mime = inlineFonts && url && FONT_MIME[path.extname(ref.split(/[?#]/)[0]).toLowerCase()];
+      if (mime && !skippable(ref) && !isRemote(ref)) {
+        const font = resolve(ref, dir, `font in ${rel}`);
+        const base64 = track(font.abs, font.rel).toString('base64');
+        written.add(font.rel);
+        return `url(data:${mime};base64,${base64})`;
+      }
+      follow(ref, 'stylesheet reference');
+      return matched;
+    });
     const scanJs = (text: string) => {
       for (const m of text.matchAll(JS_IMPORT_RE)) {
-        const spec = m[2] ?? m[4] ?? m[6];
+        const spec = m[2] ?? m[4];
         if (isRemote(spec) || spec.startsWith('.') || spec.startsWith('/')) follow(spec, 'script import');
       }
+      for (const m of text.matchAll(JS_WORKER_RE)) follow(m[2], 'script worker');
     };
 
-    if (ext === 'css') scanCss(bytes.toString('utf8'));
+    if (ext === 'css') stylesheetText.set(rel, scanCss(bytes.toString('utf8'), true));
     if (ext === 'js' || ext === 'mjs') scanJs(bytes.toString('utf8'));
-    if (ext !== 'html') {
-      files.set(rel, { rel, bytes });
-      continue;
-    }
+    if (ext !== 'html') continue;
 
     const html = bytes.toString('utf8');
     const parsed = parsePage(html);
     const subs: Substitution[] = [];
     const inlines: Inline[] = [];
+    const modules: Inline[] = [];
     const styles: Inline[] = [];
     for (const el of elements(parsed.doc)) {
       const name = el.tagName;
@@ -279,8 +301,17 @@ export function collectDemo(runDir: string, slug: string, entry: string, opts: O
         const bare = `${tag.slice(0, at.startOffset - loc.startOffset).trimEnd()}${tag.slice(at.endOffset - loc.startOffset)}`;
         // Written in, a script runs where it stands; these would change when.
         const type = (a.get('type') ?? '').trim().toLowerCase();
-        if (type && !['text/javascript', 'application/javascript'].includes(type)) throw new RunError(slug, `${rel} loads ${src} as type "${type}" (a module can't be written into the page)`);
         for (const flag of ['defer', 'async']) if (a.has(flag)) throw new RunError(slug, `${rel} loads ${src} with ${flag}, which a script written into the page would ignore`);
+        if (type === 'module') {
+          if (isRemote(src)) throw new RunError(slug, `${rel} loads module ${src} from another host`);
+          if (modules.length) throw new RunError(slug, `${rel} has more than one external module entry`);
+          for (const attr of a.keys()) {
+            if (!['type', 'src', 'id'].includes(attr) && !attr.startsWith('data-')) throw new RunError(slug, `${rel} loads module ${src} with unsupported attribute ${attr}`);
+          }
+          modules.push({ whole, tag: bare, ref: src, fromDir: dir });
+          continue;
+        }
+        if (type && !['text/javascript', 'application/javascript'].includes(type)) throw new RunError(slug, `${rel} loads ${src} as unsupported script type "${type}"`);
         if (isRemote(src) && SCRIPTS[src]) {
           const s = SCRIPTS[src];
           const body = inlineScriptBody(readFileSync(path.join(opts.nodeModules, s.pkg, s.file), 'utf8'), slug, `vendored ${s.pkg}/${s.file}`);
@@ -299,25 +330,36 @@ export function collectDemo(runDir: string, slug: string, entry: string, opts: O
       }
     }
 
-    pages.push({ rel, html, parsed, subs, inlines, styles });
-    files.set(rel, { rel, bytes });
+    pages.push({ rel, html, parsed, subs, inlines, modules, styles });
   }
 
   const entryRel = resolve(entry, root, 'entry').rel;
-  const written = new Set<string>();
-  for (const { rel, subs, inlines, styles } of pages) {
+  for (const { rel, subs, inlines, modules, styles } of pages) {
     for (const { whole, tag, ref, fromDir } of inlines) {
       const target = resolve(ref, fromDir, `script src in ${rel}`).rel;
       const body = inlineScriptBody(files.get(target)!.bytes.toString('utf8'), slug, target);
       subs.push({ file: rel, from: whole, to: `${tag}${body}</script>`, label: 'its scripts written into the page, so it loads as one file' });
       written.add(target);
     }
+    for (const { whole, tag, ref, fromDir } of modules) {
+      const target = resolve(ref, fromDir, `module src in ${rel}`);
+      const bundle = await bundleModule(root, slug, target.rel, (abs, source) => {
+        const text = track(abs, source).toString('utf8');
+        written.add(source);
+        for (const m of text.matchAll(JS_WORKER_RE)) {
+          if (!skippable(m[2])) throw new RunError(slug, `${source} loads worker ${m[2]} as a separate request`);
+        }
+        return text;
+      });
+      const body = inlineScriptBody(bundle, slug, target.rel);
+      subs.push({ file: rel, from: whole, to: `${tag}${body}</script>`, label: 'its local module imports bundled into the page' });
+    }
     for (const { whole, tag, ref, fromDir } of styles) {
       const target = resolve(ref, fromDir, `stylesheet in ${rel}`).rel;
       if (!target.endsWith('.css')) throw new RunError(slug, `${rel} loads ${target} as a stylesheet; only a .css file can be written into the page`);
       // "</style" would end the element early, and there's no rewrite of it
       // that keeps every CSS context (string, comment, selector) the same.
-      const css = files.get(target)!.bytes.toString('utf8');
+      const css = stylesheetText.get(target)!;
       if (/<\/style/i.test(css)) throw new RunError(slug, `${target} contains "</style", so it can't be written into the page`);
       subs.push({ file: rel, from: whole, to: `${tag}${css}</style>`, label: 'its stylesheets written into the page, so it loads as one file' });
       written.add(target);
@@ -355,7 +397,7 @@ export function collectDemo(runDir: string, slug: string, entry: string, opts: O
 
   const stillRequested = new Set(requested.map(({ ref, fromDir, what }) => resolve(ref, fromDir, what).rel));
   for (const rel of files.keys()) {
-    if (rel !== entryRel && (!written.has(rel) || stillRequested.has(rel))) throw new RunError(slug, `the demo loads ${rel} as a separate request, which the host's bot check blocks inside the sandbox; only classic scripts, plain stylesheets, and vendored scripts and fonts can be written into the page`);
+    if (rel !== entryRel && (!written.has(rel) || stillRequested.has(rel))) throw new RunError(slug, `the demo loads ${rel} as a separate request, which the host's bot check blocks inside the sandbox`);
   }
   return { entry: entryRel, files: [...served.values()], sources: [...files.values()], substitutions };
 }

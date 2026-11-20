@@ -2,7 +2,7 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symli
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { parse } from 'parse5';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { collectDemo, reverseSubstitutions } from '../../src/lib/oneshots/demo';
 import { labOf, parseManifest } from '../../src/lib/oneshots/manifest';
 import { computeStats, median, placeLabels, plotPoints, wideCards } from '../../src/lib/oneshots/stats';
@@ -67,11 +67,12 @@ function makeRuns(files: Record<string, string | Buffer>) {
 }
 
 // A bad run named `bad`: the build must fail naming it, and nothing is written.
-function expectRejected(files: Record<string, string | Buffer>, reason: RegExp, setup?: (root: string) => void) {
+async function expectRejected(files: Record<string, string | Buffer>, reason: RegExp, setup?: (root: string) => void) {
   const { root, opts } = makeRuns(files);
   setup?.(root);
-  expect(() => syncOneshots(opts)).toThrow(/oneshots run "bad"/);
-  expect(() => syncOneshots(opts)).toThrow(reason);
+  const rejected = syncOneshots(opts);
+  await expect(rejected).rejects.toThrow(/oneshots run "bad"/);
+  await expect(rejected).rejects.toThrow(reason);
   expect(existsSync(opts.generatedDir)).toBe(false);
   expect(existsSync(opts.publicDir)).toBe(false);
 }
@@ -84,46 +85,46 @@ const badRun = (toml: string, extra: Record<string, string | Buffer> = {}) => ({
 });
 
 describe('manifest validation', () => {
-  it('control: the good template syncs and writes its outputs', () => {
+  it('control: the good template syncs and writes its outputs', async () => {
     const { opts } = makeRuns({});
-    const data = syncOneshots(opts);
+    const data = await syncOneshots(opts);
     expect(data.runs.map((r) => r.slug)).toEqual(['good']);
     expect(existsSync(path.join(opts.publicDir, 'good/files/index.html'))).toBe(true);
     expect(existsSync(path.join(opts.generatedDir, 'good/hero.webp'))).toBe(true);
   });
 
-  it('rejects an unknown schema version, naming the run', () => {
-    expectRejected(badRun(manifest('bad').replace('schema = 1', 'schema = 2')), /unsupported manifest schema 2/);
+  it('rejects an unknown schema version, naming the run', async () => {
+    await expectRejected(badRun(manifest('bad').replace('schema = 1', 'schema = 2')), /unsupported manifest schema 2/);
   });
 
-  it('rejects a date that is not a real day, quoted or not', () => {
+  it('rejects a date that is not a real day, quoted or not', async () => {
     const withDate = (d: string) => badRun(manifest('bad').replace('date = 2026-09-01', `date = ${d}`));
-    expectRejected(withDate('"2026-99-99"'), /date/);
-    expectRejected(withDate('"2026-02-29"'), /date/);
+    await expectRejected(withDate('"2026-99-99"'), /date/);
+    await expectRejected(withDate('"2026-02-29"'), /date/);
     // TOML parsers roll an impossible unquoted day over (to March 3), so the raw text is checked.
-    expectRejected(withDate('2026-02-31'), /date.*2026-02-31/);
+    await expectRejected(withDate('2026-02-31'), /date.*2026-02-31/);
   });
-  it('control: accepts a leap day, quoted or not', () => {
+  it('control: accepts a leap day, quoted or not', async () => {
     for (const d of ['2028-02-29', '"2028-02-29"']) {
       const { opts } = makeRuns({ 'good/run.toml': manifest('good').replace('date = 2026-09-01', `date = ${d}`) });
-      expect(syncOneshots(opts).runs[0].date).toBe('2028-02-29');
+      expect((await syncOneshots(opts)).runs[0].date).toBe('2028-02-29');
     }
   });
 
-  it('rejects malformed TOML', () => {
-    expectRejected(badRun('schema = 1\ntitle = "unterminated'), /not valid TOML/);
+  it('rejects malformed TOML', async () => {
+    await expectRejected(badRun('schema = 1\ntitle = "unterminated'), /not valid TOML/);
   });
 
-  it('rejects a missing required field', () => {
-    expectRejected(badRun(manifest('bad').replace('title = "Run bad"\n', '')), /title/);
+  it('rejects a missing required field', async () => {
+    await expectRejected(badRun(manifest('bad').replace('title = "Run bad"\n', '')), /title/);
   });
 
-  it('rejects a slug that does not match its directory', () => {
-    expectRejected(badRun(manifest('other')), /does not match its directory/);
+  it('rejects a slug that does not match its directory', async () => {
+    await expectRejected(badRun(manifest('other')), /does not match its directory/);
   });
 
-  it('rejects a long-horizon run without a log', () => {
-    expectRejected(badRun(manifest('bad').replace('kind = "single-file"', 'kind = "long-horizon"')), /hero and run.log/);
+  it('rejects a long-horizon run without a log', async () => {
+    await expectRejected(badRun(manifest('bad').replace('kind = "single-file"', 'kind = "long-horizon"')), /hero and run.log/);
   });
 
   it('accepts "unrecorded" counts and reads labs from model names', () => {
@@ -145,47 +146,47 @@ describe('brief and the after-delivery marker', () => {
   const BRIEF = '# Brief\n\n> Build the thing.\n\n## Mid-run\n\n> Approved\n';
   const LATER = '## After delivery\n\n> Now open a PR.\n';
 
-  it('control: a brief without the marker is shown whole', () => {
+  it('control: a brief without the marker is shown whole', async () => {
     const { opts } = makeRuns(withBrief('good', BRIEF + LATER));
-    const run = syncOneshots(opts).runs[0];
+    const run = (await syncOneshots(opts)).runs[0];
     expect(run.brief).toBe(BRIEF + LATER);
     expect(run.briefAfterDelivery).toBe(false);
   });
 
-  it('control: a prompt that quotes the marker is neither a cut nor an error', () => {
+  it('control: a prompt that quotes the marker is neither a cut nor an error', async () => {
     const quoted = `${BRIEF}> Please add \`<!-- after delivery -->\` support\n`;
     const { opts } = makeRuns(withBrief('good', quoted));
-    const run = syncOneshots(opts).runs[0];
+    const run = (await syncOneshots(opts)).runs[0];
     expect(run.brief).toBe(quoted);
     expect(run.briefAfterDelivery).toBe(false);
   });
 
-  it('control: a marker shown in a code sample is neither a cut nor an error', () => {
+  it('control: a marker shown in a code sample is neither a cut nor an error', async () => {
     for (const sample of ['```\n<!-- after delivery -->\n```\n', '```\n``` still code\n<!-- after delivery -->\n```\n', '~~~md\n<!-- after  delivery -->\n~~~\n', '    <!-- after delivery -->\n']) {
       const { opts } = makeRuns(withBrief('good', `${BRIEF}\n${sample}`));
-      const run = syncOneshots(opts).runs[0];
+      const run = (await syncOneshots(opts)).runs[0];
       expect(run.briefAfterDelivery, sample).toBe(false);
       expect(run.brief, sample).toContain(sample);
     }
   });
 
-  it('stops the brief at the marker and says so', () => {
+  it('stops the brief at the marker and says so', async () => {
     const { opts } = makeRuns(withBrief('good', `${BRIEF}\n<!-- after delivery -->\n\n${LATER}`));
-    const run = syncOneshots(opts).runs[0];
+    const run = (await syncOneshots(opts)).runs[0];
     expect(run.brief).toBe(BRIEF);
     expect(run.brief).not.toContain('open a PR');
     expect(run.briefAfterDelivery).toBe(true);
     expect(run.links.brief).toBe(`https://example.com/oneshots/blob/${'f'.repeat(40)}/runs/good/brief.md`);
   });
 
-  it('rejects a near miss, a second marker, and a marker with nothing before it', () => {
-    expectRejected(withBrief('bad', `${BRIEF}<!-- after delivery-->\n${LATER}`), /after delivery.*exactly/);
-    expectRejected(withBrief('bad', `${BRIEF}  <!-- After Delivery\n${LATER}`), /After Delivery.*exactly/);
-    expectRejected(withBrief('bad', `${BRIEF}<!-- after  delivery -->\n${LATER}`), /after  delivery.*exactly/);
+  it('rejects a near miss, a second marker, and a marker with nothing before it', async () => {
+    await expectRejected(withBrief('bad', `${BRIEF}<!-- after delivery-->\n${LATER}`), /after delivery.*exactly/);
+    await expectRejected(withBrief('bad', `${BRIEF}  <!-- After Delivery\n${LATER}`), /After Delivery.*exactly/);
+    await expectRejected(withBrief('bad', `${BRIEF}<!-- after  delivery -->\n${LATER}`), /after  delivery.*exactly/);
     // After a closed fence the marker counts again.
-    expectRejected(withBrief('bad', `${BRIEF}\`\`\`\nx\n\`\`\`\n<!-- after delivery -->\n${LATER}<!-- after delivery -->\n`), /more than one/);
-    expectRejected(withBrief('bad', `${BRIEF}<!-- after delivery -->\n${LATER}<!-- after delivery -->\n`), /more than one/);
-    expectRejected(withBrief('bad', `<!-- after delivery -->\n${LATER}`), /nothing before/);
+    await expectRejected(withBrief('bad', `${BRIEF}\`\`\`\nx\n\`\`\`\n<!-- after delivery -->\n${LATER}<!-- after delivery -->\n`), /more than one/);
+    await expectRejected(withBrief('bad', `${BRIEF}<!-- after delivery -->\n${LATER}<!-- after delivery -->\n`), /more than one/);
+    await expectRejected(withBrief('bad', `<!-- after delivery -->\n${LATER}`), /nothing before/);
   });
 });
 
@@ -193,21 +194,21 @@ describe('hero confinement', () => {
   const withHero = (hero: string, extra: Record<string, string | Buffer> = {}) =>
     badRun(manifest('bad').replace('hero = "preview/hero.webp"', `hero = "${hero}"`), extra);
 
-  it('rejects a hero outside the run directory', () => {
-    expectRejected(withHero('../good/preview/hero.webp'), /points outside the run directory/);
+  it('rejects a hero outside the run directory', async () => {
+    await expectRejected(withHero('../good/preview/hero.webp'), /points outside the run directory/);
   });
-  it('rejects a remote hero', () => {
-    expectRejected(withHero('https://example.com/hero.webp'), /is a URL/);
+  it('rejects a remote hero', async () => {
+    await expectRejected(withHero('https://example.com/hero.webp'), /is a URL/);
   });
-  it('rejects an absolute hero path', () => {
-    expectRejected(withHero('/etc/hosts'), /absolute path/);
+  it('rejects an absolute hero path', async () => {
+    await expectRejected(withHero('/etc/hosts'), /absolute path/);
   });
-  it('rejects a hero that is not an image by extension or by content', () => {
-    expectRejected(withHero('notes.txt', { 'bad/notes.txt': 'hello' }), /is not an image/);
-    expectRejected(withHero('preview/fake.webp', { 'bad/preview/fake.webp': 'not really a webp' }), /not a valid webp/);
+  it('rejects a hero that is not an image by extension or by content', async () => {
+    await expectRejected(withHero('notes.txt', { 'bad/notes.txt': 'hello' }), /is not an image/);
+    await expectRejected(withHero('preview/fake.webp', { 'bad/preview/fake.webp': 'not really a webp' }), /not a valid webp/);
   });
-  it('rejects a symlinked hero', () => {
-    expectRejected(withHero('preview/link.webp'), /symlink/, (root) =>
+  it('rejects a symlinked hero', async () => {
+    await expectRejected(withHero('preview/link.webp'), /symlink/, (root) =>
       symlinkSync(path.join(root, 'runs/good/preview/hero.webp'), path.join(root, 'runs/bad/preview/link.webp')),
     );
   });
@@ -217,89 +218,89 @@ describe('demo file set', () => {
   const withPage = (head: string, body = '', extra: Record<string, string | Buffer> = {}) =>
     badRun(manifest('bad'), { 'bad/index.html': `<!doctype html><html><head><meta charset="utf-8">${head}</head><body>${body}</body></html>`, ...extra });
 
-  it('rejects a reference outside the run directory', () => {
-    expectRejected(withPage('<script src="../good/index.html"></script>'), /points outside the run directory/);
+  it('rejects a reference outside the run directory', async () => {
+    await expectRejected(withPage('<script src="../good/index.html"></script>'), /points outside the run directory/);
   });
-  it('rejects a symlinked demo file', () => {
-    expectRejected(withPage('<script src="app.js"></script>'), /symlink/, (root) =>
+  it('rejects a symlinked demo file', async () => {
+    await expectRejected(withPage('<script src="app.js"></script>'), /symlink/, (root) =>
       symlinkSync(path.join(root, 'runs/good/index.html'), path.join(root, 'runs/bad/app.js')),
     );
   });
-  it('rejects a disallowed file type', () => {
-    expectRejected(withPage('<script src="tool.py"></script>', '', { 'bad/tool.py': 'print(1)' }), /file type demos can't serve/);
+  it('rejects a disallowed file type', async () => {
+    await expectRejected(withPage('<script src="tool.py"></script>', '', { 'bad/tool.py': 'print(1)' }), /file type demos can't serve/);
   });
-  it('rejects an SVG file, which runs script and loads from any host when opened as a document', () => {
+  it('rejects an SVG file, which runs script and loads from any host when opened as a document', async () => {
     const svg = '<svg xmlns="http://www.w3.org/2000/svg"><script>fetch("https://example.com/x")</script></svg>';
-    expectRejected(withPage('<iframe src="icon.svg"></iframe>', '', { 'bad/icon.svg': svg }), /SVG/);
-    expectRejected(withPage('<img src="icon.svg">', '', { 'bad/icon.svg': svg }), /SVG/);
+    await expectRejected(withPage('<iframe src="icon.svg"></iframe>', '', { 'bad/icon.svg': svg }), /SVG/);
+    await expectRejected(withPage('<img src="icon.svg">', '', { 'bad/icon.svg': svg }), /SVG/);
   });
-  it('reads tags as a browser does, so a ">" inside a quoted attribute hides no reference', () => {
-    expectRejected(withPage('', '<img alt="1 > 0" src="missing.webp">'), /missing\.webp" does not exist/);
-    expectRejected(withPage('<script data-note="a>b" src="https://unpkg.com/three@0.160.0/build/three.module.js"></script>'), /unpkg\.com.*vendor map/);
+  it('reads tags as a browser does, so a ">" inside a quoted attribute hides no reference', async () => {
+    await expectRejected(withPage('', '<img alt="1 > 0" src="missing.webp">'), /missing\.webp" does not exist/);
+    await expectRejected(withPage('<script data-note="a>b" src="https://unpkg.com/three@0.160.0/build/three.module.js"></script>'), /unpkg\.com.*vendor map/);
   });
-  it('rejects a demo larger than 5 MB', () => {
-    expectRejected(withPage('<script src="big.js"></script>', '', { 'bad/big.js': Buffer.alloc(5 * 1024 * 1024 + 1, 32) }), /exceed 5 MB/);
+  it('rejects a demo larger than 5 MB', async () => {
+    await expectRejected(withPage('<script src="big.js"></script>', '', { 'bad/big.js': Buffer.alloc(5 * 1024 * 1024 + 1, 32) }), /exceed 5 MB/);
   });
-  it('rejects a missing referenced file', () => {
-    expectRejected(withPage('<script src="missing.js"></script>'), /does not exist/);
+  it('rejects a missing referenced file', async () => {
+    await expectRejected(withPage('<script src="missing.js"></script>'), /does not exist/);
   });
-  it('rejects a site-absolute path', () => {
-    expectRejected(withPage('<script src="/app.js"></script>'), /absolute path/);
+  it('rejects a site-absolute path', async () => {
+    await expectRejected(withPage('<script src="/app.js"></script>'), /absolute path/);
   });
-  it('rejects a third-party script the vendor map does not cover', () => {
-    expectRejected(withPage('<script src="https://unpkg.com/three@0.160.0/build/three.module.js"></script>'), /unpkg\.com.*vendor map/);
+  it('rejects a third-party script the vendor map does not cover', async () => {
+    await expectRejected(withPage('<script src="https://unpkg.com/three@0.160.0/build/three.module.js"></script>'), /unpkg\.com.*vendor map/);
   });
-  it('rejects a Google font family the vendor map does not cover', () => {
-    expectRejected(withPage('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap">'), /font "Comic Neue"/);
+  it('rejects a Google font family the vendor map does not cover', async () => {
+    await expectRejected(withPage('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap">'), /font "Comic Neue"/);
   });
-  it('rejects remote loads in CSS and in script imports', () => {
-    expectRejected(withPage('<style>@import "https://cdn.example.com/x.css";</style>'), /cdn\.example\.com/);
-    expectRejected(withPage('<script type="module">import x from "https://esm.sh/x";</script>'), /esm\.sh/);
+  it('rejects remote loads in CSS and in script imports', async () => {
+    await expectRejected(withPage('<style>@import "https://cdn.example.com/x.css";</style>'), /cdn\.example\.com/);
+    await expectRejected(withPage('<script type="module">import x from "https://esm.sh/x";</script>'), /esm\.sh/);
   });
-  it('rejects a connection hint to an unmapped host', () => {
-    expectRejected(withPage('<link rel="preconnect" href="https://cdn.example.com">'), /connection hint to cdn\.example\.com/);
+  it('rejects a connection hint to an unmapped host', async () => {
+    await expectRejected(withPage('<link rel="preconnect" href="https://cdn.example.com">'), /connection hint to cdn\.example\.com/);
   });
-  it('rejects anything that runs or loads before the <head> (and so before the policy)', () => {
+  it('rejects anything that runs or loads before the <head> (and so before the policy)', async () => {
     const page = (pre: string) => badRun(manifest('bad'), { 'bad/index.html': `${pre}<head><meta charset="utf-8"></head><body></body></html>`, 'bad/x.webp': WEBP });
-    expectRejected(page('<!doctype html><script>fetch("https://example.com")</script>'), /content before its <head>/);
-    expectRejected(page('<!doctype html><html><img src="x.webp">'), /content before its <head>/);
-    expectRejected(page('<!-- <head> --><!doctype html><p>'), /content before its <head>/);
+    await expectRejected(page('<!doctype html><script>fetch("https://example.com")</script>'), /content before its <head>/);
+    await expectRejected(page('<!doctype html><html><img src="x.webp">'), /content before its <head>/);
+    await expectRejected(page('<!-- <head> --><!doctype html><p>'), /content before its <head>/);
   });
-  it('parses comments as a browser does, so a malformed one cannot hide a script before the policy', () => {
+  it('parses comments as a browser does, so a malformed one cannot hide a script before the policy', async () => {
     const page = (pre: string) => badRun(manifest('bad'), { 'bad/index.html': `${pre}<head><meta charset="utf-8"></head><body></body></html>` });
     const script = '<script>fetch("https://example.com")</script>';
     // Each comment ends at its first ">" (or "--!>"), so the script is real markup.
-    expectRejected(page(`<!doctype html><!-->${script}-->`), /content before its <head>/);
-    expectRejected(page(`<!doctype html><!--->${script}-->`), /content before its <head>/);
-    expectRejected(page(`<!doctype html><!-- x --!>${script} -->`), /content before its <head>/);
-    expectRejected(page(`<!doctype html><html><!-->${script}-->`), /content before its <head>/);
+    await expectRejected(page(`<!doctype html><!-->${script}-->`), /content before its <head>/);
+    await expectRejected(page(`<!doctype html><!--->${script}-->`), /content before its <head>/);
+    await expectRejected(page(`<!doctype html><!-- x --!>${script} -->`), /content before its <head>/);
+    await expectRejected(page(`<!doctype html><html><!-->${script}-->`), /content before its <head>/);
   });
-  it('control: accepts well-formed comments, a BOM, an uppercase doctype and <html> attributes before <head>', () => {
+  it('control: accepts well-formed comments, a BOM, an uppercase doctype and <html> attributes before <head>', async () => {
     for (const pre of ['\uFEFF<!DOCTYPE html>', '<!doctype html><!-- a <script> in a comment --><html lang="en">\n<!-- and here -->\n']) {
       const { root } = makeRuns({ 'good/index.html': `${pre}<head><meta charset="utf-8"></head><body><p>ok</p></body></html>` });
-      const demo = collectDemo(path.join(root, 'runs/good'), 'good', 'index.html', { nodeModules: NODE_MODULES });
+      const demo = await collectDemo(path.join(root, 'runs/good'), 'good', 'index.html', { nodeModules: NODE_MODULES });
       const served = demo.files[0].bytes.toString('utf8');
       expect(served.indexOf('<meta charset="utf-8">\n<meta http-equiv="Content-Security-Policy"')).toBeGreaterThan(0);
       expect(reverseSubstitutions(served, demo.substitutions)).toBe(readFileSync(path.join(root, 'runs/good/index.html'), 'utf8'));
     }
   });
-  it('inserts the policy once, even when "<head>" appears again later in the page', () => {
+  it('inserts the policy once, even when "<head>" appears again later in the page', async () => {
     const { root } = makeRuns({ 'good/index.html': '<!doctype html><html><head><meta charset="utf-8"></head><body><script>const doc = "<head><meta charset=\\"utf-8\\">";</script></body></html>' });
-    const demo = collectDemo(path.join(root, 'runs/good'), 'good', 'index.html', { nodeModules: NODE_MODULES });
+    const demo = await collectDemo(path.join(root, 'runs/good'), 'good', 'index.html', { nodeModules: NODE_MODULES });
     const served = demo.files[0].bytes.toString('utf8');
     expect(served.split('Content-Security-Policy').length - 1).toBe(1);
     expect(served).toContain('const doc = "<head><meta charset=\\"utf-8\\">";');
     expect(reverseSubstitutions(served, demo.substitutions)).toBe(readFileSync(path.join(root, 'runs/good/index.html'), 'utf8'));
   });
-  it('rejects a page with no <head>', () => {
-    expectRejected(badRun(manifest('bad'), { 'bad/index.html': '<p>no head</p>' }), /no <head>/);
+  it('rejects a page with no <head>', async () => {
+    await expectRejected(badRun(manifest('bad'), { 'bad/index.html': '<p>no head</p>' }), /no <head>/);
   });
-  it('ignores links and data: URLs, and writes classic scripts into the page', () => {
+  it('ignores links and data: URLs, and writes classic scripts into the page', async () => {
     const { root } = makeRuns({
       'good/index.html': '<!doctype html><html><head><meta charset="utf-8"><link rel="icon" href="data:,"></head><body><a href="https://example.com/">out</a><script id="m" src="js/main.js"></script></body></html>',
       'good/js/main.js': 'const s = "</script>"; window.ok = s;',
     });
-    const demo = collectDemo(path.join(root, 'runs/good'), 'good', 'index.html', { nodeModules: NODE_MODULES });
+    const demo = await collectDemo(path.join(root, 'runs/good'), 'good', 'index.html', { nodeModules: NODE_MODULES });
     const served = demo.files[0].bytes.toString('utf8');
     expect(demo.files.map((f) => f.rel)).toEqual(['index.html']);
     expect(demo.sources.map((f) => f.rel).sort()).toEqual(['index.html', 'js/main.js']);
@@ -309,19 +310,19 @@ describe('demo file set', () => {
   // The host's bot check answers any request without its cookie with a
   // challenge page, and a sandboxed frame never sends that cookie. So a demo
   // gets exactly one request, its page, and anything else must be written in.
-  it('rejects a file the page would still load as a separate request', () => {
-    expectRejected(withPage('<link rel="stylesheet" href="a.css">', '', { 'bad/a.css': 'p{background:url(x.webp)}', 'bad/x.webp': WEBP }), /loads x\.webp as a separate request/);
-    expectRejected(withPage('', '<img src="x.webp">', { 'bad/x.webp': WEBP }), /loads x\.webp as a separate request/);
-    expectRejected(withPage('', '<iframe src="other.html"></iframe>', { 'bad/other.html': PAGE }), /loads other\.html as a separate request/);
-    expectRejected(withPage('<script src="a.js"></script>', '', { 'bad/a.js': 'new Worker("./w.js")', 'bad/w.js': '' }), /loads w\.js as a separate request/);
+  it('rejects a file the page would still load as a separate request', async () => {
+    await expectRejected(withPage('<link rel="stylesheet" href="a.css">', '', { 'bad/a.css': 'p{background:url(x.webp)}', 'bad/x.webp': WEBP }), /loads x\.webp as a separate request/);
+    await expectRejected(withPage('', '<img src="x.webp">', { 'bad/x.webp': WEBP }), /loads x\.webp as a separate request/);
+    await expectRejected(withPage('', '<iframe src="other.html"></iframe>', { 'bad/other.html': PAGE }), /loads other\.html as a separate request/);
+    await expectRejected(withPage('<script src="a.js"></script>', '', { 'bad/a.js': 'new Worker("./w.js")', 'bad/w.js': '' }), /loads w\.js as a separate request/);
   });
-  it('writes local stylesheets into the page, in place and keeping their media', () => {
+  it('writes local stylesheets into the page, in place and keeping their media', async () => {
     const { root } = makeRuns({
       'good/index.html': '<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="css/a.css"><style>q{}</style><link href="b.css" rel="stylesheet" media="print and (min-width: 1px)"></head><body><p>ok</p></body></html>',
       'good/css/a.css': 'p { color: red; background: url(data:,x); }',
       'good/b.css': 'p { color: black; }',
     });
-    const demo = collectDemo(path.join(root, 'runs/good'), 'good', 'index.html', { nodeModules: NODE_MODULES });
+    const demo = await collectDemo(path.join(root, 'runs/good'), 'good', 'index.html', { nodeModules: NODE_MODULES });
     const served = demo.files[0].bytes.toString('utf8');
     expect(demo.files.map((f) => f.rel)).toEqual(['index.html']);
     expect(demo.sources.map((f) => f.rel).sort()).toEqual(['b.css', 'css/a.css', 'index.html']);
@@ -329,30 +330,70 @@ describe('demo file set', () => {
     expect(served).toContain('<style>p { color: red; background: url(data:,x); }</style><style>q{}</style><style media="print and (min-width: 1px)">p { color: black; }</style>');
     expect(reverseSubstitutions(served, demo.substitutions)).toBe(readFileSync(path.join(root, 'runs/good/index.html'), 'utf8'));
   });
-  it('rejects a stylesheet that cannot be written in unchanged', () => {
-    expectRejected(withPage('<link rel="stylesheet" href="a.css">', '', { 'bad/a.css': 'p::after{content:"</style>"}' }), /a\.css.*<\/style/);
-    expectRejected(withPage('<link rel="alternate stylesheet" title="x" href="a.css">', '', { 'bad/a.css': 'p{}' }), /a\.css.*alternate stylesheet/);
-    expectRejected(withPage('<link rel="stylesheet" href="a.css" disabled>', '', { 'bad/a.css': 'p{}' }), /a\.css.*disabled/);
-    expectRejected(withPage('<link rel="stylesheet" href="a.css" onload="go()">', '', { 'bad/a.css': 'p{}' }), /a\.css.*onload/);
+  it('rejects a stylesheet that cannot be written in unchanged', async () => {
+    await expectRejected(withPage('<link rel="stylesheet" href="a.css">', '', { 'bad/a.css': 'p::after{content:"</style>"}' }), /a\.css.*<\/style/);
+    await expectRejected(withPage('<link rel="alternate stylesheet" title="x" href="a.css">', '', { 'bad/a.css': 'p{}' }), /a\.css.*alternate stylesheet/);
+    await expectRejected(withPage('<link rel="stylesheet" href="a.css" disabled>', '', { 'bad/a.css': 'p{}' }), /a\.css.*disabled/);
+    await expectRejected(withPage('<link rel="stylesheet" href="a.css" onload="go()">', '', { 'bad/a.css': 'p{}' }), /a\.css.*onload/);
   });
-  it('finds CSS loads in any letter case, as browsers do', () => {
-    expectRejected(withPage('<link rel="stylesheet" href="a.css">', '', { 'bad/a.css': 'p{background:URL(x.webp)}', 'bad/x.webp': WEBP }), /x\.webp as a separate request/);
-    expectRejected(withPage('<link rel="stylesheet" href="a.css">', '', { 'bad/a.css': '@IMPORT "b.css";', 'bad/b.css': 'p{}' }), /b\.css as a separate request/);
-    expectRejected(withPage('<style>@Import "https://cdn.example.com/x.css";</style>'), /cdn\.example\.com/);
+  it('finds CSS loads in any letter case, as browsers do', async () => {
+    await expectRejected(withPage('<link rel="stylesheet" href="a.css">', '', { 'bad/a.css': 'p{background:URL(x.webp)}', 'bad/x.webp': WEBP }), /x\.webp as a separate request/);
+    await expectRejected(withPage('<link rel="stylesheet" href="a.css">', '', { 'bad/a.css': '@IMPORT "b.css";', 'bad/b.css': 'p{}' }), /b\.css as a separate request/);
+    await expectRejected(withPage('<style>@Import "https://cdn.example.com/x.css";</style>'), /cdn\.example\.com/);
   });
-  it('rejects a file that is written in once but still requested from elsewhere', () => {
+  it('rejects a file that is written in once but still requested from elsewhere', async () => {
     // Writing b.css into the page doesn't answer an @import or import() that
     // still names it: that reference is a request of its own.
-    expectRejected(withPage('<link rel="stylesheet" href="a.css"><link rel="stylesheet" href="b.css">', '', { 'bad/a.css': '@import "b.css";', 'bad/b.css': 'p{}' }), /b\.css as a separate request/);
-    expectRejected(withPage('<style>@import "b.css";</style><link rel="stylesheet" href="b.css">', '', { 'bad/b.css': 'p{}' }), /b\.css as a separate request/);
-    expectRejected(withPage('<script src="a.js"></script><script src="b.js"></script>', '', { 'bad/a.js': 'import("./b.js");', 'bad/b.js': '' }), /b\.js as a separate request/);
+    await expectRejected(withPage('<link rel="stylesheet" href="a.css"><link rel="stylesheet" href="b.css">', '', { 'bad/a.css': '@import "b.css";', 'bad/b.css': 'p{}' }), /b\.css as a separate request/);
+    await expectRejected(withPage('<style>@import "b.css";</style><link rel="stylesheet" href="b.css">', '', { 'bad/b.css': 'p{}' }), /b\.css as a separate request/);
+    await expectRejected(withPage('<script src="a.js"></script><script src="b.js"></script>', '', { 'bad/a.js': 'import("./b.js");', 'bad/b.js': '' }), /b\.js as a separate request/);
   });
-  it('rejects a script that cannot be written in unchanged: a module, deferred, async, or holding "<!--"', () => {
-    expectRejected(withPage('<script type="module" src="a.js"></script>', '', { 'bad/a.js': '' }), /a\.js.*module/);
-    expectRejected(withPage('<script defer src="a.js"></script>', '', { 'bad/a.js': '' }), /a\.js.*defer/);
-    expectRejected(withPage('<script async src="a.js"></script>', '', { 'bad/a.js': '' }), /a\.js.*async/);
-    expectRejected(withPage('<script src="a.js"></script>', '', { 'bad/a.js': 'x = "<!--";' }), /a\.js.*<!--/);
-    expectRejected(withPage('<script defer src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>'), /d3\.min\.js.*defer/);
+  it('bundles pinned local script modules into the page and records every source', async () => {
+    const original = PAGE.replace('</head>', '<script type="module" src="js/main.js"></script></head>');
+    const { root } = makeRuns({
+      'good/index.html': original,
+      'good/js/main.js': 'import { message } from "./nested/value.js"; document.body.textContent = message;',
+      'good/js/nested/value.js': 'export const message = "Bundled"; localStorage.getItem("state");',
+    });
+    const demo = await collectDemo(path.join(root, 'runs/good'), 'good', 'index.html', { nodeModules: NODE_MODULES });
+    const served = demo.files[0].bytes.toString('utf8');
+    expect(demo.files.map((f) => f.rel)).toEqual(['index.html']);
+    expect(demo.sources.map((f) => f.rel).sort()).toEqual(['index.html', 'js/main.js', 'js/nested/value.js']);
+    expect(separateLoads(served)).toEqual([]);
+    expect(served).toContain('<script type="module">');
+    expect(served).toContain('"Bundled"');
+    expect(served.indexOf('window[n]')).toBeLessThan(served.indexOf('<script type="module">'));
+    expect(reverseSubstitutions(served, demo.substitutions)).toBe(original);
+  });
+
+  it('includes a confined font from an inlined stylesheet as data', async () => {
+    const { root } = makeRuns({
+      'good/index.html': PAGE.replace('</head>', '<link rel="stylesheet" href="css/a.css"></head>'),
+      'good/css/a.css': '@font-face { font-family: Example; src: url("../fonts/a.ttf"); }',
+      'good/fonts/a.ttf': Buffer.from([0, 1, 0, 0, 0, 1]),
+    });
+    const demo = await collectDemo(path.join(root, 'runs/good'), 'good', 'index.html', { nodeModules: NODE_MODULES });
+    expect(demo.files[0].bytes.toString()).toContain('url(data:font/ttf;base64,AAEAAAAB)');
+    expect(demo.sources.map((f) => f.rel).sort()).toEqual(['css/a.css', 'fonts/a.ttf', 'index.html']);
+  });
+
+  it('rejects module imports that are not confined local files', async () => {
+    const head = '<script type="module" src="main.js"></script>';
+    for (const specifier of ['https://example.com/x.js', '/absolute.js', 'd3']) {
+      await expectRejected(withPage(head, '', { 'bad/main.js': `import ${JSON.stringify(specifier)};` }), /must be a relative .js or .mjs import/);
+    }
+    await expectRejected(withPage(head, '', { 'bad/main.js': 'export * from "../good/private.js";', 'good/private.js': 'export const privateValue = 1;' }), /points outside the run directory/);
+    await expectRejected(withPage(head, '', { 'bad/main.js': 'import "./linked.js";' }), /is a symlink/, (root) =>
+      symlinkSync(path.join(root, 'runs/good/index.html'), path.join(root, 'runs/bad/linked.js')),
+    );
+    await expectRejected(withPage(head, '', { 'bad/main.js': 'const ref = location.hash; import(ref);' }), /will not be bundled/);
+  });
+
+  it('rejects scripts with unsupported timing or HTML-breaking content', async () => {
+    await expectRejected(withPage('<script defer src="a.js"></script>', '', { 'bad/a.js': '' }), /a\.js.*defer/);
+    await expectRejected(withPage('<script async src="a.js"></script>', '', { 'bad/a.js': '' }), /a\.js.*async/);
+    await expectRejected(withPage('<script src="a.js"></script>', '', { 'bad/a.js': 'x = "<!--";' }), /a\.js.*<!--/);
+    await expectRejected(withPage('<script defer src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>'), /d3\.min\.js.*defer/);
   });
 });
 
@@ -375,9 +416,14 @@ function separateLoads(html: string): string[] {
 
 describe('vendoring and disclosure', () => {
   const runDir = path.join(FIXTURES, 'runs/fixture-demo');
-  const demo = collectDemo(runDir, 'fixture-demo', 'index.html', { nodeModules: NODE_MODULES });
   const original = readFileSync(path.join(runDir, 'index.html'), 'utf8');
-  const served = demo.files.find((f) => f.rel === 'index.html')!.bytes.toString('utf8');
+  let demo: Awaited<ReturnType<typeof collectDemo>>;
+  let served: string;
+
+  beforeAll(async () => {
+    demo = await collectDemo(runDir, 'fixture-demo', 'index.html', { nodeModules: NODE_MODULES });
+    served = demo.files.find((f) => f.rel === 'index.html')!.bytes.toString('utf8');
+  });
 
   it('reversing the recorded substitutions recovers the original bytes exactly', () => {
     expect(served).not.toBe(original);
@@ -409,8 +455,8 @@ describe('vendoring and disclosure', () => {
     expect(csp).toBeLessThan(served.indexOf('<script'));
     expect(demo.substitutions.map((s) => s.label)).toContain('in-memory web storage, since the sandbox has none (nothing is saved between visits)');
   });
-  it('control: a page without storage gets no stand-in', () => {
-    const plain = collectDemo(path.join(FIXTURES, 'runs/fixture-plain'), 'fixture-plain', 'index.html', { nodeModules: NODE_MODULES });
+  it('control: a page without storage gets no stand-in', async () => {
+    const plain = await collectDemo(path.join(FIXTURES, 'runs/fixture-plain'), 'fixture-plain', 'index.html', { nodeModules: NODE_MODULES });
     expect(plain.substitutions.map((s) => s.label)).toEqual(['a content security policy that keeps the demo offline']);
   });
 });
@@ -466,13 +512,13 @@ describe('stats and layout', () => {
 });
 
 describe('fixture sync', () => {
-  it('links published assets to the release and marks the rest unpublished', () => {
+  it('links published assets to the release and marks the rest unpublished', async () => {
     const out = mkdtempSync(path.join(tmpdir(), 'oneshots-out-'));
     temps.push(out);
     const releases = JSON.parse(readFileSync(path.join(FIXTURES, 'releases.json'), 'utf8')) as Record<string, string[]>;
     const work = path.join(out, 'runs');
     cpSync(path.join(FIXTURES, 'runs'), work, { recursive: true });
-    const data = syncOneshots({
+    const data = await syncOneshots({
       runsDir: work,
       releases: new Map(Object.entries(releases).map(([t, a]) => [t, new Set(a)])),
       source: { kind: 'fixtures', repo: 'https://example.com/oneshots', sha: 'f'.repeat(40) },

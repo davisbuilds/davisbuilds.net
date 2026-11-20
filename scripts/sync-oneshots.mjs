@@ -87,7 +87,7 @@ if (process.env.DAVISBUILDS_ONESHOTS) {
   };
 }
 
-const data = syncOneshots({ ...opts, generatedDir, publicDir, nodeModules });
+const data = await syncOneshots({ ...opts, generatedDir, publicDir, nodeModules });
 
 const label = data.source.kind === 'repository' ? `${data.source.repo} @ ${data.source.sha.slice(0, 7)}` : 'fixtures';
 const runnable = data.runs.filter((r) => r.demo).length;
@@ -110,7 +110,7 @@ if (data.source.kind === 'repository') {
     if (!/^[0-9a-f]{40}$/.test(base)) throw new Error('oneshots: --since needs a full 40-character commit SHA');
     const tmp = mkdtempSync(path.join(tmpdir(), 'oneshots-baseline-'));
     try {
-      syncOneshots({ ...opts, runsDir: path.join(checkout(data.source.repo, base), 'runs'), source: { ...data.source, sha: base }, generatedDir: path.join(tmp, 'generated'), publicDir: path.join(tmp, 'public'), nodeModules });
+      await syncOneshots({ ...opts, runsDir: path.join(checkout(data.source.repo, base), 'runs'), source: { ...data.source, sha: base }, generatedDir: path.join(tmp, 'generated'), publicDir: path.join(tmp, 'public'), nodeModules });
       const before = readJson(path.join(tmp, 'generated/demo-files.json')).files;
       const after = readJson(path.join(generatedDir, 'demo-files.json')).files;
       const changed = [...new Set([...Object.keys(before), ...Object.keys(after)])].filter((k) => before[k] !== after[k]).sort();
