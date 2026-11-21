@@ -142,7 +142,6 @@ function readAgents() {
   };
 }
 
-// ---------- assemble ----------
 const previous = loadPrevious();
 const prev = previous?.sources;
 
