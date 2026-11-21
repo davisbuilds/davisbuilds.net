@@ -8,7 +8,7 @@
     "build": "node scripts/sync-oneshots.mjs && astro build",
     "preview": "astro preview",
     "typecheck": "astro check",
-    "check": "pnpm typecheck && pnpm test",
+    "check": "python3 scripts/check_comments.py && pnpm typecheck && pnpm test",
     "build:fixtures": "DAVISBUILDS_ONESHOTS=tests/fixtures/oneshots node scripts/sync-oneshots.mjs && DAVISBUILDS_FIXTURES=1 DAVISBUILDS_CONTENT=./tests/fixtures/writing astro build",
     "test:unit": "vitest run",
     "test:build-failure": "node scripts/expect-build-failure.mjs",
