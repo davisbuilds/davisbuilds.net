@@ -52,7 +52,7 @@ jobs:
         run: pnpm test:browser-runtime
 
       # The same gate AGENTS.md documents for pre-push.
-      - name: Type check, unit tests, fixture build, e2e, and link check
+      - name: Comment ratchet, type check, unit tests, fixture build, e2e, and link check
         run: pnpm check
 
       - name: Upload Playwright report

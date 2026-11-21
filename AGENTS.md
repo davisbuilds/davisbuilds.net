@@ -27,11 +27,11 @@ everything here builds and tests without them; only a deploy needs `private/`.
 
 ## Verification
 
-- **Gate:** `pnpm check` (typecheck, unit tests, fixture build, the bad-essay
-  build failure, e2e and the internal link check). CI also runs
-  `pnpm test:browser-runtime`, `pnpm build` then `node scripts/check-demos.mjs`,
-  and the hygiene script; run those when a change touches the browser setup,
-  oneshots or tracked text.
+- **Gate:** `pnpm check` (the comment ratchet, typecheck, unit tests, fixture
+  build, the bad-essay build failure, e2e and the internal link check). CI
+  also runs `pnpm test:browser-runtime`, `pnpm build` then
+  `node scripts/check-demos.mjs`, and the hygiene script; run those when a
+  change touches the browser setup, oneshots or tracked text.
 - **E2E** runs Playwright against `astro preview` of the fixture build on port
   4391 and never reuses a running server, so a `pnpm dev` on 4321 can't stand
   in. The fixture build uses `tests/fixtures/`, never real drafts.
@@ -151,6 +151,12 @@ everything here builds and tests without them; only a deploy needs `private/`.
 
 - **Clarify before building** when a request is vague, contradictory, or skips a
   key decision; clear, well-scoped requests need no interview.
+- **Comments.** Don't add code comments. The one exception is a decision record:
+  start it with `WHY:` and state a non-obvious reason the code can't express.
+  Never justify a shortcut in a comment; fix it or record it in
+  `docs/project/BACKLOG.md`. `python3 scripts/check_comments.py` enforces a
+  ratchet: after deleting comments run it with `--update`, and never raise a
+  count in `.comment-baseline.json`.
 - **Fix small issues now; backlog the rest.** Fix simple, quick, or blocking
   issues in this repo as part of the current change and call them out. Record in
   `docs/project/BACKLOG.md` only what can't be finished now or needs the
