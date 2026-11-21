@@ -99,7 +99,6 @@ function show(skipped: boolean) {
   setTimeout(() => delete root.dataset.intro, skipped ? 250 : 600);
 }
 
-// ---------- measuring the page ----------
 function rectOf(el: Element): Rect {
   const r = el.getBoundingClientRect();
   return { x: r.x, y: r.y, w: r.width, h: r.height };
@@ -143,7 +142,6 @@ function colors(): Colors {
 // The light shows the readout's real state: green only for a fresh reading.
 const stateColor = (state: string | undefined, c: Colors) => (state === 'ok' ? c.ok : state === 'stale' ? c.signal : c.muted);
 
-// ---------- drawing ----------
 const clamp = (x: number, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 const seg = (t: number, a: number, b: number) => clamp((t - a) / (b - a));
 const lerp = (a: number, b: number, p: number) => a + (b - a) * p;

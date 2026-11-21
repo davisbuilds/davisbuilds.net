@@ -37,7 +37,6 @@ button { font: inherit; color: inherit; }
 .view { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(40px, 6vw, 72px); }
 .view > * { min-width: 0; }
 
-/* Header */
 .masthead { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: center; justify-content: space-between; }
 .mark { display: flex; align-items: center; gap: 12px; text-decoration: none; }
 .stamp {
@@ -55,7 +54,6 @@ button { font: inherit; color: inherit; }
 .kbd { font-family: var(--f-mono); font-size: 11px; border: 1px solid var(--rule); padding: 3px 7px; background: var(--sheet); cursor: pointer; color: var(--muted); }
 .kbd:hover { border-color: var(--ink); color: var(--ink); }
 
-/* Hero */
 .hero { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); align-items: end; }
 .hero h1 {
   margin: 12px 0 10px; font-weight: 820; font-stretch: 112%; line-height: 0.98; letter-spacing: -0.025em;
@@ -88,11 +86,9 @@ button { font: inherit; color: inherit; }
 .live i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: pulse 2.4s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
-/* Odometer digits */
 .odo { display: inline-flex; vertical-align: top; }
 .odo .col { display: inline-block; height: 1em; line-height: 1; overflow: hidden; }
 
-/* Section headings */
 .sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; border-bottom: 2px solid var(--ink); padding-bottom: 8px; margin-bottom: 20px; }
 .sec-head h2 { margin: 0; font-weight: 800; font-stretch: 125%; font-size: 14px; letter-spacing: 0.16em; text-transform: uppercase; }
 .sec-head .label { text-transform: none; letter-spacing: 0.02em; }
@@ -101,7 +97,6 @@ button { font: inherit; color: inherit; }
 .page-title { margin: 6px 0 0; font-weight: 820; font-stretch: 115%; letter-spacing: -0.02em; line-height: 1; font-size: clamp(2.2rem, 5vw, 3.6rem); }
 .page-intro { margin: 14px 0 0; max-width: 60ch; color: var(--muted); font-size: 1.05rem; }
 
-/* Telemetry */
 .telemetry { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--ink); }
 .telemetry.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .tile { padding: 14px 14px 12px; display: grid; gap: 6px; align-content: start; min-width: 0; }
@@ -134,7 +129,6 @@ button { font: inherit; color: inherit; }
 .bus [data-readout] { display: grid; gap: 10px; }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-/* System diagram */
 .system { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 1fr); align-items: stretch; }
 .lane { display: grid; gap: 10px; align-content: start; padding: 16px; border: 1px solid var(--rule); min-width: 0; }
 .part { border: 1px solid var(--ink); background: var(--sheet); padding: 10px 12px; display: grid; gap: 4px; text-decoration: none; position: relative; transition: transform 0.15s ease, box-shadow 0.15s ease; }
@@ -174,7 +168,6 @@ button { font: inherit; color: inherit; }
 .age i { width: 4px; height: 10px; background: var(--rule); }
 .age i.on { background: var(--ok); }
 
-/* Writing register */
 .register { width: 100%; border-collapse: collapse; font-size: 14px; }
 .reg-wrap { overflow-x: auto; border: 1px solid var(--ink); }
 .register th, .register td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
@@ -201,7 +194,6 @@ button { font: inherit; color: inherit; }
 .scale { display: flex; flex-wrap: wrap; gap: 4px; font-family: var(--f-mono); font-size: 11px; }
 .scale span { border: 1px solid var(--rule); padding: 1px 5px; }
 
-/* Now page */
 .now-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--ink); }
 .now-grid > div { padding: 16px; display: grid; gap: 6px; align-content: start; min-width: 0; }
 .now-grid > div:nth-child(even) { border-left: 1px solid var(--rule); }
@@ -209,7 +201,6 @@ button { font: inherit; color: inherit; }
 .now-grid .v { font-weight: 650; font-size: 1.05rem; }
 .now-grid p { margin: 0; color: var(--muted); font-size: 14.5px; }
 
-/* Title block footer */
 .titleblock { display: grid; grid-template-columns: 2fr repeat(3, minmax(0, 1fr)) minmax(0, 1.7fr); border: 2px solid var(--ink); }
 .titleblock > div { padding: 10px 12px; border-left: 1px solid var(--ink); display: grid; gap: 2px; min-width: 0; }
 .titleblock > div:first-child { border-left: 0; }
@@ -226,7 +217,6 @@ button { font: inherit; color: inherit; }
 .titleblock .rights { font-family: var(--f-mono); font-size: 12px; }
 #zone-readout { font-family: var(--f-mono); font-size: 12px; font-variant-numeric: tabular-nums; }
 
-/* Essay view */
 .doc-head { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); align-items: start; }
 .doc-head h1 { margin: 10px 0 14px; font-weight: 820; font-stretch: 108%; letter-spacing: -0.02em; line-height: 1.02; font-size: clamp(2.2rem, 5.4vw, 4rem); text-wrap: balance; }
 .doc-head .dek { margin: 0; font-family: var(--f-read); font-style: italic; font-size: 1.2rem; color: var(--muted); max-width: 46ch; }
@@ -278,7 +268,6 @@ button { font: inherit; color: inherit; }
 .ruler .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--signal-soft); border-right: 2px solid var(--signal); }
 .ruler .pos { position: absolute; top: 2px; right: 8px; font-family: var(--f-mono); font-size: 10px; color: var(--muted); background: var(--sheet); padding-inline: 4px; }
 
-/* Command palette */
 .palette-scrim { position: fixed; inset: 0; z-index: 20; background: color-mix(in srgb, var(--paper) 60%, transparent); backdrop-filter: blur(2px); display: grid; place-items: start center; padding: 12vh 16px 16px; }
 .palette { width: min(560px, 100%); background: var(--sheet); border: 1px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); }
 .palette input { width: 100%; border: 0; border-bottom: 1px solid var(--ink); background: transparent; padding: 14px 16px; font-family: var(--f-mono); font-size: 15px; color: var(--ink); outline: none; }
@@ -313,7 +302,6 @@ button { font: inherit; color: inherit; }
 .mosaic { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
 .mosaic img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; border: 1px solid var(--ink); }
 
-/* Oneshots test log */
 .runs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .runs.four { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .runs.four .run h3 { font-size: 15px; }
@@ -405,7 +393,6 @@ button { font: inherit; color: inherit; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
-/* Additions beyond the prototype */
 /* The first-visit intro (src/scripts/intro.ts): the sheet's frame and zones
    stay, its contents wait under the crew's canvas, then fade in. */
 html[data-intro] .sheet .inner { opacity: 0; }
