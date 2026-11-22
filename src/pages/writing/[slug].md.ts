@@ -1,4 +1,4 @@
-// Each published essay's Markdown, for readers and agents that prefer plain
+// WHY: Each published essay's Markdown, for readers and agents that prefer plain
 // text. Same published-only source as the essay pages.
 import type { APIContext } from 'astro';
 import { getPublishedEssays } from '../../lib/writing';

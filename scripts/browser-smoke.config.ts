@@ -2,7 +2,7 @@ import config from '../playwright.config';
 import path from 'node:path';
 import { defineConfig } from '@playwright/test';
 
-// Exercise the real project/browser/globalSetup wiring without app or DB state.
+// WHY: Exercise the real project/browser/globalSetup wiring without app or DB state.
 export default defineConfig({
   ...config,
   testDir: '.',

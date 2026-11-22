@@ -5,7 +5,7 @@ import { expect, test, type Page } from '@playwright/test';
 const RUNS_DIR = 'tests/fixtures/oneshots/runs';
 const MANIFESTS = readdirSync(RUNS_DIR).filter((d) => existsSync(path.join(RUNS_DIR, d, 'run.toml')));
 
-// Watches requests to hosts other than the preview server, frames included.
+// WHY: Watches requests to hosts other than the preview server, frames included.
 // Chromium reports a request the page's CSP stopped as failed with "csp"; it
 // never left the browser. Anything else to another host did leave.
 function offsite(page: Page) {
@@ -81,7 +81,6 @@ test.describe('Oneshots index', () => {
       const d = (await dot.boundingBox())!, t = (await tip.boundingBox())!;
       const gap = Math.max(t.x - (d.x + d.width), d.x - (t.x + t.width), t.y - (d.y + d.height), d.y - (t.y + t.height));
       expect(gap).toBeLessThanOrEqual(16);
-      // Inside the plot's box, not cut off at an edge.
       const w = (await page.locator('#plot').locator('xpath=..').boundingBox())!;
       expect(t.x).toBeGreaterThanOrEqual(w.x);
       expect(t.x + t.width).toBeLessThanOrEqual(w.x + w.width + 1);
@@ -138,7 +137,7 @@ test.describe('autonomy plot on a touch screen', () => {
 test.describe('runnable demos', () => {
   test('Run loads the demo in a scripts-only sandbox, with vendored d3, fonts and storage, and nothing offsite', async ({ page }) => {
     const hits = offsite(page);
-    // The host's bot check blocks every request a sandboxed frame makes after
+    // WHY: The host's bot check blocks every request a sandboxed frame makes after
     // its page, so the page must be the only one.
     const fromFrame: string[] = [];
     page.on('request', (req) => { if (req.frame() !== page.mainFrame() && /^https?:/.test(req.url())) fromFrame.push(new URL(req.url()).pathname); });
@@ -167,7 +166,7 @@ test.describe('runnable demos', () => {
     expect(r.fetch).toBe('blocked');
     expect(r.script).toBe('blocked');
     expect(r.image).toBe('blocked');
-    // The demo then tries to navigate its own frame to another host, by script
+    // WHY: The demo then tries to navigate its own frame to another host, by script
     // at 2 s and by meta refresh at 3 s. The page's frame-src blocks both before
     // any request (the frame shows an error page). Without that policy the
     // watcher sees the navigation request and the frame lands on example.com.
@@ -175,7 +174,7 @@ test.describe('runnable demos', () => {
     expect(page.frames().map((f) => f.url()).filter((u) => u.startsWith('http') && !u.includes('localhost'))).toEqual([]);
     expect(page.url()).toBe(url);
     expect(await page.evaluate(() => document.body.dataset.pwned)).toBeUndefined();
-    // Control: the watcher sees the injected script and image, which CSP stopped.
+    // WHY: Control: the watcher sees the injected script and image, which CSP stopped.
     expect(hits.stopped()).toEqual(expect.arrayContaining(['https://example.com/injected.js', 'https://example.com/pixel.png']));
     expect(hits.left()).toEqual([]);
   });
@@ -222,7 +221,7 @@ test.describe('runnable demos', () => {
       image: f.querySelector('img')!.getBoundingClientRect().height,
       content: f.querySelector('figcaption')!.getBoundingClientRect().bottom - f.getBoundingClientRect().top,
     })));
-    // Control: the hero (960 x 600) and the close-up (600 x 900) share a row,
+    // WHY: Control: the hero (960 x 600) and the close-up (600 x 900) share a row,
     // so a stretched hero would show here.
     expect(boxes[0].top).toBe(boxes[1].top);
     expect(boxes[1].image).toBeGreaterThan(boxes[0].image + 100);
@@ -235,7 +234,7 @@ test.describe('runnable demos', () => {
     await expect(page.locator('pre.brief')).not.toContainText('Fixture follow-up');
     await expect(page.locator('.brief-later')).toContainText('full brief on GitHub');
     await expect(page.getByRole('link', { name: 'Brief on GitHub' })).toHaveAttribute('href', /\/runs\/fixture-film\/brief\.md$/);
-    // Control: a brief without the marker is shown whole, with no note.
+    // WHY: Control: a brief without the marker is shown whole, with no note.
     await page.goto('/oneshots/fixture-demo/');
     await expect(page.locator('pre.brief')).toBeVisible();
     await expect(page.locator('.brief-later')).toHaveCount(0);
@@ -260,7 +259,7 @@ test.describe('without JavaScript', () => {
   });
 });
 
-// Link previews (X, Slack, iMessage) read these tags without running scripts,
+// WHY: Link previews (X, Slack, iMessage) read these tags without running scripts,
 // so they're checked in the served HTML, not the rendered page.
 test.describe('link preview tags', () => {
   const meta = (html: string, attr: 'property' | 'name', key: string) =>

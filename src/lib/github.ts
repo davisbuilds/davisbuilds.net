@@ -1,4 +1,4 @@
-// Created and last-push dates for the parts list, read from GitHub at build
+// WHY: Created and last-push dates for the parts list, read from GitHub at build
 // time. One request lists the owner's public repositories, so a
 // part that was renamed or made private is missing from it.
 //
@@ -18,8 +18,6 @@ export type Signals =
 
 const day = (iso: string) => iso.slice(0, 10);
 
-// Matches each wanted repository to the read, or throws naming the ones that
-// aren't public repositories of the owner.
 export function signalsFrom(read: GitHubRead, wanted: string[]): Map<string, Signal> {
   const byName = new Map(read.repos.filter((r) => !r.private).map((r) => [r.name, r]));
   const missing = wanted.filter((w) => !byName.has(w));
@@ -29,7 +27,6 @@ export function signalsFrom(read: GitHubRead, wanted: string[]): Map<string, Sig
   return new Map(wanted.map((w) => [w, { created: day(byName.get(w)!.created_at), pushed: day(byName.get(w)!.pushed_at) }]));
 }
 
-// Whole weeks between the last push and the read, for the freshness bars.
 export function weeksSince(pushed: string, readAt: string): number {
   return Math.max(0, Math.floor((Date.parse(readAt) - Date.parse(pushed)) / (7 * 864e5)));
 }

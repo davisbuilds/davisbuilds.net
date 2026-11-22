@@ -1,5 +1,3 @@
-// Margin-note linking: hovering a marker lights its note;
-// following one lights the note and brings it into view.
 import { reducedMotion } from './motion';
 
 document.querySelectorAll<HTMLAnchorElement>('a.ref[data-note]').forEach((ref) => {

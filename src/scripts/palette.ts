@@ -1,4 +1,3 @@
-// Command palette: ⌘K / Ctrl+K or "/" opens it; arrows move; enter opens.
 type Item = { label: string; kind: string; href: string };
 
 const scrim = document.getElementById('palette') as HTMLElement | null;

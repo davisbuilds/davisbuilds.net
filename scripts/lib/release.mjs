@@ -1,4 +1,4 @@
-// Shared by deploy, rollback, verify-deploy and the telemetry upload. The
+// WHY: Shared by deploy, rollback, verify-deploy and the telemetry upload. The
 // server side is private/server/deploy-shell.sh, reached as the
 // dbs-deploy identity through the operator's SSH alias; the server's address
 // never appears here. DAVISBUILDS_SSH_CONFIG and DAVISBUILDS_ORIGIN point the
@@ -14,7 +14,7 @@ const SSH = ['ssh', ...(process.env.DAVISBUILDS_SSH_CONFIG ? ['-F', process.env.
 /** rsync's remote shell, matching remote(). */
 export const RSYNC_SHELL = ['-e', SSH.join(' ')];
 
-// The server's rrsync accepts only GNU rsync 3.x as a client. macOS ships
+// WHY: The server's rrsync accepts only GNU rsync 3.x as a client. macOS ships
 // openrsync as /usr/bin/rsync, which it rejects, so prefer Homebrew's.
 export function rsyncBinary() {
   const candidates = [process.env.DAVISBUILDS_RSYNC, '/opt/homebrew/bin/rsync', '/usr/local/bin/rsync', 'rsync'].filter(Boolean);
@@ -92,7 +92,7 @@ export function currentRelease() {
   return remote('list').split('\n').find((l) => l.endsWith(' current'))?.split(' ')[0] ?? null;
 }
 
-// The URL that serves a release file: directory indexes by their directory,
+// WHY: The URL that serves a release file: directory indexes by their directory,
 // and each segment encoded, so a name with `#`, `?` or `%` is fetched as
 // itself rather than cut short.
 export function urlFor(file) {

@@ -1,5 +1,3 @@
-// Pages that appear in the masthead navigation and the command palette.
-// The sheet layout appends essays, oneshot runs and parts to the palette items.
 export const NAV = [
   { href: '/', label: 'Home', key: 'home' },
   { href: '/writing/', label: 'Writing', key: 'writing' },
@@ -13,7 +11,7 @@ export type NavKey = (typeof NAV)[number]['key'];
 export type PaletteItem = { label: string; kind: string; href: string };
 
 const SUBSTACK = 'https://davisbuilds.substack.com';
-// Substack's own signup page: a link, not an embedded form, so pages make no
+// WHY: Substack's own signup page: a link, not an embedded form, so pages make no
 // third-party requests.
 export const SUBSCRIBE_URL = `${SUBSTACK}/subscribe`;
 
@@ -29,7 +27,6 @@ export function basePaletteItems(): PaletteItem[] {
   return [
     ...NAV.map((n) => ({ label: n.label, kind: 'page', href: n.href })),
     ...LINKS.filter((l) => l.label === 'GitHub' || l.label === 'Substack').map((l) => ({ label: l.label, kind: 'link', href: l.href })),
-    // Home plays the first-visit intro again when asked with ?intro.
     { label: 'Replay intro', kind: 'intro', href: '/?intro' },
   ];
 }

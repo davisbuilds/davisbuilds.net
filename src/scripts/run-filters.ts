@@ -1,4 +1,4 @@
-// Filters on the Oneshots test log. Hidden without JavaScript, when every run shows.
+// WHY: Filters on the Oneshots test log. Hidden without JavaScript, when every run shows.
 const group = document.querySelector<HTMLElement>('[data-run-filters]');
 if (group) {
   const buttons = group.querySelectorAll<HTMLButtonElement>('[data-rf]');

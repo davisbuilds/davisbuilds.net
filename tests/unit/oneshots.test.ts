@@ -40,7 +40,6 @@ ${extra}`;
 
 const PAGE = '<!doctype html><html><head><meta charset="utf-8"><title>t</title></head><body><p>ok</p></body></html>';
 
-// A runs/ directory with one good run plus `files` (paths relative to runs/).
 function makeRuns(files: Record<string, string | Buffer>) {
   const root = mkdtempSync(path.join(tmpdir(), 'oneshots-test-'));
   temps.push(root);
@@ -66,7 +65,6 @@ function makeRuns(files: Record<string, string | Buffer>) {
   return { root, opts };
 }
 
-// A bad run named `bad`: the build must fail naming it, and nothing is written.
 async function expectRejected(files: Record<string, string | Buffer>, reason: RegExp, setup?: (root: string) => void) {
   const { root, opts } = makeRuns(files);
   setup?.(root);
@@ -101,7 +99,7 @@ describe('manifest validation', () => {
     const withDate = (d: string) => badRun(manifest('bad').replace('date = 2026-09-01', `date = ${d}`));
     await expectRejected(withDate('"2026-99-99"'), /date/);
     await expectRejected(withDate('"2026-02-29"'), /date/);
-    // TOML parsers roll an impossible unquoted day over (to March 3), so the raw text is checked.
+    // WHY: TOML parsers roll an impossible unquoted day over (to March 3), so the raw text is checked.
     await expectRejected(withDate('2026-02-31'), /date.*2026-02-31/);
   });
   it('control: accepts a leap day, quoted or not', async () => {
@@ -183,7 +181,7 @@ describe('brief and the after-delivery marker', () => {
     await expectRejected(withBrief('bad', `${BRIEF}<!-- after delivery-->\n${LATER}`), /after delivery.*exactly/);
     await expectRejected(withBrief('bad', `${BRIEF}  <!-- After Delivery\n${LATER}`), /After Delivery.*exactly/);
     await expectRejected(withBrief('bad', `${BRIEF}<!-- after  delivery -->\n${LATER}`), /after  delivery.*exactly/);
-    // After a closed fence the marker counts again.
+    // WHY: After a closed fence the marker counts again.
     await expectRejected(withBrief('bad', `${BRIEF}\`\`\`\nx\n\`\`\`\n<!-- after delivery -->\n${LATER}<!-- after delivery -->\n`), /more than one/);
     await expectRejected(withBrief('bad', `${BRIEF}<!-- after delivery -->\n${LATER}<!-- after delivery -->\n`), /more than one/);
     await expectRejected(withBrief('bad', `<!-- after delivery -->\n${LATER}`), /nothing before/);
@@ -269,7 +267,7 @@ describe('demo file set', () => {
   it('parses comments as a browser does, so a malformed one cannot hide a script before the policy', async () => {
     const page = (pre: string) => badRun(manifest('bad'), { 'bad/index.html': `${pre}<head><meta charset="utf-8"></head><body></body></html>` });
     const script = '<script>fetch("https://example.com")</script>';
-    // Each comment ends at its first ">" (or "--!>"), so the script is real markup.
+    // WHY: Each comment ends at its first ">" (or "--!>"), so the script is real markup.
     await expectRejected(page(`<!doctype html><!-->${script}-->`), /content before its <head>/);
     await expectRejected(page(`<!doctype html><!--->${script}-->`), /content before its <head>/);
     await expectRejected(page(`<!doctype html><!-- x --!>${script} -->`), /content before its <head>/);
@@ -307,7 +305,7 @@ describe('demo file set', () => {
     expect(served).toContain('<script id="m">const s = "<\\/script>"; window.ok = s;</script>');
     expect(reverseSubstitutions(served, demo.substitutions)).toBe(readFileSync(path.join(root, 'runs/good/index.html'), 'utf8'));
   });
-  // The host's bot check answers any request without its cookie with a
+  // WHY: The host's bot check answers any request without its cookie with a
   // challenge page, and a sandboxed frame never sends that cookie. So a demo
   // gets exactly one request, its page, and anything else must be written in.
   it('rejects a file the page would still load as a separate request', async () => {
@@ -342,7 +340,7 @@ describe('demo file set', () => {
     await expectRejected(withPage('<style>@Import "https://cdn.example.com/x.css";</style>'), /cdn\.example\.com/);
   });
   it('rejects a file that is written in once but still requested from elsewhere', async () => {
-    // Writing b.css into the page doesn't answer an @import or import() that
+    // WHY: Writing b.css into the page doesn't answer an @import or import() that
     // still names it: that reference is a request of its own.
     await expectRejected(withPage('<link rel="stylesheet" href="a.css"><link rel="stylesheet" href="b.css">', '', { 'bad/a.css': '@import "b.css";', 'bad/b.css': 'p{}' }), /b\.css as a separate request/);
     await expectRejected(withPage('<style>@import "b.css";</style><link rel="stylesheet" href="b.css">', '', { 'bad/b.css': 'p{}' }), /b\.css as a separate request/);
@@ -397,7 +395,7 @@ describe('demo file set', () => {
   });
 });
 
-// What a page loads as separate scripts and stylesheets, read as a browser
+// WHY: What a page loads as separate scripts and stylesheets, read as a browser
 // parses it (so markup inside a comment doesn't count).
 type Parsed5 = { tagName?: string; attrs?: { name: string; value: string }[]; childNodes?: Parsed5[]; content?: Parsed5 };
 function separateLoads(html: string): string[] {
@@ -435,7 +433,7 @@ describe('vendoring and disclosure', () => {
   });
   it('serves the demo as one page, with its script, d3 and fonts written in', () => {
     expect(demo.files.map((f) => f.rel)).toEqual(['index.html']);
-    // Control first: the parser-based detector sees both kinds of load.
+    // WHY: Control first: the parser-based detector sees both kinds of load.
     expect(separateLoads('<script src="a.js"></script><!-- <script src="c.js"></script> --><link rel="stylesheet" href="b.css">')).toEqual(['a.js', 'b.css']);
     expect(separateLoads(served)).toEqual([]);
     expect(served).toContain(`<script>${readFileSync(path.join(NODE_MODULES, 'd3/dist/d3.min.js'), 'utf8')}</script>`);
@@ -473,7 +471,7 @@ describe('stats and layout', () => {
     expect(plotPoints([run('a', 1, 60), run('c', null, 30)]).map((p) => p.slug)).toEqual(['a']);
   });
   it('places plot labels so none overlap a label, a point, or the edge', () => {
-    // The live plot's crowded rows: two pairs a label-width apart on one line.
+    // WHY: The live plot's crowded rows: two pairs a label-width apart on one line.
     const area = { left: 48, right: 740, top: 0, bottom: 226 };
     const points = [
       { x: 254, y: 175, text: 'From Gate to Game' },

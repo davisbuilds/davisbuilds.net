@@ -1,4 +1,4 @@
-// Page-side access to the synced oneshots data. Run `node scripts/sync-oneshots.mjs`
+// WHY: Page-side access to the synced oneshots data. Run `node scripts/sync-oneshots.mjs`
 // first; `pnpm dev` and `pnpm build` do that for you.
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';

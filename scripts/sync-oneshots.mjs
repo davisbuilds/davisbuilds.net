@@ -1,4 +1,4 @@
-// Fetches the oneshots repository at the pinned commit and writes the site's
+// WHY: Fetches the oneshots repository at the pinned commit and writes the site's
 // copies of its runs. Reads files only; nothing from that
 // repository runs here.
 //
@@ -31,7 +31,7 @@ function git(cwd, ...args) {
   }).trim();
 }
 
-// Only the pinned commit's bytes may be published, so a cached checkout is
+// WHY: Only the pinned commit's bytes may be published, so a cached checkout is
 // reset and cleaned (tracked edits, untracked and ignored files) before use.
 function checkout(repo, sha) {
   const dir = path.join(root, '.cache/oneshots', sha);

@@ -5,7 +5,7 @@ import { checkRawDates, essaySchema } from '../../src/lib/essay-schema';
 
 const BODY = 'An opening paragraph.\n\n## What worked\n\n1. **A point.** With a [link](https://example.com/).\n';
 
-// A vault Writing note as Obsidian saves it: vault key order, `type`, and the
+// WHY: A vault Writing note as Obsidian saves it: vault key order, `type`, and the
 // `writing` collection tag.
 const note = (patch: Record<string, string> = {}, body = BODY) => {
   const fields: Record<string, string> = {
@@ -122,7 +122,7 @@ describe('convertNote', () => {
   });
 
   it('refuses Obsidian-only syntax, naming its line in the note', () => {
-    const line3 = note({}, '').split('\n').length + 2; // third line of the body
+    const line3 = note({}, '').split('\n').length + 2;
     for (const [line, kind] of [
       ['See [[Other Note]].', 'wikilink'],
       ['![[diagram.png]]', 'wikilink'],

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Publish a telemetry document: validate it against the last
+// WHY: Publish a telemetry document: validate it against the last
 // published one, `put` it as the dbs-telemetry identity, and only then make
 // it the new baseline. The server (private/server/telemetry-shell.sh) writes a
 // temporary file and renames it, so /telemetry.json is always one complete
@@ -32,7 +32,7 @@ if (errors.length) {
   process.exit(1);
 }
 
-// The baseline's directory first, so a successful upload always becomes the
+// WHY: The baseline's directory first, so a successful upload always becomes the
 // baseline the next upload is checked against.
 mkdirSync(path.dirname(previousPath), { recursive: true });
 console.log(sshVerb(HOST, ['put'], readFileSync(file)));

@@ -1,4 +1,4 @@
-// The first-visit intro on Home: a pixel crew carries the first screen's
+// WHY: The first-visit intro on Home: a pixel crew carries the first screen's
 // panels in, a foreman checks them off, and the last worker switches on the
 // readout's light before the page fades in. The inline script in index.astro
 // decides whether it plays (first visit or ?intro, never with reduced motion,
@@ -8,9 +8,9 @@
 import { planIntro, STORAGE_KEY, TIMING, type Plan, type PlannedPanel, type Rect } from '../lib/intro';
 
 const root = document.documentElement;
-// Started this late, the page has waited long enough: show it.
+// WHY: Started this late, the page has waited long enough: show it.
 const LATE_MS = 2500;
-const P = 3; // px per sprite pixel
+const P = 3; // WHY: px per sprite pixel
 
 type Colors = Record<'sheet' | 'ink' | 'rule' | 'muted' | 'signal' | 'ok' | 'agent' | 'agentDark' | 'agentHi', string>;
 type Drawn = PlannedPanel & { el: Element; bordered: boolean; bars: Rect[]; rules: number[] };
@@ -92,7 +92,6 @@ function start() {
   raf = requestAnimationFrame(frame);
 }
 
-// Hand the page back: the fade-in finishes (or is quick, when skipped).
 function show(skipped: boolean) {
   if (!root.dataset.intro) return;
   root.dataset.intro = skipped ? 'skip' : 'reveal';
@@ -105,7 +104,7 @@ function rectOf(el: Element): Rect {
 }
 const sameRect = (a: Rect, b: Rect) => a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h;
 
-// Skeleton bars where the panel's text lines are, relative to the panel. The
+// WHY: Skeleton bars where the panel's text lines are, relative to the panel. The
 // gear stamp's letters are left out: the gear is stamped on its own.
 function textBars(el: Element, at: Rect): Rect[] {
   const bars: Rect[] = [];
@@ -123,7 +122,6 @@ function textBars(el: Element, at: Rect): Rect[] {
   return bars;
 }
 
-// Rules inside the panel (a header's bottom border, say) that span most of it.
 function rulesIn(el: Element, at: Rect): number[] {
   const ys: number[] = [];
   for (const child of el.querySelectorAll('*')) {
@@ -139,7 +137,7 @@ function colors(): Colors {
   const s = getComputedStyle(root), v = (k: string) => s.getPropertyValue(`--${k}`).trim();
   return { sheet: v('sheet'), ink: v('ink'), rule: v('rule'), muted: v('muted'), signal: v('signal'), ok: v('ok'), agent: v('agent'), agentDark: v('agent-dark'), agentHi: v('agent-hi') };
 }
-// The light shows the readout's real state: green only for a fresh reading.
+// WHY: The light shows the readout's real state: green only for a fresh reading.
 const stateColor = (state: string | undefined, c: Colors) => (state === 'ok' ? c.ok : state === 'stale' ? c.signal : c.muted);
 
 const clamp = (x: number, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -177,7 +175,7 @@ function blockAt(p: PlannedPanel, t: number, vp: { w: number; h: number }) {
 
 function draw(ctx: CanvasRenderingContext2D, t: number, s: Scene) {
   const { plan, c } = s, vp = { w: innerWidth, h: innerHeight };
-  // Panels under way are drawn last, over the ones already placed.
+  // WHY: Panels under way are drawn last, over the ones already placed.
   const order = [...s.drawn].sort((m, n) => Number(blockAt(n, t, vp).landed) - Number(blockAt(m, t, vp).landed));
   for (const p of order) {
     if (t < p.a) continue;
@@ -201,7 +199,6 @@ function draw(ctx: CanvasRenderingContext2D, t: number, s: Scene) {
     if (p.foreman) drawForeman(ctx, x + s.foremanDx, Math.max(y, FOREMAN.length * P + 2), t, s);
     if (!landed) for (let k = 0; k < p.n; k++) worker(ctx, c, x + r.w * (k + 0.5) / p.n, Math.min(y + r.h + 28, plan.lane), Math.floor((t + k * 45) / 90) % 2);
   }
-  // The gear is stamped once the last panel is down.
   const g = seg(t, plan.gear[0], plan.gear[1]);
   if (g > 0 && s.gear) {
     const { rect, path } = s.gear, k = rect.w / 40;
@@ -209,7 +206,6 @@ function draw(ctx: CanvasRenderingContext2D, t: number, s: Scene) {
     ctx.translate(rect.x + rect.w / 2, rect.y + rect.h / 2); ctx.rotate((1 - back(g)) * 1.2); ctx.translate(-rect.w / 2, -rect.h / 2); ctx.scale(k, k);
     ctx.strokeStyle = c.ink; ctx.lineWidth = 2 / k; ctx.stroke(path); ctx.restore();
   }
-  // The landed crew: a cheer, a wait, then single file off the right edge.
   for (const w of plan.crew) {
     if (t < w.landed || t >= w.gone) continue;
     if (t < w.leave) { cheering(ctx, c, w.x, w.y, t - w.landed); continue; }
@@ -217,7 +213,6 @@ function draw(ctx: CanvasRenderingContext2D, t: number, s: Scene) {
     const py = drop < 1 ? lerp(w.y, plan.lane, drop) - Math.sin(drop * Math.PI) * 16 : plan.lane;
     worker(ctx, c, w.x + Math.max(0, t - w.leave - 170) * plan.walk, py, Math.floor(t / 70) % 2);
   }
-  // The switcher: up under the light, a tap, a fall to the lane, and off.
   const sw = plan.switcher, L = s.light;
   if (sw && L && t >= sw.landed && t < sw.gone) {
     if (t < sw.jump) cheering(ctx, c, sw.x, sw.y, t - sw.landed);
@@ -240,13 +235,11 @@ function drawForeman(ctx: CanvasRenderingContext2D, x: number, y: number, t: num
   const tap = plan.switcher?.tap ?? Infinity;
   const nod = checks.some((k) => t >= k && t < k + 140) ? 2 : 0, cheer = t >= tap && t < tap + 380 ? 4 : 0;
   sprite(ctx, FOREMAN, x, y, { O: c.agent, D: c.agentDark, E: c.ink, K: c.agentHi }, (j) => cheer - (j < 7 ? nod : 0));
-  // The clipboard: one line per check, ticked as it lands.
   const ox = Math.round(x - 4 * P), oy = Math.round(y - FOREMAN.length * P), cx = ox + 27, cy = oy + 9 - cheer;
   ctx.fillStyle = c.sheet; ctx.fillRect(cx, cy, 13, 17);
   ctx.strokeStyle = c.ink; ctx.lineWidth = 1; ctx.strokeRect(cx + 0.5, cy + 0.5, 12, 16);
   ctx.fillStyle = c.ink; ctx.fillRect(cx + 4, cy - 1, 5, 2);
   checks.forEach((k, i) => { ctx.fillStyle = t >= k ? c.signal : c.rule; ctx.fillRect(cx + 3, cy + 3 + i * (12 / checks.length), t >= k ? 7 : 5, 0.9); });
-  // A tick over his head for each check, rising as it fades.
   for (const k of checks) {
     const f = seg(t, k, k + 450);
     if (f <= 0 || f >= 1) continue;
@@ -268,5 +261,5 @@ function drawLight(ctx: CanvasRenderingContext2D, t: number, s: Scene) {
   ctx.restore();
 }
 
-// Last, once every helper above is defined.
+// WHY: Last, once every helper above is defined.
 if (root.dataset.intro === 'play') start();

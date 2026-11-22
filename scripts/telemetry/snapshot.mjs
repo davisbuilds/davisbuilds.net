@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The operator's telemetry snapshot. It reads GitHub with the
+// WHY: The operator's telemetry snapshot. It reads GitHub with the
 // owner's `gh` login and this host's agentmonitor through its read-only CLI,
 // applies the publishing rules against the last published document, validates
 // the result, and writes the candidate. It emits aggregates only: no project,
@@ -45,8 +45,7 @@ function loadPrevious() {
   return checked.value;
 }
 
-// ---------- GitHub ----------
-// The weekly series is GitHub's own trailing-year calendar (the profile
+// WHY: the weekly series is GitHub's own trailing-year calendar (the profile
 // graph), which stays inside the API's one-year limit on any weekday.
 // The control year (GITHUB_CONTROL, shared with the validator) must be in
 // the per-year totals, so the published document carries its own proof.
@@ -66,7 +65,7 @@ async function graphql(query, variables = {}) {
   return body.data;
 }
 
-// Authored pull requests merged in the last 30 days, in every repository the
+// WHY: Authored pull requests merged in the last 30 days, in every repository the
 // login can read (see src/lib/telemetry-github.ts).
 const MERGED_PRS = `query($cursor: String) {
   viewer { pullRequests(states: MERGED, first: 100, after: $cursor, orderBy: { field: UPDATED_AT, direction: DESC }) {
@@ -111,8 +110,7 @@ async function readGithub() {
   };
 }
 
-// ---------- agentmonitor ----------
-// Its own read contracts (`amon … --json`), so the numbers match its app:
+// WHY: agentmonitor's own read contracts (`amon … --json`), so the numbers match its app:
 // sessions from Analytics, tokens (every bucket, as its Monitor counts them)
 // from Usage. Harness names map onto the allowlist; anything new is "Other".
 const HARNESS = { codex: 'Codex', claude: 'Claude Code', claude_code: 'Claude Code', antigravity: 'Antigravity', opencode: 'OpenCode', pi: 'Pi', cursor: 'Cursor', gemini: 'Gemini CLI' };
@@ -161,7 +159,7 @@ try {
   agents = mergeHosts([readAgents()], prev?.agents.hosts ?? [], now);
 } catch (e) {
   failures.push(`agents: ${e.message}`);
-  // This host's read failed: its last report carries forward as stale. Other
+  // WHY: This host's read failed: its last report carries forward as stale. Other
   // hosts keep their own 48-hour clock.
   const hosts = prev?.agents.hosts ?? [];
   const own = hosts.find((h) => h.host === host);

@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-// The intro skips automated browsers (navigator.webdriver), which keeps every
+// WHY: The intro skips automated browsers (navigator.webdriver), which keeps every
 // other test on the plain page. These tests stand in for a visitor.
 const asVisitor = (page: Page) =>
   page.addInitScript(() => Object.defineProperty(Navigator.prototype, 'webdriver', { get: () => false }));
@@ -17,7 +17,7 @@ test.describe('landing intro', () => {
     await page.goto('/');
     expect(await intro(page)).toBe('play');
     await expect(page.locator('canvas.intro')).toHaveCount(1);
-    // The page under the canvas is really hidden while it plays.
+    // WHY: The page under the canvas is really hidden while it plays.
     expect(await pageOpacity(page)).toBe('0');
     await finished(page);
     await expect(page.locator('canvas.intro')).toHaveCount(0);
@@ -53,7 +53,7 @@ test.describe('landing intro', () => {
     await asVisitor(page);
     await page.goto('/');
     expect(await intro(page)).toBe('play');
-    // Browsers can dispatch resize after load without changing the viewport.
+    // WHY: Browsers can dispatch resize after load without changing the viewport.
     await page.evaluate(() => dispatchEvent(new Event('resize')));
     expect(await intro(page)).toBe('play');
     await expect(page.locator('canvas.intro')).toHaveCount(1);

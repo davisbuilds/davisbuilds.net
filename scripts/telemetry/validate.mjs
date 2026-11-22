@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Validate a telemetry document before it's published. Exits 1 naming every
+// WHY: Validate a telemetry document before it's published. Exits 1 naming every
 // problem; nothing that fails may be uploaded.
 //
 //   node scripts/telemetry/validate.mjs <document.json> [--previous <published.json>]

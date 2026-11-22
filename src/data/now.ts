@@ -1,4 +1,4 @@
-// The Now page: what the owner is focused on, and the site's revision
+// WHY: The Now page: what the owner is focused on, and the site's revision
 // history. The owner edits this file; the Writing cell comes from the
 // published essays instead, so it can't name an unpublished draft.
 

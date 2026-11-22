@@ -1,4 +1,4 @@
-// Swaps a demo's poster for its sandboxed frame when the visitor presses Run.
+// WHY: Swaps a demo's poster for its sandboxed frame when the visitor presses Run.
 // On a narrow screen the inline stage is too small to use, so Run follows its
 // link to the full-screen page instead.
 const narrow = matchMedia('(max-width: 860px)');

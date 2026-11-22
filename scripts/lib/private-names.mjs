@@ -1,4 +1,4 @@
-// The owner's private project names must never reach the built site. The list
+// WHY: The owner's private project names must never reach the built site. The list
 // isn't kept in this repository, since naming them here would publish them:
 // it is read at deploy time from GitHub (private repositories the owner's `gh`
 // login can see) plus `private/names.txt`, one name per line, for projects
@@ -25,7 +25,7 @@ export function parseNamesFile(text) {
   return { names, canaries };
 }
 
-// Throws unless the GitHub list provably covers the owner's private
+// WHY: Throws unless the GitHub list provably covers the owner's private
 // repositories: at least one canary, and every canary present.
 export function checkCanaries(listed, canaries) {
   if (!canaries.length) throw new Error(`${EXTRA_NAMES} names no \`github:\` canary, so a partial GitHub list would pass unnoticed`);
@@ -34,7 +34,7 @@ export function checkCanaries(listed, canaries) {
   if (missing.length) throw new Error(`the gh login can't see private repositories ${missing.join(', ')}; the private-name scan would be incomplete`);
 }
 
-// Throws unless the token can see every private repository: a classic or
+// WHY: Throws unless the token can see every private repository: a classic or
 // OAuth token with the `repo` scope. A fine-grained or app token can be
 // limited to selected repositories and reports no scopes at all. `response`
 // is `gh api -i` output.
@@ -43,9 +43,9 @@ export function checkScopes(response) {
   if (!scopes.includes('repo')) throw new Error("the gh login's token lacks the repo scope (a fine-grained or app token may see only some private repositories); log in with `gh auth login`");
 }
 
-// `self` is this site's own repository, which the site names on purpose.
+// WHY: `self` is this site's own repository, which the site names on purpose.
 export function privateNames(self) {
-  // Required: without it the scan would silently skip every project it lists.
+  // WHY: Required: without it the scan would silently skip every project it lists.
   if (!existsSync(EXTRA_NAMES)) throw new Error(`${EXTRA_NAMES} is missing; the private-name scan needs it`);
   const { names: extra, canaries } = parseNamesFile(readFileSync(EXTRA_NAMES, 'utf8'));
   checkScopes(execFileSync('gh', ['api', '-i', 'user'], { encoding: 'utf8' }));
@@ -60,26 +60,25 @@ export function publicNames() {
   return gh(['api', '--paginate', 'user/repos?visibility=public&affiliation=owner&per_page=100', '--jq', '.[].name']).map((n) => n.toLowerCase());
 }
 
-// A name counts where it stands as its own token: `tools` matches "tools",
+// WHY: A name counts where it stands as its own token: `tools` matches "tools",
 // "/tools/" and ".tools" but not "devtools", and `widget-ai` doesn't match
 // "Widget AI".
 const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 export const tokenRe = (name) => new RegExp(`(?<![a-z0-9_-])${escape(name)}(?![a-z0-9_-])`, 'i');
 
-// Built files whose text is the site's own. Demo files are copied verbatim from
+// WHY: Built files whose text is the site's own. Demo files are copied verbatim from
 // the public oneshots repository, where an ordinary word or variable name that
 // happens to match a project name is code, not a mention.
 const isDemoFile = (file) => /^oneshots\/[^/]+\/files\//.test(file);
 export const scannable = (file) => /\.(html|xml|txt|json|js|css|md|svg)$/.test(file) && !isDemoFile(file);
 
-// What a deploy scans: the text of every scannable file, plus every built
+// WHY: What a deploy scans: the text of every scannable file, plus every built
 // path (a file's name is public too, whatever its type), as [label, text].
 export const scanTargets = (built, read) => [
   ...built.filter(scannable).map((f) => [f, read(f)]),
   ['built paths', built.filter((f) => !isDemoFile(f)).join('\n')],
 ];
 
-// texts: [file, content] pairs. Returns "file: name" for every hit.
 export function findNames(texts, names) {
   const hits = [];
   for (const name of names) {
@@ -89,7 +88,7 @@ export function findNames(texts, names) {
   return hits;
 }
 
-// Application brands may be deliberately published without publishing source.
+// WHY: Application brands may be deliberately published without publishing source.
 // Scope and canary validation still happen in privateNames before this scan.
 export function findPrivateNames(texts, names, apps = APPS) {
   const brands = apps.filter((app) => app.publishedBrand === true && app.url);
@@ -97,18 +96,18 @@ export function findPrivateNames(texts, names, apps = APPS) {
   const ordinary = names.filter((name) => !approved.has(name.toLowerCase()));
   const hits = findNames(texts, ordinary);
   for (const name of names.filter((name) => approved.has(name.toLowerCase()))) {
-    // An approved display name is not permission to expose a source URL,
+    // WHY: An approved display name is not permission to expose a source URL,
     // another host, or a build path. Only the curated live destination is OK.
     const protectedTexts = texts.map(([file, content]) => {
       const liveUrl = approved.get(name.toLowerCase());
-      // Remove only a complete curated URL, before collecting path tokens.
+      // WHY: Remove only a complete curated URL, before collecting path tokens.
       // Prefix/suffix matches must not hide a different destination.
       const normalized = content.replace(/\\\//g, '/').replaceAll(liveUrl, (url, offset, full) => {
         const boundary = (c) => c === undefined || /[\s<>"'`()[\]]/.test(c);
         return boundary(full[offset - 1]) && boundary(full[offset + url.length]) ? '' : url;
       });
       const destinations = [
-        // Inspect path-like tokens in every format, including CSS, srcset,
+        // WHY: Inspect path-like tokens in every format, including CSS, srcset,
         // data attributes, Markdown references, JS strings and ordinary prose.
         // Angle brackets delimit HTML text, so closing tags cannot turn a
         // standalone display name into a path. Backslashes count as paths too.

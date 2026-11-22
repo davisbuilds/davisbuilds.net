@@ -1,20 +1,20 @@
-// Whether a screenshot of a demo frame shows anything drawn: enough pixels
+// WHY: Whether a screenshot of a demo frame shows anything drawn: enough pixels
 // that differ from its most common color. An empty canvas or a page that fails
 // before painting is one flat color.
 import sharp from 'sharp';
 
 export const MIN_DRAWN_PIXELS = 100;
-// Channel difference below which two colors count as the same (dithering,
+// WHY: Channel difference below which two colors count as the same (dithering,
 // compression of gradients).
 const TOLERANCE = 8;
 
-// A grid of cells over the image, with the cells a visitor can see. Only
+// WHY: A grid of cells over the image, with the cells a visitor can see. Only
 // pixels in visible cells count, and the background color is taken from
 // them. Without a grid, every pixel counts.
 export type VisibleCells = { size: number; cells: Array<[number, number]> };
 
 export async function drawnPixels(png: Buffer, visible?: VisibleCells): Promise<number> {
-  // Canvas captures can be transparent; flatten them onto black like an empty frame.
+  // WHY: Canvas captures can be transparent; flatten them onto black like an empty frame.
   const { data, info } = await sharp(png).flatten({ background: '#000000' }).raw().toBuffer({ resolveWithObject: true });
   const { width: w, height: h } = info;
   const open = visible && new Set(visible.cells.map(([i, j]) => `${i},${j}`));

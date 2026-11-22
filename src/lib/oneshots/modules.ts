@@ -6,7 +6,7 @@ import { RunError } from './manifest.ts';
 const JS = /\.(?:js|mjs)$/i;
 const RELATIVE = /^\.\.?\//;
 
-// Use a virtual namespace and give esbuild no resolveDir. Only the callbacks
+// WHY: Use a virtual namespace and give esbuild no resolveDir. Only the callbacks
 // read inputs, so run code cannot trigger package lookup, filesystem globbing,
 // tsconfig discovery, or network loads while it is compiled.
 export async function bundleModule(root: string, slug: string, entry: string, read: (absolute: string, relative: string) => string): Promise<string> {

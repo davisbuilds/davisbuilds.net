@@ -1,7 +1,4 @@
 ---
-// The drawing sheet every page sits on: framed and zoned, with a masthead and
-// a title block, plus the site-wide interactions (theme, zones, palette,
-// status, console hello).
 import '@fontsource-variable/archivo/wdth.css';
 import '@fontsource-variable/jetbrains-mono/index.css';
 import '@fontsource-variable/source-serif-4/opsz.css';
@@ -25,7 +22,6 @@ interface Props {
   paletteItems?: PaletteItem[];
   canonical?: string;
   ogType?: 'website' | 'article';
-  // The link-preview image; pages without one get the small text card.
   image?: SocialImage | null;
 }
 const { title, description, current, paletteItems = [], ogType = 'website', image = null } = Astro.props;
@@ -52,7 +48,7 @@ const items = [...basePaletteItems(), ...essays, ...runs, ...parts, ...paletteIt
     <SocialMeta image={image} />
     <link rel="alternate" type="application/rss+xml" title="Davis Gee · Writing" href="/rss.xml" />
     <script is:inline>
-      // Apply an explicit theme choice before first paint to avoid a flash.
+      // WHY: Apply an explicit theme choice before first paint to avoid a flash.
       try {
         const t = localStorage.getItem('dg-theme');
         if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);

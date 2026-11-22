@@ -1,4 +1,4 @@
-// The page a runnable demo is served as, and the edits made to it.
+// WHY: The page a runnable demo is served as, and the edits made to it.
 // Starting from the entry page, it follows local
 // references, confined to the run directory. Third-party loads are swapped for
 // vendored copies from vendor-map.ts or fail the build. Every served page gets
@@ -19,11 +19,11 @@ import { DEMO_CSP, FONT_FAMILIES, GOOGLE_FONTS_CSS, PRECONNECT_HOSTS, SCRIPTS, S
 
 export type Substitution = { file: string; from: string; to: string; label: string };
 export type DemoFile = { rel: string; bytes: Buffer };
-// `files` is what's served: the entry page alone. `sources` is every file the
+// WHY: `files` is what's served: the entry page alone. `sources` is every file the
 // demo uses, as read from the run, for reviewing a lock bump.
 export type Demo = { entry: string; files: DemoFile[]; sources: DemoFile[]; substitutions: Substitution[] };
 
-// HTML is the only document type served, because only HTML pages get the
+// WHY: HTML is the only document type served, because only HTML pages get the
 // offline CSP. SVG is left out: opened as a document (in a frame, or by the
 // demo navigating to it) it runs script with no policy.
 export const ALLOWED_EXTENSIONS = ['html', 'js', 'mjs', 'css', 'json', 'png', 'jpg', 'jpeg', 'webp', 'gif', 'woff2', 'wav', 'mp3', 'ogg'];
@@ -37,7 +37,7 @@ const URL_ATTRS: Record<string, string[]> = {
   script: ['src'], img: ['src', 'srcset'], source: ['src', 'srcset'], audio: ['src'], video: ['src', 'poster'],
   track: ['src'], iframe: ['src'], embed: ['src'], object: ['data'], input: ['src'], link: ['href'],
 };
-// CSS keywords and functions are case-insensitive: URL( and @IMPORT load too.
+// WHY: CSS keywords and functions are case-insensitive: URL( and @IMPORT load too.
 const CSS_URL_RE = /url\(\s*(['"]?)([^'")]+)\1\s*\)|@import\s+(['"])([^'"]+)\3/gi;
 const JS_IMPORT_RE = /(?:^|[^\w$.])import\s*(?:[\w*{}\s,$]+\s*from\s*)?(['"])([^'"\n]+)\1|\bimport\(\s*(['"])([^'"\n]+)\3\s*\)/g;
 const JS_WORKER_RE = /\bnew\s+(?:Shared)?Worker\(\s*(['"])([^'"\n]+)\1/g;
@@ -52,14 +52,13 @@ type Element = DefaultTreeAdapterMap['element'];
 type Document = DefaultTreeAdapterMap['document'];
 type Parsed = { doc: Document; bom: number };
 
-// Parses a page as a browser does. Browsers drop a leading BOM before
+// WHY: Parses a page as a browser does. Browsers drop a leading BOM before
 // parsing; parse5 would read it as text, so offsets are shifted by `bom`.
 function parsePage(html: string): Parsed {
   const bom = html.startsWith('\uFEFF') ? 1 : 0;
   return { doc: parse(html.slice(bom), { sourceCodeLocationInfo: true }), bom };
 }
 
-// Every element in document order, template contents included.
 function* elements(node: ParentNode): Generator<Element> {
   for (const child of node.childNodes) {
     if (!('tagName' in child)) continue;
@@ -71,7 +70,7 @@ function* elements(node: ParentNode): Generator<Element> {
 
 const textOf = (el: Element) => el.childNodes.map((n) => (n.nodeName === '#text' ? (n as DefaultTreeAdapterMap['textNode']).value : '')).join('');
 
-// Script text as an inline <script> body. "</script" would close the element
+// WHY: Script text as an inline <script> body. "</script" would close the element
 // early; written "<\/script" it means the same in a string, template, regex or
 // comment, the only places it can appear. "<!--" can change how the rest of
 // the element parses and has no safe rewrite, so it fails instead.
@@ -80,7 +79,7 @@ function inlineScriptBody(text: string, slug: string, what: string): string {
   return text.replace(/<\/(script)/gi, '<\\/$1');
 }
 
-// Rebuilds a Google Fonts css2 stylesheet from the mapped Fontsource packages,
+// WHY: Rebuilds a Google Fonts css2 stylesheet from the mapped Fontsource packages,
 // keeping Google's family names so the demo's own CSS still matches.
 function googleFonts(url: string, slug: string, opts: Options): { css: string; families: string[] } {
   const u = new URL(url);
@@ -115,7 +114,7 @@ function googleFonts(url: string, slug: string, opts: Options): { css: string; f
       const file = path.join(pkgDir, sheet);
       if (!existsSync(file)) throw new RunError(slug, `vendored font sheet ${fam.pkg}/${sheet} is missing`);
       let text = readFileSync(file, 'utf8').replaceAll(`font-family: '${fam.sourceName}'`, `font-family: '${name}'`);
-      // Every browser that runs these demos reads woff2, so a woff fallback
+      // WHY: Every browser that runs these demos reads woff2, so a woff fallback
       // would only double the page.
       text = text.replace(/,\s*url\(\.\/files\/[^)]+\.woff\)\s*format\('woff'\)/g, '');
       text = text.replace(/url\(\.\/files\/([^)]+)\)/g, (_, f: string) => {
@@ -131,7 +130,7 @@ function googleFonts(url: string, slug: string, opts: Options): { css: string; f
   return { css: text, families };
 }
 
-// Where the demo's policy goes: right after the page's <head> tag, or after a
+// WHY: Where the demo's policy goes: right after the page's <head> tag, or after a
 // <meta charset> that opens the head (so the charset stays within the first
 // 1024 bytes). The page is parsed as a browser parses it, so a malformed
 // comment can't hide markup: nothing but a doctype and comments may come
@@ -158,7 +157,6 @@ export async function collectDemo(runDir: string, slug: string, entry: string, o
   const root = realpathSync(runDir);
   const files = new Map<string, DemoFile>();
   const substitutions: Substitution[] = [];
-  // Local scripts and stylesheets to write in, once every file has been read.
   type Inline = { whole: string; tag: string; ref: string; fromDir: string };
   const pages: Array<{ rel: string; html: string; parsed: Parsed; subs: Substitution[]; inlines: Inline[]; modules: Inline[]; styles: Inline[] }> = [];
   const read = new Set<string>();
@@ -166,7 +164,7 @@ export async function collectDemo(runDir: string, slug: string, entry: string, o
   const stylesheetText = new Map<string, string>();
   let total = 0;
   const queue: Array<{ ref: string; fromDir: string; what: string }> = [{ ref: entry, fromDir: root, what: 'entry' }];
-  // References still in the served page as loads: everything except the
+  // WHY: References still in the served page as loads: everything except the
   // script and stylesheet tags that are replaced by the file's text. A file
   // written in once is still a separate request if any of these names it.
   const requested: Array<{ ref: string; fromDir: string; what: string }> = [];
@@ -247,9 +245,8 @@ export async function collectDemo(runDir: string, slug: string, entry: string, o
       if (name === 'style') scanCss(textOf(el));
       if (name === 'script' && !a.has('src')) scanJs(textOf(el));
       if (name !== 'link' && !URL_ATTRS[name]) continue;
-      if (!loc) continue; // made by the parser, not written in the page
+      if (!loc) continue; // WHY: made by the parser, not written in the page
       const tag = html.slice(parsed.bom + loc.startOffset, parsed.bom + loc.endOffset);
-      // The tag with one attribute's value replaced, keeping everything else.
       const withAttr = (attr: string, value: string) => {
         const at = el.sourceCodeLocation!.attrs![attr];
         const [from, to] = [at.startOffset - loc.startOffset, at.endOffset - loc.startOffset];
@@ -275,7 +272,7 @@ export async function collectDemo(runDir: string, slug: string, entry: string, o
         }
         if (isRemote(href)) throw new RunError(slug, `${rel} loads ${href} from another host, which the vendor map doesn't cover`);
         if (rels.includes('stylesheet')) {
-          // Written in as a <style>, it applies where the link stood; only
+          // WHY: Written in as a <style>, it applies where the link stood; only
           // media carries over, so anything else would change what it does.
           if (rels.length !== 1) throw new RunError(slug, `${rel} loads ${href} as "${a.get('rel')}"; only a plain stylesheet can be written into the page`);
           for (const attr of a.keys()) {
@@ -296,10 +293,9 @@ export async function collectDemo(runDir: string, slug: string, entry: string, o
         const end = el.sourceCodeLocation?.endTag;
         if (!end) throw new RunError(slug, `${rel} has a <script src="${src}"> with no closing tag`);
         const whole = html.slice(parsed.bom + loc.startOffset, parsed.bom + end.endOffset);
-        // The start tag without its src, keeping every other attribute.
         const at = el.sourceCodeLocation!.attrs!.src;
         const bare = `${tag.slice(0, at.startOffset - loc.startOffset).trimEnd()}${tag.slice(at.endOffset - loc.startOffset)}`;
-        // Written in, a script runs where it stands; these would change when.
+        // WHY: Written in, a script runs where it stands; these would change when.
         const type = (a.get('type') ?? '').trim().toLowerCase();
         for (const flag of ['defer', 'async']) if (a.has(flag)) throw new RunError(slug, `${rel} loads ${src} with ${flag}, which a script written into the page would ignore`);
         if (type === 'module') {
@@ -324,7 +320,7 @@ export async function collectDemo(runDir: string, slug: string, entry: string, o
         const v = a.get(attr);
         if (v === undefined) continue;
         const refs = attr === 'srcset' ? v.split(',').map((s) => s.trim().split(/\s+/)[0]) : [v.trim()];
-        // A local script's src is replaced by its text; nothing else here is.
+        // WHY: A local script's src is replaced by its text; nothing else here is.
         const writtenIn = name === 'script' && attr === 'src';
         for (const r of refs) follow(r, `${name} ${attr}`, writtenIn);
       }
@@ -357,7 +353,7 @@ export async function collectDemo(runDir: string, slug: string, entry: string, o
     for (const { whole, tag, ref, fromDir } of styles) {
       const target = resolve(ref, fromDir, `stylesheet in ${rel}`).rel;
       if (!target.endsWith('.css')) throw new RunError(slug, `${rel} loads ${target} as a stylesheet; only a .css file can be written into the page`);
-      // "</style" would end the element early, and there's no rewrite of it
+      // WHY: "</style" would end the element early, and there's no rewrite of it
       // that keeps every CSS context (string, comment, selector) the same.
       const css = stylesheetText.get(target)!;
       if (/<\/style/i.test(css)) throw new RunError(slug, `${target} contains "</style", so it can't be written into the page`);
@@ -366,7 +362,7 @@ export async function collectDemo(runDir: string, slug: string, entry: string, o
     }
   }
 
-  // Head insertions need the whole file set: the storage stand-in goes in only
+  // WHY: Head insertions need the whole file set: the storage stand-in goes in only
   // if some file in the demo uses web storage.
   const served = new Map<string, DemoFile>();
   const usesStorage = [...files.values()].some((f) => /\.(html?|m?js)$/.test(f.rel) && STORAGE_RE.test(f.bytes.toString('utf8')));
@@ -383,10 +379,10 @@ export async function collectDemo(runDir: string, slug: string, entry: string, o
     for (const s of [...subs, ...headEdits]) {
       if (original.includes(s.to)) throw new RunError(slug, `${rel} already contains a substitution's output, so the edit couldn't be reversed`);
     }
-    // Tag swaps apply everywhere; the head insertion only at its anchor.
+    // WHY: Tag swaps apply everywhere; the head insertion only at its anchor.
     // A function replacement, so "$&" and the like in script text stay literal.
     const swapped = subs.reduce((text, s) => text.replaceAll(s.from, () => s.to), original);
-    // Only a doctype and comments precede the anchor (locateHead). A swap
+    // WHY: Only a doctype and comments precede the anchor (locateHead). A swap
     // inside one of those comments would shift it, and fails here.
     if (!swapped.startsWith(anchor, anchorAt)) throw new RunError(slug, `${rel}: the <head> moved while editing, so the policy couldn't be placed`);
     const html = swapped.slice(0, anchorAt) + inserted + swapped.slice(anchorAt + anchor.length);
@@ -402,7 +398,7 @@ export async function collectDemo(runDir: string, slug: string, entry: string, o
   return { entry: entryRel, files: [...served.values()], sources: [...files.values()], substitutions };
 }
 
-// Undoes a page's substitutions, newest first. Tests use it to show the served
+// WHY: Undoes a page's substitutions, newest first. Tests use it to show the served
 // page is the original plus exactly the recorded edits.
 export function reverseSubstitutions(served: string, subs: Substitution[]): string {
   return [...subs].reverse().reduce((text, s) => text.replaceAll(s.to, () => s.from), served);

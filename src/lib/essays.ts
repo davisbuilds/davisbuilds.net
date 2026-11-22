@@ -1,4 +1,4 @@
-// Pure helpers for the Writing section. src/lib/writing.ts applies them to the
+// WHY: Pure helpers for the Writing section. src/lib/writing.ts applies them to the
 // content collection; keeping them here lets unit tests run without Astro.
 
 type EntryLike = { id: string; body?: string; data: { created: Date; published?: Date | null } };
@@ -12,8 +12,6 @@ export type Arranged<T extends EntryLike> = {
   minutes: number;
 };
 
-// Counts words in Markdown source: link targets, footnote markers, HTML tags
-// and punctuation-only tokens don't count.
 export function countWords(markdown: string): number {
   const text = markdown
     .replace(/<[^>]+>/g, ' ')
@@ -24,7 +22,7 @@ export function countWords(markdown: string): number {
 
 export const readingMinutes = (words: number): number => Math.max(1, Math.round(words / 200));
 
-// Published essays only, newest first. Document numbers (W-01, W-02, ...)
+// WHY: Published essays only, newest first. Document numbers (W-01, W-02, ...)
 // follow publication order, so an old draft published later takes the next
 // number instead of renumbering what's out, and nothing about unpublished
 // drafts, not even their count, shows in the numbering. `published` is a

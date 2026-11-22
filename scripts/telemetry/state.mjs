@@ -1,4 +1,4 @@
-// Where the operator's telemetry state lives on the producing host: the
+// WHY: Where the operator's telemetry state lives on the producing host: the
 // snapshot's candidate, and the last document actually published (the
 // baseline for the year-to-date and zero rules).
 import { homedir } from 'node:os';

@@ -1,4 +1,4 @@
-// Counts the operator's merged pull requests for the telemetry snapshot: every
+// WHY: Counts the operator's merged pull requests for the telemetry snapshot: every
 // pull request they authored, in any repository their `gh` login can read,
 // whose merge time falls in the window. GitHub's contribution totals itemize
 // public repositories only, and search can return incomplete results, so this
@@ -10,7 +10,7 @@ export type MergedPullRequestPage = {
   pageInfo: { hasNextPage: boolean; endCursor: string | null };
 };
 
-// Pages must come most recently updated first. Merging updates a pull request,
+// WHY: Pages must come most recently updated first. Merging updates a pull request,
 // so once a whole page was last updated before the window, nothing after it
 // can have merged inside the window.
 export async function countMergedPullRequests(

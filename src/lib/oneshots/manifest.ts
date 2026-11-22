@@ -1,4 +1,4 @@
-// Run manifests (run.toml) from the oneshots repository, schema 1. The
+// WHY: Run manifests (run.toml) from the oneshots repository, schema 1. The
 // repository accepts outside contributions, so everything here is untrusted
 // input: a manifest that doesn't validate fails the build, naming its run.
 import { parse } from 'smol-toml';
@@ -59,7 +59,7 @@ const manifestSchema = z
 
 export type Manifest = z.infer<typeof manifestSchema>;
 
-// TOML dates arrive as smol-toml TomlDate objects; the manifest wants a plain
+// WHY: TOML dates arrive as smol-toml TomlDate objects; the manifest wants a plain
 // local date. Anything else (a time, a date-time) is left for the schema to reject.
 function normalizeDate(value: unknown): unknown {
   if (value instanceof Date && 'isDate' in value && typeof value.isDate === 'function' && value.isDate()) {
@@ -78,7 +78,7 @@ export function parseManifest(dirName: string, toml: string): Manifest {
   if (raw.schema !== 1) {
     throw new RunError(dirName, `unsupported manifest schema ${JSON.stringify(raw.schema)} (this site reads schema 1)`);
   }
-  // The parser has already rolled an impossible unquoted date over, so check
+  // WHY: The parser has already rolled an impossible unquoted date over, so check
   // every unquoted date value in the raw text.
   for (const m of toml.matchAll(/=[ \t]*(\d{4}-\d{2}-\d{2})(?![\d-])/g)) {
     if (!isCalendarDate(m[1])) throw new RunError(dirName, `date: ${m[1]} is not a real date`);
@@ -94,7 +94,6 @@ export function parseManifest(dirName: string, toml: string): Manifest {
   return result.data;
 }
 
-// Which lab a model comes from, for the page's filters.
 export function labOf(agent: Manifest['agent']): 'anthropic' | 'openai' | 'other' {
   const id = `${agent.model_id ?? ''} ${agent.model}`.toLowerCase();
   if (/\bclaude\b|claude-|\bfable\b/.test(id)) return 'anthropic';

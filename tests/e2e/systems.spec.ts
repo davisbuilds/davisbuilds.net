@@ -31,7 +31,7 @@ test.describe('Systems', () => {
 
   test('freshness bars drain one per week without a push', async ({ page }) => {
     await page.goto('/systems/');
-    // Read 2026-10-01; dojo pushed 2026-09-30 (0 weeks), envdiff 2026-08-20 (6 weeks).
+    // WHY: Read 2026-10-01; dojo pushed 2026-09-30 (0 weeks), envdiff 2026-08-20 (6 weeks).
     await expect(page.locator('tr[data-part="dojo"] .age i.on')).toHaveCount(8);
     await expect(page.locator('tr[data-part="envdiff"] .age i.on')).toHaveCount(2);
   });
@@ -81,7 +81,7 @@ test.describe('Systems', () => {
   });
 });
 
-// The real private-name check runs at deploy time against the production
+// WHY: The real private-name check runs at deploy time against the production
 // build (scripts/lib/private-names.mjs), since the names can't be listed here.
 // This one holds the fixture build to the same rule for the fixture's
 // private repository.

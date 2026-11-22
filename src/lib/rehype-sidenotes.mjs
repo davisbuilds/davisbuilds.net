@@ -1,4 +1,4 @@
-// Turns Markdown footnotes ([^name]) into margin notes.
+// WHY: Turns Markdown footnotes ([^name]) into margin notes.
 //
 // GFM renders footnotes as superscript links plus a list at the end. This
 // plugin replaces each reference with an `a.ref` marker and moves its note to
@@ -13,7 +13,6 @@ function walk(node, fn, parent = null) {
   if (node.children) for (const c of [...node.children]) walk(c, fn, node);
 }
 
-// The note's content: its definition, minus GFM's "back to reference" links.
 function noteBody(li) {
   walk(li, (n, parent) => {
     if (isEl(n, 'a') && n.properties?.dataFootnoteBackref !== undefined) {
@@ -21,7 +20,7 @@ function noteBody(li) {
     }
   });
   const blocks = li.children.filter((c) => !(c.type === 'text' && !c.value.trim()));
-  // Trim the space GFM leaves before the removed back-reference.
+  // WHY: Trim the space GFM leaves before the removed back-reference.
   const last = blocks.at(-1);
   const tail = last?.children?.at(-1);
   if (tail?.type === 'text') tail.value = tail.value.replace(/\s+$/, '');

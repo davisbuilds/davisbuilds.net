@@ -1,4 +1,3 @@
-// A note for whoever opens the console. Copy is a placeholder for the owner's voice.
 console.log(
   '%cDAVISBUILDS.NET · SHEET 1 OF 1 · REV D',
   "font: 700 12px 'JetBrains Mono Variable', monospace; color: #fff; background: #b7460a; padding: 4px 8px;",
