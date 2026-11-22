@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Copies a vault Writing note into src/content/writing/<slug>.md in the site's
+// WHY: Copies a vault Writing note into src/content/writing/<slug>.md in the site's
 // frontmatter (src/lib/essay-import.ts). Re-run it after editing the note in
 // Obsidian; the vault stays the source. Nothing is written if the note has a
 // problem, and every problem is listed.
@@ -17,7 +17,7 @@ if (!file) {
   process.exit(2);
 }
 
-// The note's path within its vault (the folder holding .obsidian) is its
+// WHY: The note's path within its vault (the folder holding .obsidian) is its
 // identity: two folders can each have a note with the same name.
 const abs = path.resolve(file);
 let vault = path.dirname(abs);
@@ -38,7 +38,7 @@ try {
 
 const out = path.join('src/content/writing', `${imported.slug}.md`);
 const before = existsSync(out) ? readFileSync(out, 'utf8') : null;
-// Two note names can make the same slug ("A & B" and "A B"); never let one
+// WHY: Two note names can make the same slug ("A & B" and "A B"); never let one
 // replace the other, or a file written by hand.
 if (before !== null && sourceOf(before) !== source) {
   const owner = sourceOf(before);

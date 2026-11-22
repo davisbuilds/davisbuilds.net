@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Deploy the site: build, freeze a snapshot, hash
+// WHY: Deploy the site: build, freeze a snapshot, hash
 // it, upload it to incoming/, have the server verify it into releases/, then
 // switch `current` to it in one step and verify what's live.
 //
@@ -31,7 +31,6 @@ const { values } = parseArgs({
 const run = (cmd, args, opts = {}) => execFileSync(cmd, args, { encoding: 'utf8', ...opts });
 const die = (msg) => { console.error(`deploy: ${msg}`); process.exit(1); };
 
-// ---------- preflight: a committed, merged tree and a production build ----------
 if (run('git', ['status', '--porcelain']).trim()) die('the working tree has changes; deploy only committed work');
 const sha = run('git', ['rev-parse', 'HEAD']).trim();
 if (!values['allow-branch']) {
@@ -46,7 +45,7 @@ for (const v of ['DAVISBUILDS_FIXTURES', 'DAVISBUILDS_CONTENT', 'DAVISBUILDS_ONE
   if (process.env[v]) die(`${v} is set; a release is always a production build`);
 }
 
-// The server config and the checks that hold it to the build live in the
+// WHY: The server config and the checks that hold it to the build live in the
 // private companion repository, checked out at private/ (see AGENTS.md).
 for (const p of ['private/tests', 'private/names.txt']) if (!existsSync(p)) die(`no ${p}; a deploy needs the private checkout's server checks and name list`);
 console.log('server config checks…');
@@ -55,7 +54,7 @@ run('pnpm', ['exec', 'vitest', 'run', 'private/tests'], { stdio: 'inherit' });
 console.log('building…');
 run('pnpm', ['build'], { stdio: 'inherit' });
 
-// What a release must never contain: the telemetry document (deploys never
+// WHY: What a release must never contain: the telemetry document (deploys never
 // touch it), fixture content, or anything that isn't a plain file.
 const built = files('dist');
 if (built.includes('telemetry.json')) die('dist/ contains telemetry.json; the site never ships it');
@@ -63,7 +62,7 @@ const fixtures = built.filter((f) => /(^|\/)fixture-/.test(f));
 if (fixtures.length) die(`dist/ contains fixture content (${fixtures[0]}); is this a fixture build?`);
 for (const f of ['index.html', '404.html']) if (!built.includes(f)) die(`dist/ has no ${f}`);
 
-// No private project name anywhere in the site's own text or file names. The
+// WHY: No private project name anywhere in the site's own text or file names. The
 // control: the same scan finds the public repositories the Systems page links.
 const self = JSON.parse(run('gh', ['repo', 'view', '--json', 'name'])).name;
 const texts = scanTargets(built, (f) => readFileSync(path.join('dist', f), 'utf8'));
@@ -71,7 +70,6 @@ if (!findNames(texts, publicNames()).length) die('the private-name scan found no
 const leaks = findPrivateNames(texts, privateNames(self));
 if (leaks.length) die(`dist/ names a private project:\n  ${leaks.join('\n  ')}`);
 
-// ---------- snapshot, manifest, upload ----------
 const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
 const id = `${stamp}-${sha.slice(0, 7)}`;
 if (!ID_RE.test(id)) die(`bad release id ${id}`);
@@ -81,7 +79,7 @@ writeFileSync(path.join(snap, MANIFEST), manifestOf(snap));
 console.log(`release ${id}: ${built.length} files`);
 
 console.log(`uploading to ${DEPLOY_HOST}:incoming/${id}/…`);
-// Web-readable modes whatever the local umask; the server also refuses a
+// WHY: Web-readable modes whatever the local umask; the server also refuses a
 // release nginx couldn't read.
 run(RSYNC, ['-a', '--delete', '--chmod=D755,F644', ...RSYNC_SHELL, `${snap}/`, `${DEPLOY_HOST}:${id}/`], { stdio: 'inherit' });
 console.log(remote('finalize', id));
@@ -91,7 +89,6 @@ if (values['no-activate']) {
 }
 console.log(remote('activate', id));
 
-// ---------- verify what's live, then tidy ----------
 const problems = await verifyRelease(id, { served: !values['no-http'], publicCheck: values.public });
 if (problems.length) {
   console.error(`deploy: ${id} is active but failed verification:`);
@@ -101,7 +98,7 @@ if (problems.length) {
 }
 const gc = remote('gc');
 if (gc) console.log(gc);
-// Keep the snapshots the server keeps, so any of them can be verified over HTTP.
+// WHY: Keep the snapshots the server keeps, so any of them can be verified over HTTP.
 const local = existsSync(SNAPSHOTS) ? readdirSync(SNAPSHOTS).filter((d) => ID_RE.test(d)).sort() : [];
 for (const d of local.slice(0, -5)) rmSync(path.join(SNAPSHOTS, d), { recursive: true, force: true });
 console.log(`live: ${id}`);

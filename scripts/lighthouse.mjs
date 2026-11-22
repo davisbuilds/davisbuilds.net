@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Lighthouse accessibility, Home's transfer
+// WHY: Lighthouse accessibility, Home's transfer
 // budget, and no requests to third-party hosts, measured on the built site
 // served the way nginx serves it (gzip level 1 on the same types).
 //
@@ -32,12 +32,12 @@ const args = process.argv.slice(2);
 const PORT = 4394, DEBUG_PORT = 9334;
 const ORIGIN = `http://localhost:${PORT}`;
 const A11Y_FLOOR = 95;
-const HOME_BUDGET = 150 * 1024; // compressed HTML + CSS + JS, excluding fonts and images
+const HOME_BUDGET = 150 * 1024; // WHY: compressed HTML + CSS + JS, excluding fonts and images
 const OUT = '.lighthouse';
 const CONTROL = '/__lighthouse-control/';
 const SCHEME_CONTROL = '/__lighthouse-scheme/';
 
-// The same types nginx gzips (private/server/nginx/davisbuilds.net.conf), plus
+// WHY: The same types nginx gzips (private/server/nginx/davisbuilds.net.conf), plus
 // HTML, which nginx always compresses.
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'application/javascript', '.json': 'application/json',
@@ -49,7 +49,7 @@ const GZIP = new Set(['.html', '.css', '.js', '.json', '.xml', '.txt', '.md', '.
 const CONTROL_PAGE = `<!doctype html><html><head><title>control</title></head><body>
 <img src="https://example.com/lighthouse-control.png"><a href="#"></a>
 <p style="color:#eee;background:#fff">low contrast</p><input type="text"></body></html>`;
-// Readable except under one color scheme, so a contrast failure proves the
+// WHY: Readable except under one color scheme, so a contrast failure proves the
 // run really emulated that scheme.
 const schemeControl = (scheme) => `<!doctype html><html lang="en"><head><title>scheme control</title>
 <style>body{background:#fff;color:#000}@media (prefers-color-scheme:${scheme}){p{color:#f4f4f4}}</style></head>
@@ -93,7 +93,7 @@ function build(script) {
   if (r.status !== 0) throw new Error(`pnpm ${script} failed`);
 }
 
-// Patched Chrome, with an isolated Playwright profile and debugging port for Lighthouse.
+// WHY: Patched Chrome, with an isolated Playwright profile and debugging port for Lighthouse.
 // `scheme` sets prefers-color-scheme (Blink: 0 dark, 1 light).
 async function startChrome(scheme) {
   const browser = await launchPatchedChromium({
@@ -141,16 +141,15 @@ mkdirSync(OUT, { recursive: true });
 const telemetry = ['application/json', readFileSync('tests/fixtures/telemetry/ok.json')];
 
 const phases = [
-  // The fixture build: the essay template, with fixture content.
   { script: 'build:fixtures', pages: ['/writing/published-essay/'] },
-  // Production last, so dist/ is left as production for check-demos.
+  // WHY: Production last, so dist/ is left as production for check-demos.
   { script: 'build', pages: ['/', '/oneshots/', '/systems/', '/writing/', '/now/'] },
 ];
 
 const results = [];
 for (const [i, { script, pages }] of phases.entries()) {
   if (!args.includes('--no-build')) build(script);
-  // Home is audited with a telemetry reading in place; the document is a
+  // WHY: Home is audited with a telemetry reading in place; the document is a
   // test fixture served locally, never part of the build.
   const server = await serve('dist', {
     '/telemetry.json': telemetry,

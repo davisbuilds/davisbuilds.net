@@ -1,4 +1,4 @@
-// Plays every runnable demo in the built site, inside its sandbox, and reports
+// WHY: Plays every runnable demo in the built site, inside its sandbox, and reports
 // what each one did: requests to other hosts, CSP
 // violations, script errors, and whether the frame drew anything (by its
 // pixels, not its DOM: an empty canvas still counts as nothing drawn).
@@ -26,7 +26,7 @@ const args = process.argv.slice(2);
 const opt = (name, fallback) => (args.includes(name) ? args[args.indexOf(name) + 1] : fallback);
 const shots = opt('--shots', null);
 const seconds = Number(opt('--seconds', '6'));
-// --origin plays the demos from a running server (the rehearsal's nginx, with
+// WHY: --origin plays the demos from a running server (the rehearsal's nginx, with
 // its sandbox header) instead of a local preview.
 const external = opt('--origin', null);
 const port = 4393;
@@ -44,13 +44,13 @@ for (let i = 0; ; i++) {
   await new Promise((r) => setTimeout(r, 500));
 }
 
-// Software WebGL, so WebGL2 demos render in headless Chromium without a GPU.
+// WHY: Software WebGL, so WebGL2 demos render in headless Chromium without a GPU.
 const browser = await launchPatchedChromium({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 if (shots) mkdirSync(shots, { recursive: true });
 let failed = false;
 try {
   for (const run of demos) {
-    // A modest viewport: demos size their canvases to the window, and software
+    // WHY: A modest viewport: demos size their canvases to the window, and software
     // WebGL on a 2-core CI runner slows with every pixel.
     const context = await browser.newContext({ viewport: { width: 960, height: 600 } });
     await context.addInitScript(() => {
@@ -85,7 +85,7 @@ try {
       await page.waitForTimeout(seconds * 1000);
       frame = page.frames().find((f) => f.url().includes(`/oneshots/${run.slug}/files/`));
       if (frame) {
-        // Only what a visitor can see counts. A canvas is read if
+        // WHY: Only what a visitor can see counts. A canvas is read if
         // checkVisibility passes (display, visibility, opacity, ancestors
         // included) and nothing from it up to the root sets a filter, clip
         // path, mask or blend, which hit-testing can't see. Its box is split
@@ -114,13 +114,13 @@ try {
           }), GRID);
         for (const { url, cells } of canvases) drawn += await drawnPixels(Buffer.from(url.slice(url.indexOf(',') + 1), 'base64'), { size: GRID, cells });
       }
-      // A page screenshot clipped to the frame. An element screenshot waits for
+      // WHY: A page screenshot clipped to the frame. An element screenshot waits for
       // the frame to hold still across animation frames, which a busy demo may
       // never do.
       const clip = await page.locator('iframe').first().boundingBox();
       if (frame && clip && drawn < MIN_DRAWN_PIXELS) {
         via = 'screenshot';
-        // A demo behind an overlay can keep software WebGL busy enough that a
+        // WHY: A demo behind an overlay can keep software WebGL busy enough that a
         // capture times out. Try three times, stopping the demo's animation
         // loop after a timeout so the compositor can catch up.
         for (let attempt = 1; ; attempt++) {

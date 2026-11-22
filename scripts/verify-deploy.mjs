@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Verify the live release: `current` names it, the server re-hashes it
+// WHY: Verify the live release: `current` names it, the server re-hashes it
 // against its manifest, and every file its nginx serves matches that
 // manifest (--no-http skips this). --public also compares every file served
 // at the public hostname with the local snapshot in .deploy/<id>/.

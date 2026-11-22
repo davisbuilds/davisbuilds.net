@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Roll back to the release before the current one, then verify
+// WHY: Roll back to the release before the current one, then verify
 // it: on the server against its manifest, and every file nginx serves against
 // the same manifest (--no-http skips that; --public also checks the public
 // hostname against the local snapshot).
