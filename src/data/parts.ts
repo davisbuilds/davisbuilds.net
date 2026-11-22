@@ -1,4 +1,4 @@
-// The Systems parts list and applications. Only public
+// WHY: The Systems parts list and applications. Only public
 // repositories appear here, plus products the owner has chosen to name. Each
 // part's created and last-push dates come from GitHub at build time
 // (src/lib/github.ts), never from this file; a part that isn't a public
@@ -11,7 +11,7 @@ export type Part = {
   repo: string;
   function: string;
   lang: string;
-  // The kind shown on the Home system diagram, and which side of the harness
+  // WHY: The kind shown on the Home system diagram, and which side of the harness
   // bus the part sits on. Parts without a lane are listed on Systems only.
   kind?: string;
   lane?: Lane;
@@ -33,11 +33,11 @@ export type App = {
   name: string;
   kind: string;
   description: string;
-  // A public repository, or none for a product whose repository is private.
+  // WHY: A public repository, or none for a product whose repository is private.
   repo?: string;
   url?: string;
   featured?: boolean;
-  // Explicit permission to publish this brand and its live URL. This does
+  // WHY: Explicit permission to publish this brand and its live URL. This does
   // not permit source URLs or other destinations in the deploy scan.
   publishedBrand?: boolean;
 };

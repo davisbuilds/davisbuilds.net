@@ -1,4 +1,4 @@
-// The odometer roll: a number's digits spin into place once, then the element
+// WHY: The odometer roll: a number's digits spin into place once, then the element
 // goes back to plain text. Reduced motion skips the roll entirely.
 import { reducedMotion } from './motion';
 
@@ -31,7 +31,7 @@ export function odometer(el: HTMLElement, text: string): void {
     wrap.append(col);
     strips.push([strip, Number(ch)]);
   });
-  // Screen readers and copy-paste get the number, not the digit strips.
+  // WHY: Screen readers and copy-paste get the number, not the digit strips.
   const label = document.createElement('span');
   label.className = 'sr-only';
   label.textContent = text;

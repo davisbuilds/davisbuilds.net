@@ -1,4 +1,4 @@
-// Every rendered page passes through here, in dev and at build time, so
+// WHY: Every rendered page passes through here, in dev and at build time, so
 // links to other sites open in a new tab wherever they come from: components,
 // essay Markdown, oneshots data.
 import { defineMiddleware } from 'astro:middleware';

@@ -1,4 +1,4 @@
-// The telemetry reader: fills every [data-readout] from
+// WHY: The telemetry reader: fills every [data-readout] from
 // /telemetry.json. Values go in with textContent and DOM calls only, so the
 // document is always data. A source that's missing, invalid or unavailable
 // says "unavailable" (with its last reading when there was one), never zero;
@@ -16,7 +16,6 @@ const fmt = (n: number) => n.toLocaleString('en-US');
 const compact = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 });
 const $ = <T extends Element = HTMLElement>(el: Element, sel: string) => el.querySelector<T>(sel);
 
-// Mark a readout's state and age. Returns false when there's nothing to show.
 function state(el: HTMLElement, source: Source | null, now: number): boolean {
   const usable = source !== null && source.status !== 'unavailable';
   const stale = usable && isStale(source, now);
@@ -118,8 +117,8 @@ const RENDER: Record<string, Render> = {
     if (since && t.since) since.textContent = `sessions since ${t.since}`;
   },
   'harness-mix'(el, { agents }, now) {
-    // Line 132 says unavailable, or holds the segment labels; line 146 is the
-    // total and the reading's age, which state() keeps current.
+    // WHY: the text line at y=132 says unavailable, or holds the segment labels; the one at
+    // y=146 is the total and the reading's age, which state() keeps current.
     const empty = $(el, '[data-empty]'), total = $(el, '[data-total]');
     if (!state(el, agents, now)) return;
     if (empty) empty.textContent = '';
@@ -141,7 +140,7 @@ const RENDER: Record<string, Render> = {
       if (w > 40) {
         const label = document.createElementNS(NS, 'text');
         label.textContent = `${name} ${Math.round((sessions / sum) * 100)}%`;
-        // Mono at 9px is about 5.4 units a character: a label that would run
+        // WHY: Mono at 9px is about 5.4 units a character: a label that would run
         // past the bar's end is right-aligned to it instead.
         const fits = x + 4 + label.textContent.length * 5.4 <= 288;
         label.setAttribute('x', fits ? (x + 4).toFixed(1) : '288');
@@ -156,7 +155,7 @@ const RENDER: Record<string, Render> = {
   },
 };
 
-// Agent tiles note any host that has gone quiet: still counted, and named.
+// WHY: Agent tiles note any host that has gone quiet: still counted, and named.
 function hosts(el: HTMLElement, agents: AgentsSource | null, now: number): void {
   const note = $(el, '[data-hosts]');
   if (!note || !agents) return;
@@ -170,7 +169,7 @@ function render(sources: Sources): void {
   for (const el of document.querySelectorAll<HTMLElement>('[data-readout]')) RENDER[el.dataset.readout!]?.(el, sources, now);
 }
 
-// Keep every age and the stale state current without re-rendering values:
+// WHY: Keep every age and the stale state current without re-rendering values:
 // state() only touches a value to say "unavailable", which it already says.
 const GITHUB_READOUTS = ['contributions-ytd', 'pull-requests-30d', 'weekly-contributions'];
 function tick(sources: Sources): void {
@@ -188,7 +187,7 @@ async function load(): Promise<void> {
   try {
     res = await fetch('/telemetry.json', { cache: 'no-cache' });
   } catch {
-    return; // Offline: the page already says "unavailable".
+    return; // WHY: Offline: the page already says "unavailable".
   }
   if (!res.ok) return;
   let body: unknown = null;

@@ -1,11 +1,11 @@
-// The weekly contributions chart and its crosshair: built from the telemetry
+// WHY: The weekly contributions chart and its crosshair: built from the telemetry
 // series with DOM calls only (no markup strings), so a value can never become
 // an element. Pointer or touch reads any week into the caption.
 const NS = 'http://www.w3.org/2000/svg';
-// The chart is drawn at its box's width (one unit is about one CSS pixel), so
+// WHY: The chart is drawn at its box's width (one unit is about one CSS pixel), so
 // labels keep their size and nothing scrolls on a phone. Redrawn on resize.
 const W_MIN = 260, W_MAX = 760, L_MIN = 40, R = 8, T = 18, B = 26;
-const MONTH_GAP = 26; // a three-letter month label at 10px, plus air
+const MONTH_GAP = 26; // WHY: a three-letter month label at 10px, plus air
 const WEEK = 7 * 86_400_000;
 
 type Attrs = Record<string, string | number>;
@@ -16,7 +16,7 @@ function svg<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Attrs, parent?
   return el;
 }
 
-// Leave 20% above the measured peak, then round to readable integer ticks.
+// WHY: Leave 20% above the measured peak, then round to readable integer ticks.
 // Varying the tick count avoids the old four-tick jump from 400 to 800.
 export function axisMax(peak: number): { max: number; step: number } {
   if (!Number.isFinite(peak) || peak < 1) return { max: 4, step: 1 };
@@ -53,7 +53,7 @@ function chart(W: number, read: HTMLElement, series: { start: string; counts: nu
   const weekOf = (i: number) => new Date(start + i * WEEK).toISOString().slice(0, 10);
   const peak = counts.reduce((best, v, i) => (v > counts[best] ? i : best), 0);
   const { max, step } = axisMax(counts[peak]);
-  // The 10px mono labels need about six pixels per character, including commas.
+  // WHY: The 10px mono labels need about six pixels per character, including commas.
   const L = Math.max(L_MIN, fmt(max).length * 6 + 10);
   const pw = W - L - R, ph = H - T - B, bw = pw / counts.length;
   const y = (v: number) => T + ph - (v / max) * ph;
@@ -73,7 +73,6 @@ function chart(W: number, read: HTMLElement, series: { start: string; counts: nu
     const gap = bw < 6 ? 0.5 : 1;
     svg('rect', { class: 'bar', x: (L + i * bw + gap).toFixed(1), y: (T + ph - h).toFixed(1), width: (bw - 2 * gap).toFixed(1), height: h.toFixed(1), fill }, root);
   });
-  // One label per month, skipping any that would crowd the one before it.
   let lastMonth = -1, lastX = -Infinity;
   counts.forEach((_, i) => {
     const d = new Date(start + i * WEEK);
@@ -106,7 +105,7 @@ function chart(W: number, read: HTMLElement, series: { start: string; counts: nu
   };
   root.addEventListener('pointermove', (e) => at(e.clientX));
   root.addEventListener('pointerdown', (e) => at(e.clientX));
-  // A finger lifting also fires pointerleave; a tapped week stays until the next tap.
+  // WHY: A finger lifting also fires pointerleave; a tapped week stays until the next tap.
   root.addEventListener('pointerleave', (e) => {
     if (e.pointerType !== 'mouse') return;
     cross.setAttribute('opacity', '0');

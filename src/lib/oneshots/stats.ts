@@ -1,4 +1,3 @@
-// Headline numbers and plot points, computed from the manifests.
 import type { SyncedRun } from './types.ts';
 
 export type Stats = {
@@ -28,14 +27,13 @@ export function computeStats(runs: SyncedRun[]): Stats {
   };
 }
 
-// Runs that recorded both values, for the autonomy plot.
 export const plotPoints = (runs: SyncedRun[]) =>
   runs.flatMap((r) => (r.humanTurns !== null && r.wallClockMinutes !== null ? [{ slug: r.slug, title: r.title, model: r.agent.model, minutes: r.wallClockMinutes, turns: r.humanTurns }] : []));
 
 export type PlotLabel = { x: number; y: number; anchor: 'start' | 'end' };
 export type PlotArea = { left: number; right: number; top: number; bottom: number };
 
-// Places each point's label beside it, trying spots in order (right above,
+// WHY: Places each point's label beside it, trying spots in order (right above,
 // right below, left above, left below, then level) and taking the first that
 // stays inside `area` and clears every point and every label already placed.
 // A label with no free spot is left out (null); the tooltip still names it.
@@ -49,7 +47,7 @@ export function placeLabels(points: { x: number; y: number; text: string }[], ar
     const w = p.text.length * charWidth;
     for (const [dx, dy, anchor] of spots) {
       const x = p.x + dx, y = p.y + dy;
-      // Text boxes run from about 9 px above the baseline to 3 below; 2 px of air around each.
+      // WHY: Text boxes run from about 9 px above the baseline to 3 below; 2 px of air around each.
       const box = { x0: (anchor === 'start' ? x : x - w) - 2, x1: (anchor === 'start' ? x + w : x) + 2, y0: y - 11, y1: y + 5 };
       if (box.x0 + 2 < area.left || box.x1 - 2 > area.right || box.y0 + 2 < area.top || box.y1 - 2 > area.bottom) continue;
       if (dots.some((d) => hit(box, d)) || placed.some((b) => hit(box, b))) continue;
@@ -66,7 +64,7 @@ export function duration(minutes: number | null): string {
   return `${(minutes / 60).toFixed(1).replace(/\.0$/, '')} h`;
 }
 
-// Which long-horizon cards span two columns in the three-column grid. Rows
+// WHY: Which long-horizon cards span two columns in the three-column grid. Rows
 // alternate wide-then-narrow and narrow-then-wide, so every row is full; an odd
 // count ends with a row of three narrow cards.
 export function wideCards(n: number): boolean[] {
@@ -76,7 +74,6 @@ export function wideCards(n: number): boolean[] {
   return flags;
 }
 
-// Long-horizon runs first, each group newest first.
 export function ordered(runs: SyncedRun[]) {
   const byDate = (a: SyncedRun, b: SyncedRun) => b.date.localeCompare(a.date) || a.slug.localeCompare(b.slug);
   return {

@@ -1,4 +1,4 @@
-// Path confinement and file checks for untrusted run directories. A path
+// WHY: Path confinement and file checks for untrusted run directories. A path
 // from a manifest or a demo must resolve to a
 // regular file inside its run directory, with no symlink anywhere on the way.
 import { lstatSync, readFileSync, realpathSync } from 'node:fs';
@@ -9,8 +9,6 @@ const isInside = (root: string, p: string) => p.startsWith(root + path.sep);
 
 export const isRemote = (ref: string) => /^[a-z][a-z0-9+.-]*:/i.test(ref) || ref.startsWith('//');
 
-// Returns the absolute path of `rel` (relative to `fromDir`, itself inside
-// `runDir`), or throws a RunError naming the run.
 export function confinedFile(runDir: string, rel: string, slug: string, what: string, fromDir = runDir): string {
   if (isRemote(rel)) throw new RunError(slug, `${what} "${rel}" is a URL; only files in the run directory are allowed`);
   if (path.isAbsolute(rel)) throw new RunError(slug, `${what} "${rel}" is an absolute path`);
@@ -40,7 +38,6 @@ const MAGIC: Record<string, (b: Buffer) => boolean> = {
 export const IMAGE_EXTENSIONS = Object.keys(MAGIC);
 export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 
-// Reads an image whose extension and magic bytes agree, or throws.
 export function readImage(abs: string, slug: string, what: string): Buffer {
   const ext = path.extname(abs).slice(1).toLowerCase();
   const check = MAGIC[ext];

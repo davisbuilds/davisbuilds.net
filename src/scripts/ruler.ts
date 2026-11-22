@@ -1,5 +1,3 @@
-// Reading ruler: fills as the essay body scrolls past, reaching
-// 100% when the end of the prose is in view, and reads out words covered.
 const ruler = document.getElementById('ruler');
 const fill = document.getElementById('ruler-fill');
 const pos = document.getElementById('ruler-pos');

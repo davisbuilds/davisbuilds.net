@@ -1,4 +1,4 @@
-/* Design tokens for the Instrument direction.
+/* WHY: Design tokens for the Instrument direction.
    Layout concept: the page is an engineering drawing sheet (framed, zoned, with a
    title block), and every data readout carries its provenance.
    Light values on bare :root; dark values for the system preference (unless the
@@ -10,11 +10,11 @@
   --muted: #5a6772;
   --rule: #c2cbd2;
   --grid: rgba(58, 98, 138, 0.07);
-  --signal: #b7460a; /* 4.5:1 on --paper and --sheet, for the small text that uses it */
+  --signal: #b7460a; /* WHY: 4.5:1 on --paper and --sheet, for the small text that uses it */
   --signal-soft: rgba(183, 70, 10, 0.12);
-  --code-bg: #dde2de; /* inline code chip, opaque so the grid doesn't show through */
+  --code-bg: #dde2de; /* WHY: inline code chip, opaque so the grid doesn't show through */
   --ok: #2e7a58;
-  --agent: #ee6a1c; --agent-dark: #b9500f; --agent-hi: #ffb27a; /* the intro's pixel crew */
+  --agent: #ee6a1c; --agent-dark: #b9500f; --agent-hi: #ffb27a;
   --f-display: "Archivo Variable", "Archivo", "Helvetica Neue", Arial, sans-serif;
   --f-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, Menlo, monospace;
   --f-read: "Source Serif 4 Variable", "Source Serif 4", Georgia, serif;

@@ -1,5 +1,4 @@
 ---
-// Full-viewport page for one demo: a thin bar and the sandboxed frame.
 import '@fontsource-variable/jetbrains-mono/index.css';
 import '../../../styles/tokens.css';
 import SocialMeta from '../../../components/SocialMeta.astro';
@@ -28,7 +27,7 @@ const social = await runSocialImage(run, Astro.site);
     <meta name="description" content={run.summary} />
     <meta name="robots" content="noindex" />
     <link rel="canonical" href={canonical} />
-    <!-- A shared play link still previews as the run: its title, summary and hero. -->
+    <!-- WHY: A shared play link still previews as the run: its title, summary and hero. -->
     <meta property="og:title" content={title} />
     <meta property="og:description" content={run.summary} />
     <meta property="og:url" content={canonical} />
@@ -40,7 +39,7 @@ const social = await runSocialImage(run, Astro.site);
       body { height: 100dvh; display: grid; grid-template-rows: auto minmax(0, 1fr); }
       .bar { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; justify-content: space-between; padding: 8px 14px; border-bottom: 1px solid var(--ink); font-family: var(--f-mono); font-size: 12px; }
       .bar a { color: var(--ink); text-decoration: none; padding: 6px 0; margin: -6px 0; }
-      /* The run page states the sandbox under its poster; a phone keeps the row for the demo. */
+      /* WHY: The run page states the sandbox under its poster; a phone keeps the row for the demo. */
       @media (max-width: 560px) { .bar span { display: none; } }
       .bar a:hover { color: var(--signal); }
       .bar span { color: var(--muted); }

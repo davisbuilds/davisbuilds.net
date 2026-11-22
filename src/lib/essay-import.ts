@@ -1,4 +1,4 @@
-// Turns an Obsidian vault Writing note into a site essay (scripts/import-essay.mjs).
+// WHY: Turns an Obsidian vault Writing note into a site essay (scripts/import-essay.mjs).
 // The vault keeps a superset of the site's frontmatter (it adds `type` and
 // the `writing` tag); this drops the vault-only parts and refuses
 // anything the site can't publish as written, listing every problem at once.
@@ -8,13 +8,12 @@ import { essaySchema } from './essay-schema.ts';
 
 export type Imported = { slug: string; markdown: string };
 
-// Site keys in the order the site file lists them; the vault adds `type`.
 const SITE_KEYS = ['title', 'description', 'created', 'updated', 'published', 'status', 'confidence', 'importance', 'tags', 'written_by', 'also_on', 'canonical'] as const;
 const REQUIRED = ['title', 'description', 'created', 'updated', 'published', 'status', 'confidence', 'importance', 'written_by'] as const;
 const VAULT_ONLY_TAGS = new Set(['writing']);
 const DATES = new Set(['created', 'updated', 'published']);
 
-// Obsidian syntax with no meaning on the site, looked for in the body's text
+// WHY: Obsidian syntax with no meaning on the site, looked for in the body's text
 // only: code of any kind (fenced, indented, inline) shows it rather than uses it.
 const OBSIDIAN_ONLY: [RegExp, string][] = [
   [/(?<!\\)!?\[\[[^\]]*\]\]/, 'wikilink or embed'],
@@ -23,7 +22,7 @@ const OBSIDIAN_ONLY: [RegExp, string][] = [
 ];
 const CALLOUT = /^\[![^\]]+\]/;
 
-// The first frontmatter line of an imported essay names its vault note, as a
+// WHY: The first frontmatter line of an imported essay names its vault note, as a
 // YAML comment the build ignores. The script uses it to refuse overwriting an
 // essay that came from a different note (or was written by hand).
 const SOURCE_PREFIX = 'imported from vault note ';
@@ -56,7 +55,7 @@ function bodyProblems(body: string, bodyStartLine: number): string[] {
   const out: string[] = [];
   const walk = (node: MdNode, inQuote: boolean) => {
     if (node.type === 'text' && node.position) {
-      // The raw source, not the parsed value: the parser drops backslash
+      // WHY: The raw source, not the parsed value: the parser drops backslash
       // escapes, and \[\[x\]\] is written to be shown, not linked.
       const raw = body.slice(node.position.start.offset, node.position.end.offset);
       const report = (index: number, kind: string, match: string) => {
@@ -75,7 +74,7 @@ function bodyProblems(body: string, bodyStartLine: number): string[] {
   return out;
 }
 
-// One YAML line per key. Text goes out as JSON strings, which YAML reads as
+// WHY: One YAML line per key. Text goes out as JSON strings, which YAML reads as
 // double-quoted scalars, so a colon or # in a title can't change its meaning.
 function frontmatterLine(key: string, value: unknown): string {
   if (DATES.has(key)) return `${key}: ${value}`;
@@ -84,13 +83,13 @@ function frontmatterLine(key: string, value: unknown): string {
   return `${key}: ${JSON.stringify(value)}`;
 }
 
-// `source` identifies the note for the overwrite check: its path within the
+// WHY: `source` identifies the note for the overwrite check: its path within the
 // vault, since two folders can each hold a note with the same name.
 export function convertNote(text: string, fileName: string, source = fileName): Imported {
   const src = text.replace(/^﻿/, '').replace(/\r\n/g, '\n');
   const m = /^---\n([\s\S]*?)\n---\n?/.exec(src);
   if (!m) throw new Error(`${fileName}: no frontmatter; a Writing note starts with the vault's article properties`);
-  // The core schema keeps dates as the text Obsidian wrote; the site checks them.
+  // WHY: The core schema keeps dates as the text Obsidian wrote; the site checks them.
   const vault = (parse(m[1], { schema: 'core' }) ?? {}) as Record<string, unknown>;
   const problems: string[] = [];
 
@@ -99,11 +98,11 @@ export function convertNote(text: string, fileName: string, source = fileName): 
   for (const k of unknown) problems.push(`\`${k}\` isn't a Writing property (misspelled?)`);
   for (const k of REQUIRED) if (blank(vault[k])) problems.push(`\`${k}\` is blank`);
 
-  // A scalar or nested tag would otherwise be coerced or dropped, and with it an
+  // WHY: A scalar or nested tag would otherwise be coerced or dropped, and with it an
   // ai-generated marker.
   const tagsOk = Array.isArray(vault.tags) && vault.tags.every((t) => typeof t === 'string' && t.trim());
   if (!tagsOk) problems.push('`tags` must be a list of text, one tag per line');
-  // Obsidian compares tags trimmed and case-insensitively, so this does too.
+  // WHY: Obsidian compares tags trimmed and case-insensitively, so this does too.
   const tags = tagsOk ? (vault.tags as string[]).map((t) => t.trim()) : [];
   if (tags.some((t) => t.toLowerCase() === 'ai-generated')) problems.push('tagged `ai-generated`: an AI wrote this text, so rewrite it in your own words and remove the tag first');
   if (typeof vault.importance === 'string' && !blank(vault.importance)) problems.push('`importance` is saved as text; set the property type to Number in Obsidian');
@@ -114,7 +113,7 @@ export function convertNote(text: string, fileName: string, source = fileName): 
     else if (!blank(vault[k])) site[k] = vault[k];
   }
 
-  // Validate with the build's own schema, leaving out what's already reported:
+  // WHY: Validate with the build's own schema, leaving out what's already reported:
   // blank fields, importance saved as text, and malformed tags.
   const reported = new Set<string>([...REQUIRED.filter((k) => blank(vault[k])), ...(typeof vault.importance === 'string' ? ['importance'] : []), ...(tagsOk ? [] : ['tags'])]);
   const result = essaySchema.safeParse(site);

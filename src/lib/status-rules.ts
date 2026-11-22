@@ -1,4 +1,4 @@
-// The time-of-day status shown in the title block.
+// WHY: The time-of-day status shown in the title block.
 // It is a fixed rule table over the Eastern-time hour, never presence data.
 
 export const STATUS_RULES: ReadonlyArray<{ until: number; label: string }> = [

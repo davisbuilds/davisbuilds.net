@@ -1,4 +1,4 @@
-// Links to other sites open in a new tab (src/middleware.ts runs this over
+// WHY: Links to other sites open in a new tab (src/middleware.ts runs this over
 // every rendered page). Attributes are matched whole, so a ">" inside a quoted
 // value doesn't end the tag, and script and style bodies are left alone.
 const ATTR = String.raw`\s+[^\s=>"'/]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>"']+))?`;
@@ -18,7 +18,7 @@ function isExternal(href: string): boolean {
 
 export function markExternalLinks(html: string): string {
   return html.replace(TOKEN, (tag, attrs: string | undefined) => {
-    if (attrs === undefined) return tag; // script or style
+    if (attrs === undefined) return tag; // WHY: script or style
     const href = attr(attrs, 'href');
     if (!href || !isExternal(href[1] ?? href[2] ?? href[3]) || attr(attrs, 'target')) return tag;
     const rel = attr(attrs, 'rel');

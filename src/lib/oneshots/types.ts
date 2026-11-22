@@ -1,6 +1,3 @@
-// The shape of src/generated/oneshots/runs.json, written by the sync step and
-// read by the pages.
-
 export type Lab = 'anthropic' | 'openai' | 'other';
 
 export type SyncedAsset = { file: string; description: string; url: string | null };
@@ -17,7 +14,7 @@ export type SyncedRun = {
   lab: Lab;
   humanTurns: number | null;
   wallClockMinutes: number | null;
-  // The brief up to the oneshots `<!-- after delivery -->` line;
+  // WHY: The brief up to the oneshots `<!-- after delivery -->` line;
   // briefAfterDelivery says messages after it were left out.
   brief: string | null;
   briefAfterDelivery: boolean;
@@ -30,7 +27,7 @@ export type SyncedRun = {
 };
 
 export type SyncedData = {
-  // Fixtures use a placeholder repo and SHA so link-building runs in tests.
+  // WHY: Fixtures use a placeholder repo and SHA so link-building runs in tests.
   source: { kind: 'repository' | 'fixtures'; repo: string; sha: string };
   runs: SyncedRun[];
 };

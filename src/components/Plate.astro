@@ -1,6 +1,4 @@
 ---
-// One figure plate on Systems: a drawing, its callouts, and a footer with the
-// part's language, its first-commit month (from GitHub) and a link.
 interface Props { fig: number; name: string; kind: string; meta: string; href: string; linkLabel?: string }
 const { fig, name, kind, meta, href, linkLabel = 'Repo →' } = Astro.props;
 ---

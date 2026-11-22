@@ -1,5 +1,3 @@
-// Cursor zone tracking: the sheet's zone markers light up under the pointer
-// and the title block reads out the zone (C4, D6, ...).
 const sheet = document.getElementById('sheet');
 const xs = [...document.querySelectorAll<HTMLElement>('#zx span')];
 const ys = [...document.querySelectorAll<HTMLElement>('#zy span')];

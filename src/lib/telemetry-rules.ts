@@ -1,13 +1,13 @@
-// What a new reading may publish, given the last published document. The
+// WHY: What a new reading may publish, given the last published document. The
 // snapshot applies these before it
 // validates; the validator re-checks the year-to-date rule on the result.
 import { ageMs, HOST_STALE_AFTER_MS, UNAVAILABLE_AFTER_MS, type AgentHost, type AgentsSource, type GithubSource, type Status, type TelemetryDocument } from './telemetry-schema.ts';
 
 export type RuleOptions = {
   now: number;
-  // GitHub returned the known 2024 total, so a zero from it is believable.
+  // WHY: GitHub returned the known 2024 total, so a zero from it is believable.
   githubControlOk: boolean;
-  // Operator-only: publish a lower year-to-date total, recording why.
+  // WHY: Operator-only: publish a lower year-to-date total, recording why.
   acceptDecrease?: string;
 };
 
@@ -38,7 +38,7 @@ export function mergeHosts(fresh: AgentHost[], previous: AgentHost[], now: numbe
 
 const allTime = (h: AgentHost) => h.harness.reduce((n, x) => n + x.sessions, 0);
 
-// The positive controls. GitHub has reported 21 contributions for 2024 since
+// WHY: The positive controls. GitHub has reported 21 contributions for 2024 since
 // it was first measured, so a source that still says so is reading what it
 // should; an agent host's store is intact when its all-time sessions held.
 export const GITHUB_CONTROL = { year: 2024, total: 21 } as const;
@@ -62,7 +62,7 @@ function githubRules(next: GithubSource, prev: GithubSource | undefined, opts: R
   return next;
 }
 
-// An agent host's zero is believable only when its all-time session count
+// WHY: An agent host's zero is believable only when its all-time session count
 // held: the store is still there and still being read. A host refused before
 // keeps its last good values, so the same bogus zero is refused again.
 function hostRules(next: AgentHost, prev: AgentHost | undefined, notes: string[]): AgentHost {

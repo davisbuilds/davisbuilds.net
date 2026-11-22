@@ -1,4 +1,4 @@
-// Autonomy plot tooltip: pointing at a run shows its title, model, wall clock
+// WHY: Autonomy plot tooltip: pointing at a run shows its title, model, wall clock
 // and turns beside the point. A mouse hides it on leaving; a tap keeps it
 // until the next tap elsewhere, since a finger "leaves" as it lifts. The
 // svg's own label lists every run for screen readers.
@@ -15,7 +15,7 @@ if (tip && wrap) {
     title.textContent = g.dataset.title ?? '';
     detail.textContent = g.dataset.detail ?? '';
     tip.hidden = false;
-    // Wrap coordinates: the wrap scrolls sideways on a narrow screen.
+    // WHY: Wrap coordinates: the wrap scrolls sideways on a narrow screen.
     const dot = g.querySelector('.dot')!.getBoundingClientRect();
     const box = wrap.getBoundingClientRect();
     const cx = dot.left + dot.width / 2 - box.left - wrap.clientLeft + wrap.scrollLeft;

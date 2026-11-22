@@ -1,4 +1,4 @@
-// The published telemetry document, shared by the page's
+// WHY: The published telemetry document, shared by the page's
 // reader and the operator's validator. Every field is allowlisted: a key, a
 // label or a number outside these rules fails the check, so nothing but
 // aggregate counts can reach /telemetry.json.
@@ -14,7 +14,7 @@ export const STATUSES = ['ok', 'stale', 'unavailable'] as const;
 export const PRODUCERS = ['snapshot', 'scheduled'] as const;
 export const HOSTS = ['macbook', 'mac-mini'] as const;
 export const HARNESSES = ['Codex', 'Claude Code', 'Antigravity', 'OpenCode', 'Pi', 'Cursor', 'Gemini CLI', 'Other'] as const;
-// The weekly chart's series: weekly buckets only, so it can't be drawn at the
+// WHY: The weekly chart's series: weekly buckets only, so it can't be drawn at the
 // wrong spacing (and nothing finer than a day can ever be published).
 export const BUCKETS = ['week'] as const;
 
@@ -25,14 +25,13 @@ export type Harness = (typeof HARNESSES)[number];
 export type GithubSource = {
   status: Status;
   read_at: string | null;
-  // Present unless the source is unavailable.
+  // WHY: Present unless the source is unavailable.
   year?: number;
   contributions_ytd?: number;
   contributions_by_year?: Array<{ year: number; total: number }>;
-  // Authored pull requests merged in the last 30 days, any repository the login can read.
+  // WHY: Authored pull requests merged in the last 30 days, any repository the login can read.
   pull_requests_30d?: number;
   weekly_contributions?: { bucket: (typeof BUCKETS)[number]; start: string; counts: number[] };
-  // An operator-accepted drop in the year-to-date total (validator --accept-decrease).
   accepted_decrease?: { reason: string; previous: number; at: string };
 };
 
@@ -57,13 +56,13 @@ export type TelemetryDocument = {
 
 export type Check<T> = { ok: true; value: T } | { ok: false; errors: string[] };
 
-// A small strict checker: each reader records errors under a path, and an
+// WHY: A small strict checker: each reader records errors under a path, and an
 // object check fails on any key it wasn't told about.
 type Errors = string[];
 const isObject = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null && !Array.isArray(x);
 const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
-// Free text the operator types (an accepted decrease's reason): words and
+// WHY: Free text the operator types (an accepted decrease's reason): words and
 // punctuation only, so it can't carry markup even if a renderer slipped.
 const REASON = /^[A-Za-z0-9 .,;:'()\-]{1,200}$/;
 
@@ -98,7 +97,7 @@ function list(x: unknown, path: string, max: number, e: Errors, each: (item: unk
   if (x.length > max) e.push(`${path}: more than ${max} entries`);
   x.forEach((item, i) => each(item, `${path}[${i}]`));
 }
-// Status and read_at are common to every source; an unavailable source may
+// WHY: Status and read_at are common to every source; an unavailable source may
 // carry nothing else, and any other status must carry every field.
 function head(x: Record<string, unknown>, path: string, e: Errors): boolean {
   oneOf(x.status, STATUSES, `${path}.status`, e);

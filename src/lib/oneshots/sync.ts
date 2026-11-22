@@ -1,4 +1,4 @@
-// Reads a checkout of the oneshots repository's runs/ directory, validates
+// WHY: Reads a checkout of the oneshots repository's runs/ directory, validates
 // every run, and only then writes the site's copies. If any
 // run fails, nothing is written, so no file from a bad run reaches the build.
 import { createHash } from 'node:crypto';
@@ -9,15 +9,14 @@ import { confinedFile, IMAGE_EXTENSIONS, readImage } from './files.ts';
 import { labOf, parseManifest, RunError } from './manifest.ts';
 import type { SyncedData, SyncedRun } from './types.ts';
 
-// Release tag → names of the assets attached to it.
 export type ReleaseIndex = Map<string, Set<string>>;
 
 export type SyncOptions = {
   runsDir: string;
   releases: ReleaseIndex;
   source: SyncedData['source'];
-  generatedDir: string; // src/generated/oneshots
-  publicDir: string; // public/oneshots
+  generatedDir: string;
+  publicDir: string;
   nodeModules: string;
 };
 
@@ -27,12 +26,12 @@ const MAX_BRIEF_BYTES = 64 * 1024;
 const caption = (file: string) => path.basename(file, path.extname(file)).replace(/[-_]+/g, ' ');
 export const sha256 = (b: Buffer | string) => createHash('sha256').update(b).digest('hex');
 
-// oneshots RUNS.md: a line reading exactly this comes before messages sent
+// WHY: oneshots RUNS.md: a line reading exactly this comes before messages sent
 // after the work was delivered (repository moves, PR requests). The page
 // shows the brief up to it and links to the full file.
 export const DELIVERY_MARKER = '<!-- after delivery -->';
 
-// The indexes of lines outside fenced code blocks, where a marker counts. A
+// WHY: The indexes of lines outside fenced code blocks, where a marker counts. A
 // prompt that shows the marker in a code sample is quoting it. Same rule as
 // the oneshots validator (scripts/validate_runs.py).
 function proseLines(lines: string[]): number[] {
@@ -41,7 +40,7 @@ function proseLines(lines: string[]): number[] {
   lines.forEach((line, i) => {
     const m = /^ {0,3}(`{3,}|~{3,})/.exec(line);
     if (fence) {
-      // A closer is the fence character alone, at least as long, then only
+      // WHY: A closer is the fence character alone, at least as long, then only
       // whitespace; anything else on the line is still code.
       if (m && m[1][0] === fence[0] && m[1].length >= fence.length && !line.slice(m[0].length).trim()) fence = null;
     } else if (m) fence = m[1];
@@ -55,7 +54,7 @@ export function splitBrief(text: string, dir: string): { brief: string; afterDel
   const prose = proseLines(lines.map((l) => l.replace(/\r$/, '')));
   const line = (i: number) => lines[i].replace(/\r$/, '');
   const at = prose.filter((i) => line(i) === DELIVERY_MARKER);
-  // A marker in another case or spacing would leave the later messages on
+  // WHY: A marker in another case or spacing would leave the later messages on
   // the page unnoticed. Other typos aren't caught.
   // Only a line that is itself a comment (indented under 4 spaces, so not
   // code) counts: a prompt may quote the marker inline.
@@ -154,11 +153,10 @@ export async function syncOneshots(opts: SyncOptions): Promise<SyncedData> {
     .sort();
   if (dirs.length === 0) throw new Error(`oneshots: no runs with a run.toml under ${opts.runsDir}`);
 
-  // Phase 1: validate everything. Any RunError stops here, before any write.
+  // WHY: Phase 1: validate everything. Any RunError stops here, before any write.
   const staged: Staged[] = [];
   for (const dir of dirs) staged.push(await stageRun(opts.runsDir, dir, opts));
 
-  // Phase 2: write.
   rmSync(opts.generatedDir, { recursive: true, force: true });
   rmSync(opts.publicDir, { recursive: true, force: true });
   for (const { run, images, demo } of staged) {

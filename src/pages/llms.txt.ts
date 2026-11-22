@@ -1,4 +1,4 @@
-// /llms.txt in the llmstxt.org format. Built from the same
+// WHY: /llms.txt in the llmstxt.org format. Built from the same
 // sources as the pages: published essays, the synced oneshots runs and the
 // parts list, so it can't list anything a page doesn't show.
 import type { APIContext } from 'astro';
@@ -6,7 +6,7 @@ import { getPublishedEssays } from '../lib/writing';
 import { loadOneshots } from '../lib/oneshots/data';
 import { APPS, PARTS, repoUrl } from '../data/parts';
 
-// Text from essays and run manifests (contributed, untrusted) goes into
+// WHY: Text from essays and run manifests (contributed, untrusted) goes into
 // Markdown, so its syntax characters are escaped: a summary can't add a link
 // or break the list item around it.
 const text = (s: string) => s.replace(/\s+/g, ' ').trim().replace(/[\\`*_{}[\]()<>#+!|~]/g, '\\$&');
