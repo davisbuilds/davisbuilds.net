@@ -3,7 +3,7 @@ import { planIntro, TIMING, type PanelSpec } from '../../src/lib/intro';
 
 const r = (x: number, y: number, w: number, h: number) => ({ x, y, w, h });
 
-// The real Home's first screen, measured in Chromium from the production build.
+// WHY: The real Home's first screen, measured in Chromium from the production build.
 const DESKTOP = { w: 1440, h: 900 };
 const DESKTOP_PANELS: PanelSpec[] = [
   { rect: r(209, 73, 1022, 40), foreman: true },

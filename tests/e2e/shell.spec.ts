@@ -64,7 +64,7 @@ test('links to other sites open in a new tab, links within it do not', async ({ 
       } else expect(l.target, `${path} ${l.href}`).toBeNull();
     }
   }
-  // Control: the footer's profile links alone put external links on every page.
+  // WHY: Control: the footer's profile links alone put external links on every page.
   expect(external).toBeGreaterThanOrEqual(PAGES.length * 5);
 });
 
@@ -74,12 +74,12 @@ test('an explicit theme choice overrides the system scheme, both ways', async ({
   const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
   const darkBg = await bg();
   const btn = page.locator('#theme-btn');
-  await btn.click(); // system -> light
+  await btn.click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   const lightBg = await bg();
   expect(lightBg).not.toBe(darkBg);
   await page.emulateMedia({ colorScheme: 'light' });
-  await btn.click(); // light -> dark
+  await btn.click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   expect(await bg()).toBe(darkBg);
   await page.reload();

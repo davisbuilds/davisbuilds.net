@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 
-// Each case serves one fixture as /telemetry.json and pins the page clock, so
+// WHY: Each case serves one fixture as /telemetry.json and pins the page clock, so
 // ages are exact. Fixtures never ship: the fixture build has no telemetry.json.
 const fixture = (name: string) => readFileSync(`tests/fixtures/telemetry/${name}.json`, 'utf8');
 
@@ -13,7 +13,7 @@ const readout = (page: Page, key: string) => page.locator(`[data-readout="${key}
 const value = (page: Page, key: string) => readout(page, key).locator('[data-value]');
 
 test.describe('telemetry reader', () => {
-  // Values land without the odometer roll, so each assertion reads final text.
+  // WHY: Values land without the odometer roll, so each assertion reads final text.
   test.beforeEach(({ page }) => page.emulateMedia({ reducedMotion: 'reduce' }));
 
   test('ok: every Home readout shows its number and its age', async ({ page }) => {
@@ -65,7 +65,6 @@ test.describe('telemetry reader', () => {
     const months = labels.filter((l) => /^[A-Z][a-z]{2}$/.test(l.text ?? '')).sort((a, b) => a.left - b.left);
     expect(months.length).toBeGreaterThanOrEqual(4);
     for (let i = 1; i < months.length; i++) expect(months[i].left, `${months[i].text} clears ${months[i - 1].text}`).toBeGreaterThan(months[i - 1].right + 2);
-    // The crosshair still reads the last week from the right edge.
     const box = (await chart.locator('svg').boundingBox())!;
     await chart.locator('svg').click({ position: { x: box.width - 3, y: box.height / 2 } });
     await expect(chart.locator('[data-cross]')).toHaveText('Week of 2026-10-04 · 63 contributions · in progress');
@@ -228,7 +227,7 @@ test.describe('ages keep counting on an open page', () => {
 });
 
 test('the odometer rolls into the number and settles to plain text', async ({ page }) => {
-  // A fake clock that only moves when told, so the roll can be caught midway.
+  // WHY: A fake clock that only moves when told, so the roll can be caught midway.
   await page.clock.install({ time: new Date('2026-10-07T21:00:00Z') });
   await page.route('**/telemetry.json', (route) => route.fulfill({ contentType: 'application/json', body: fixture('ok') }));
   await page.goto('/');

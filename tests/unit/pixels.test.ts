@@ -25,7 +25,7 @@ describe('drawnPixels', () => {
     expect(await drawnPixels(await withSquare(3))).toBeLessThan(MIN_DRAWN_PIXELS);
   });
   it('counts only the visible cells of a grid, and takes the background from them', async () => {
-    // 320x200 with a 20px square at (40,40), inside cell (0,0) of a 2x2 grid.
+    // WHY: 320x200 with a 20px square at (40,40), inside cell (0,0) of a 2x2 grid.
     const png = await withSquare(20);
     expect(await drawnPixels(png, { size: 2, cells: [[0, 0]] })).toBe(400);
     expect(await drawnPixels(png, { size: 2, cells: [[1, 0], [0, 1], [1, 1]] })).toBe(0);

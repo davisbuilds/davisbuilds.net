@@ -5,7 +5,7 @@ const t = (s: string) => Date.parse(s);
 const FROM = t('2026-10-07T00:00:00Z');
 const TO = t('2026-11-06T00:00:00Z');
 
-// Pages as GitHub returns them: merged PRs, most recently updated first.
+// WHY: Pages as GitHub returns them: merged PRs, most recently updated first.
 const node = (id: string, mergedAt: string | null, updatedAt = mergedAt ?? '2026-11-01T00:00:00Z') => ({ id, mergedAt, updatedAt });
 const page = (nodes: MergedPullRequestPage['nodes'], endCursor: string | null): MergedPullRequestPage => ({
   nodes,
@@ -32,7 +32,6 @@ describe('merged pull requests in the window', () => {
   });
 
   it('stops once a whole page was last updated before the window', async () => {
-    // A PR is updated when it merges, so nothing later in the order can have merged inside the window.
     const { fetchPage, requested } = pages(
       page([node('a', '2026-11-01T00:00:00Z')], 'c1'),
       page([node('b', '2026-09-01T00:00:00Z', '2026-10-06T00:00:00Z')], 'c2'),

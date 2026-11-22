@@ -21,7 +21,7 @@ test.describe('Home', () => {
   test('the system diagram, oneshots strip and register come from site data', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('.system .lane .part')).toHaveCount(6);
-    // The four newest runs, in order; fixture-plain has no hero, so it keeps
+    // WHY: The four newest runs, in order; fixture-plain has no hero, so it keeps
     // its place with the placeholder plate.
     const hrefs = await page.locator('.strip a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
     expect(hrefs).toEqual(['/oneshots/fixture-demo/', '/oneshots/fixture-hostile/', '/oneshots/fixture-film/', '/oneshots/fixture-plain/']);
