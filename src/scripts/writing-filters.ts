@@ -1,5 +1,3 @@
-// WHY: Status filters on the Writing register. Without JavaScript the filters stay
-// hidden and every row shows.
 const group = document.querySelector<HTMLElement>('[data-filters]');
 const rows = document.querySelectorAll<HTMLTableRowElement>('#reg-all tr');
 const empty = document.getElementById('reg-empty');

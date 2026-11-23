@@ -1,7 +1,4 @@
-// WHY: The link-preview image for a run (X, Slack, iMessage cards): its hero,
-// cropped to the 1.91:1 frame those cards show and re-encoded as JPEG, which
-// every preview fetcher accepts. Sharp's attention crop keeps the busiest
-// region; a centre crop cut screenshot titles and the top of tall subjects.
+// WHY: Use the attention crop because centered crops cut titles and the tops of tall subjects.
 import { getImage } from 'astro:assets';
 import { runImage } from './data.ts';
 import type { SyncedRun } from './types.ts';

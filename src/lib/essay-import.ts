@@ -1,7 +1,3 @@
-// WHY: Turns an Obsidian vault Writing note into a site essay (scripts/import-essay.mjs).
-// The vault keeps a superset of the site's frontmatter (it adds `type` and
-// the `writing` tag); this drops the vault-only parts and refuses
-// anything the site can't publish as written, listing every problem at once.
 import { fromMarkdown } from 'mdast-util-from-markdown';
 import { parse } from 'yaml';
 import { essaySchema } from './essay-schema.ts';
@@ -13,8 +9,7 @@ const REQUIRED = ['title', 'description', 'created', 'updated', 'published', 'st
 const VAULT_ONLY_TAGS = new Set(['writing']);
 const DATES = new Set(['created', 'updated', 'published']);
 
-// WHY: Obsidian syntax with no meaning on the site, looked for in the body's text
-// only: code of any kind (fenced, indented, inline) shows it rather than uses it.
+// WHY: Check text nodes so unsupported note syntax inside a code example remains literal.
 const OBSIDIAN_ONLY: [RegExp, string][] = [
   [/(?<!\\)!?\[\[[^\]]*\]\]/, 'wikilink or embed'],
   [/(?<!\\)==[^=\s](?:[^=]*[^=\s])?==/, 'highlight'],
@@ -22,9 +17,7 @@ const OBSIDIAN_ONLY: [RegExp, string][] = [
 ];
 const CALLOUT = /^\[![^\]]+\]/;
 
-// WHY: The first frontmatter line of an imported essay names its vault note, as a
-// YAML comment the build ignores. The script uses it to refuse overwriting an
-// essay that came from a different note (or was written by hand).
+// WHY: The ignored frontmatter note identity prevents an import from overwriting another source’s essay.
 const SOURCE_PREFIX = 'imported from vault note ';
 
 export function sourceOf(markdown: string): string | null {
@@ -83,8 +76,7 @@ function frontmatterLine(key: string, value: unknown): string {
   return `${key}: ${JSON.stringify(value)}`;
 }
 
-// WHY: `source` identifies the note for the overwrite check: its path within the
-// vault, since two folders can each hold a note with the same name.
+/** Pass the source note’s vault-relative path to distinguish notes with the same filename. */
 export function convertNote(text: string, fileName: string, source = fileName): Imported {
   const src = text.replace(/^﻿/, '').replace(/\r\n/g, '\n');
   const m = /^---\n([\s\S]*?)\n---\n?/.exec(src);
@@ -113,8 +105,7 @@ export function convertNote(text: string, fileName: string, source = fileName): 
     else if (!blank(vault[k])) site[k] = vault[k];
   }
 
-  // WHY: Validate with the build's own schema, leaving out what's already reported:
-  // blank fields, importance saved as text, and malformed tags.
+  // WHY: Skip schema errors already reported by the specialized checks so each problem appears once.
   const reported = new Set<string>([...REQUIRED.filter((k) => blank(vault[k])), ...(typeof vault.importance === 'string' ? ['importance'] : []), ...(tagsOk ? [] : ['tags'])]);
   const result = essaySchema.safeParse(site);
   if (!result.success) {

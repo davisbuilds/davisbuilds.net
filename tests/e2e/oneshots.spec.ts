@@ -5,9 +5,7 @@ import { expect, test, type Page } from '@playwright/test';
 const RUNS_DIR = 'tests/fixtures/oneshots/runs';
 const MANIFESTS = readdirSync(RUNS_DIR).filter((d) => existsSync(path.join(RUNS_DIR, d, 'run.toml')));
 
-// WHY: Watches requests to hosts other than the preview server, frames included.
-// Chromium reports a request the page's CSP stopped as failed with "csp"; it
-// never left the browser. Anything else to another host did leave.
+// WHY: Chromium reports CSP-blocked requests even when they never leave the browser.
 function offsite(page: Page) {
   const attempted = new Set<string>();
   const stoppedByCsp = new Set<string>();
@@ -166,15 +164,11 @@ test.describe('runnable demos', () => {
     expect(r.fetch).toBe('blocked');
     expect(r.script).toBe('blocked');
     expect(r.image).toBe('blocked');
-    // WHY: The demo then tries to navigate its own frame to another host, by script
-    // at 2 s and by meta refresh at 3 s. The page's frame-src blocks both before
-    // any request (the frame shows an error page). Without that policy the
-    // watcher sees the navigation request and the frame lands on example.com.
+    // WHY: Allow both delayed navigation attempts to fire before checking that the embedding policy blocked them.
     await page.waitForTimeout(3_500);
     expect(page.frames().map((f) => f.url()).filter((u) => u.startsWith('http') && !u.includes('localhost'))).toEqual([]);
     expect(page.url()).toBe(url);
     expect(await page.evaluate(() => document.body.dataset.pwned)).toBeUndefined();
-    // WHY: Control: the watcher sees the injected script and image, which CSP stopped.
     expect(hits.stopped()).toEqual(expect.arrayContaining(['https://example.com/injected.js', 'https://example.com/pixel.png']));
     expect(hits.left()).toEqual([]);
   });
@@ -221,8 +215,7 @@ test.describe('runnable demos', () => {
       image: f.querySelector('img')!.getBoundingClientRect().height,
       content: f.querySelector('figcaption')!.getBoundingClientRect().bottom - f.getBoundingClientRect().top,
     })));
-    // WHY: Control: the hero (960 x 600) and the close-up (600 x 900) share a row,
-    // so a stretched hero would show here.
+    // WHY: A landscape hero beside a portrait close-up makes unintended height stretching observable.
     expect(boxes[0].top).toBe(boxes[1].top);
     expect(boxes[1].image).toBeGreaterThan(boxes[0].image + 100);
     for (const b of boxes) expect(b.height - b.content).toBeLessThanOrEqual(2);
@@ -234,7 +227,6 @@ test.describe('runnable demos', () => {
     await expect(page.locator('pre.brief')).not.toContainText('Fixture follow-up');
     await expect(page.locator('.brief-later')).toContainText('full brief on GitHub');
     await expect(page.getByRole('link', { name: 'Brief on GitHub' })).toHaveAttribute('href', /\/runs\/fixture-film\/brief\.md$/);
-    // WHY: Control: a brief without the marker is shown whole, with no note.
     await page.goto('/oneshots/fixture-demo/');
     await expect(page.locator('pre.brief')).toBeVisible();
     await expect(page.locator('.brief-later')).toHaveCount(0);

@@ -4,10 +4,8 @@ import { readRevision } from '../lib/revision';
 
 const rev = readRevision();
 const year = new Date().getFullYear();
-// WHY: The sheet's address, so the title names the page it's on. The 404 page
-// serves any missing address, so it keeps the bare domain.
-// Each path segment is its own box, so a long title breaks at a slash rather
-// than inside a slug.
+// WHY: The 404 serves arbitrary missing addresses, so it uses the bare domain.
+// Splitting by segment lets the title wrap at a slash and keep each slug intact.
 const here = Astro.url.pathname.replace(/\/?$/, '/');
 const segments = here === '/' || here === '/404/' ? [] : here.split('/').filter(Boolean).map((s) => `${s}/`);
 ---

@@ -1,5 +1,4 @@
-// WHY: Essays live in src/content/writing. Tests point DAVISBUILDS_CONTENT at a
-// fixture directory instead, so real drafts never enter a test build.
+// WHY: Tests can select a fixture content directory to keep working drafts out of builds under test.
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { defineCollection } from 'astro:content';

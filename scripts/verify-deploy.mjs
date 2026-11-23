@@ -1,10 +1,8 @@
 #!/usr/bin/env node
-// WHY: Verify the live release: `current` names it, the server re-hashes it
-// against its manifest, and every file its nginx serves matches that
-// manifest (--no-http skips this). --public also compares every file served
-// at the public hostname with the local snapshot in .deploy/<id>/.
-//
-//   node scripts/verify-deploy.mjs [--no-http] [--public] [<release-id>]
+/**
+ * Verify the live release or a given release ID against its manifest.
+ * Use --no-http to skip the origin HTTP comparison or --public to compare the public host.
+ */
 import { parseArgs } from 'node:util';
 import { currentRelease, verifyRelease } from './lib/release.mjs';
 

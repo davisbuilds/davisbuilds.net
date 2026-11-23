@@ -1,6 +1,4 @@
-// WHY: Links to other sites open in a new tab (src/middleware.ts runs this over
-// every rendered page). Attributes are matched whole, so a ">" inside a quoted
-// value doesn't end the tag, and script and style bodies are left alone.
+// WHY: Match complete attribute values so a greater-than sign inside quotes cannot close the tag.
 const ATTR = String.raw`\s+[^\s=>"'/]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>"']+))?`;
 const TOKEN = new RegExp(String.raw`<script\b[\s\S]*?</script\s*>|<style\b[\s\S]*?</style\s*>|<a((?:${ATTR})*)\s*>`, 'gi');
 const SITE_HOSTS = new Set(['davisbuilds.net', 'www.davisbuilds.net']);
@@ -18,7 +16,7 @@ function isExternal(href: string): boolean {
 
 export function markExternalLinks(html: string): string {
   return html.replace(TOKEN, (tag, attrs: string | undefined) => {
-    if (attrs === undefined) return tag; // WHY: script or style
+    if (attrs === undefined) return tag;
     const href = attr(attrs, 'href');
     if (!href || !isExternal(href[1] ?? href[2] ?? href[3]) || attr(attrs, 'target')) return tag;
     const rel = attr(attrs, 'rel');

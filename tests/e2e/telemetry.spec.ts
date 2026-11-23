@@ -1,8 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 
-// WHY: Each case serves one fixture as /telemetry.json and pins the page clock, so
-// ages are exact. Fixtures never ship: the fixture build has no telemetry.json.
 const fixture = (name: string) => readFileSync(`tests/fixtures/telemetry/${name}.json`, 'utf8');
 
 async function serve(page: Page, body: string, at = '2026-10-07T21:00:00Z') {

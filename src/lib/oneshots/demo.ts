@@ -1,14 +1,4 @@
-// WHY: The page a runnable demo is served as, and the edits made to it.
-// Starting from the entry page, it follows local
-// references, confined to the run directory. Third-party loads are swapped for
-// vendored copies from vendor-map.ts or fail the build. Every served page gets
-// a CSP that keeps it offline.
-//
-// A demo is served as that one page. The host's bot check answers any request
-// without its cookie with a challenge page, and a sandboxed frame (an opaque
-// origin) never sends the cookie, so every request after the page itself would
-// fail. Scripts, plain stylesheets and fonts are written into the page;
-// anything else it would load separately fails the build.
+// WHY: A sandboxed frame lacks the host’s bot-check cookie, so dependencies must fit in the initial page response.
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { parse, type DefaultTreeAdapterMap } from 'parse5';
@@ -19,8 +9,7 @@ import { DEMO_CSP, FONT_FAMILIES, GOOGLE_FONTS_CSS, PRECONNECT_HOSTS, SCRIPTS, S
 
 export type Substitution = { file: string; from: string; to: string; label: string };
 export type DemoFile = { rel: string; bytes: Buffer };
-// WHY: `files` is what's served: the entry page alone. `sources` is every file the
-// demo uses, as read from the run, for reviewing a lock bump.
+/** files contains the served entry page. sources contains the original artifacts used to review a lock bump. */
 export type Demo = { entry: string; files: DemoFile[]; sources: DemoFile[]; substitutions: Substitution[] };
 
 // WHY: HTML is the only document type served, because only HTML pages get the
@@ -79,8 +68,7 @@ function inlineScriptBody(text: string, slug: string, what: string): string {
   return text.replace(/<\/(script)/gi, '<\\/$1');
 }
 
-// WHY: Rebuilds a Google Fonts css2 stylesheet from the mapped Fontsource packages,
-// keeping Google's family names so the demo's own CSS still matches.
+// WHY: Preserve Google’s family names so the original demo stylesheet can use the vendored font files.
 function googleFonts(url: string, slug: string, opts: Options): { css: string; families: string[] } {
   const u = new URL(url);
   const css: string[] = [];
@@ -164,9 +152,7 @@ export async function collectDemo(runDir: string, slug: string, entry: string, o
   const stylesheetText = new Map<string, string>();
   let total = 0;
   const queue: Array<{ ref: string; fromDir: string; what: string }> = [{ ref: entry, fromDir: root, what: 'entry' }];
-  // WHY: References still in the served page as loads: everything except the
-  // script and stylesheet tags that are replaced by the file's text. A file
-  // written in once is still a separate request if any of these names it.
+  // WHY: Track every remaining request even when another reference to the same file was already inlined.
   const requested: Array<{ ref: string; fromDir: string; what: string }> = [];
 
   const resolve = (ref: string, fromDir: string, what: string) => {
@@ -245,7 +231,7 @@ export async function collectDemo(runDir: string, slug: string, entry: string, o
       if (name === 'style') scanCss(textOf(el));
       if (name === 'script' && !a.has('src')) scanJs(textOf(el));
       if (name !== 'link' && !URL_ATTRS[name]) continue;
-      if (!loc) continue; // WHY: made by the parser, not written in the page
+      if (!loc) continue; // WHY: Parser-inserted elements have no source span to edit.
       const tag = html.slice(parsed.bom + loc.startOffset, parsed.bom + loc.endOffset);
       const withAttr = (attr: string, value: string) => {
         const at = el.sourceCodeLocation!.attrs![attr];
@@ -320,7 +306,6 @@ export async function collectDemo(runDir: string, slug: string, entry: string, o
         const v = a.get(attr);
         if (v === undefined) continue;
         const refs = attr === 'srcset' ? v.split(',').map((s) => s.trim().split(/\s+/)[0]) : [v.trim()];
-        // WHY: A local script's src is replaced by its text; nothing else here is.
         const writtenIn = name === 'script' && attr === 'src';
         for (const r of refs) follow(r, `${name} ${attr}`, writtenIn);
       }
@@ -379,8 +364,7 @@ export async function collectDemo(runDir: string, slug: string, entry: string, o
     for (const s of [...subs, ...headEdits]) {
       if (original.includes(s.to)) throw new RunError(slug, `${rel} already contains a substitution's output, so the edit couldn't be reversed`);
     }
-    // WHY: Tag swaps apply everywhere; the head insertion only at its anchor.
-    // A function replacement, so "$&" and the like in script text stay literal.
+    // WHY: Use a replacement callback so special replacement sequences in script text stay literal.
     const swapped = subs.reduce((text, s) => text.replaceAll(s.from, () => s.to), original);
     // WHY: Only a doctype and comments precede the anchor (locateHead). A swap
     // inside one of those comments would shift it, and fails here.
@@ -398,8 +382,6 @@ export async function collectDemo(runDir: string, slug: string, entry: string, o
   return { entry: entryRel, files: [...served.values()], sources: [...files.values()], substitutions };
 }
 
-// WHY: Undoes a page's substitutions, newest first. Tests use it to show the served
-// page is the original plus exactly the recorded edits.
 export function reverseSubstitutions(served: string, subs: Substitution[]): string {
   return [...subs].reverse().reduce((text, s) => text.replaceAll(s.to, () => s.from), served);
 }

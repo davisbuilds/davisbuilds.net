@@ -1,8 +1,3 @@
-/* WHY: Design tokens for the Instrument direction.
-   Layout concept: the page is an engineering drawing sheet (framed, zoned, with a
-   title block), and every data readout carries its provenance.
-   Light values on bare :root; dark values for the system preference (unless the
-   visitor chose light) and for an explicit dark choice. */
 :root {
   --paper: #e9ece8;
   --sheet: #f4f5f2;

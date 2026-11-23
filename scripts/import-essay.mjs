@@ -1,10 +1,8 @@
 #!/usr/bin/env node
-// WHY: Copies a vault Writing note into src/content/writing/<slug>.md in the site's
-// frontmatter (src/lib/essay-import.ts). Re-run it after editing the note in
-// Obsidian; the vault stays the source. Nothing is written if the note has a
-// problem, and every problem is listed.
-//
-//   node scripts/import-essay.mjs "<vault note>.md" [--dry-run]
+/**
+ * Import a vault Writing note into the site frontmatter. The vault remains the authoring source.
+ * Run node scripts/import-essay.mjs "<vault note>.md" [--dry-run].
+ */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { convertNote, sourceOf } from '../src/lib/essay-import.ts';

@@ -1,5 +1,4 @@
-// WHY: The one place pages, the RSS feed and the palette get essays from. It
-// returns published essays only.
+// WHY: One publication filter keeps draft essays out of pages, the feed, and the palette.
 import { getCollection } from 'astro:content';
 import { arrange } from './essays';
 

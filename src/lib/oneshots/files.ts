@@ -1,6 +1,4 @@
-// WHY: Path confinement and file checks for untrusted run directories. A path
-// from a manifest or a demo must resolve to a
-// regular file inside its run directory, with no symlink anywhere on the way.
+// WHY: Runs can come from outside contributors, so reads stay inside the run’s regular, non-symlink files.
 import { lstatSync, readFileSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { RunError } from './manifest.ts';

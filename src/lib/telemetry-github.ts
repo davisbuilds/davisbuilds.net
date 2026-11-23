@@ -1,9 +1,4 @@
-// WHY: Counts the operator's merged pull requests for the telemetry snapshot: every
-// pull request they authored, in any repository their `gh` login can read,
-// whose merge time falls in the window. GitHub's contribution totals itemize
-// public repositories only, and search can return incomplete results, so this
-// pages the viewer's merged pull requests instead and refuses anything that
-// would make the count partial.
+// WHY: Contribution totals omit private repository detail and search may be incomplete, so count the viewer’s merged pull requests directly.
 
 export type MergedPullRequestPage = {
   nodes: Array<{ id: string; mergedAt: string | null; updatedAt: string }>;

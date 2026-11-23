@@ -1,10 +1,4 @@
-// WHY: Turns Markdown footnotes ([^name]) into margin notes.
-//
-// GFM renders footnotes as superscript links plus a list at the end. This
-// plugin replaces each reference with an `a.ref` marker and moves its note to
-// an `aside.sidenote` placed right after the top-level block that cites it.
-// CSS sets those asides in the margin column on wide screens; below the essay
-// breakpoint they stay where they are, inline after their paragraph.
+// WHY: Attach each note after the citing block so the same markup can appear beside the essay or inline on narrow screens.
 
 const isEl = (n, tag) => n && n.type === 'element' && (!tag || n.tagName === tag);
 

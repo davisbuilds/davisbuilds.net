@@ -1,8 +1,4 @@
-// WHY: Shared by deploy, rollback, verify-deploy and the telemetry upload. The
-// server side is private/server/deploy-shell.sh, reached as the
-// dbs-deploy identity through the operator's SSH alias; the server's address
-// never appears here. DAVISBUILDS_SSH_CONFIG and DAVISBUILDS_ORIGIN point the
-// same scripts at the rehearsal container.
+// WHY: Configurable SSH and origin settings let the same release client exercise the rehearsal server.
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, readdirSync, readFileSync } from 'node:fs';
@@ -92,9 +88,7 @@ export function currentRelease() {
   return remote('list').split('\n').find((l) => l.endsWith(' current'))?.split(' ')[0] ?? null;
 }
 
-// WHY: The URL that serves a release file: directory indexes by their directory,
-// and each segment encoded, so a name with `#`, `?` or `%` is fetched as
-// itself rather than cut short.
+// WHY: Encode path segments separately so a literal hash, query marker, or percent sign survives over HTTP.
 export function urlFor(file) {
   const encoded = file.split('/').map(encodeURIComponent).join('/');
   if (encoded === 'index.html') return `${PUBLIC_ORIGIN}/`;

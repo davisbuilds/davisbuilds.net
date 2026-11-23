@@ -27,7 +27,7 @@ const social = await runSocialImage(run, Astro.site);
     <meta name="description" content={run.summary} />
     <meta name="robots" content="noindex" />
     <link rel="canonical" href={canonical} />
-    <!-- WHY: A shared play link still previews as the run: its title, summary and hero. -->
+    <!-- WHY: Preview clients fetch a shared play URL directly, so it carries the run’s metadata. -->
     <meta property="og:title" content={title} />
     <meta property="og:description" content={run.summary} />
     <meta property="og:url" content={canonical} />

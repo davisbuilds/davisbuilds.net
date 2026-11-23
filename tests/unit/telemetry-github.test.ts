@@ -5,7 +5,7 @@ const t = (s: string) => Date.parse(s);
 const FROM = t('2026-10-07T00:00:00Z');
 const TO = t('2026-11-06T00:00:00Z');
 
-// WHY: Pages as GitHub returns them: merged PRs, most recently updated first.
+// WHY: The window test relies on GitHub returning the most recently updated pull requests first.
 const node = (id: string, mergedAt: string | null, updatedAt = mergedAt ?? '2026-11-01T00:00:00Z') => ({ id, mergedAt, updatedAt });
 const page = (nodes: MergedPullRequestPage['nodes'], endCursor: string | null): MergedPullRequestPage => ({
   nodes,

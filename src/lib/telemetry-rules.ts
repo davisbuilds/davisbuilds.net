@@ -1,13 +1,10 @@
-// WHY: What a new reading may publish, given the last published document. The
-// snapshot applies these before it
-// validates; the validator re-checks the year-to-date rule on the result.
 import { ageMs, HOST_STALE_AFTER_MS, UNAVAILABLE_AFTER_MS, type AgentHost, type AgentsSource, type GithubSource, type Status, type TelemetryDocument } from './telemetry-schema.ts';
 
 export type RuleOptions = {
   now: number;
-  // WHY: GitHub returned the known 2024 total, so a zero from it is believable.
+  /** The source returned the known GitHub control total. */
   githubControlOk: boolean;
-  // WHY: Operator-only: publish a lower year-to-date total, recording why.
+  /** Operator-provided reason for accepting a lower year-to-date total. */
   acceptDecrease?: string;
 };
 

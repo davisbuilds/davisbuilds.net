@@ -1,9 +1,4 @@
-// WHY: The telemetry reader: fills every [data-readout] from
-// /telemetry.json. Values go in with textContent and DOM calls only, so the
-// document is always data. A source that's missing, invalid or unavailable
-// says "unavailable" (with its last reading when there was one), never zero;
-// one older than 3 hours renders stale. Ages count from each source's read_at
-// and refresh every minute.
+// WHY: Use text and DOM collection methods for telemetry. An unreadable source stays unavailable so it cannot look like a measured zero.
 import { ageLabel, agentTotals, isStale, readDocument, type AgentsSource, type GithubSource } from '../lib/telemetry-schema';
 import { odometer } from './odometer';
 import { weeklyChart } from './crosshair';
@@ -117,8 +112,6 @@ const RENDER: Record<string, Render> = {
     if (since && t.since) since.textContent = `sessions since ${t.since}`;
   },
   'harness-mix'(el, { agents }, now) {
-    // WHY: the text line at y=132 says unavailable, or holds the segment labels; the one at
-    // y=146 is the total and the reading's age, which state() keeps current.
     const empty = $(el, '[data-empty]'), total = $(el, '[data-total]');
     if (!state(el, agents, now)) return;
     if (empty) empty.textContent = '';
@@ -155,7 +148,7 @@ const RENDER: Record<string, Render> = {
   },
 };
 
-// WHY: Agent tiles note any host that has gone quiet: still counted, and named.
+// WHY: Show which hosts have gone quiet while their last readings still contribute to the total.
 function hosts(el: HTMLElement, agents: AgentsSource | null, now: number): void {
   const note = $(el, '[data-hosts]');
   if (!note || !agents) return;
@@ -169,8 +162,7 @@ function render(sources: Sources): void {
   for (const el of document.querySelectorAll<HTMLElement>('[data-readout]')) RENDER[el.dataset.readout!]?.(el, sources, now);
 }
 
-// WHY: Keep every age and the stale state current without re-rendering values:
-// state() only touches a value to say "unavailable", which it already says.
+// WHY: Refresh age labels without replacing the values or replaying their animations.
 const GITHUB_READOUTS = ['contributions-ytd', 'pull-requests-30d', 'weekly-contributions'];
 function tick(sources: Sources): void {
   const now = Date.now();

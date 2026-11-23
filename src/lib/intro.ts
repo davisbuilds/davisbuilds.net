@@ -1,6 +1,3 @@
-// WHY: The first-visit intro's choreography, as a pure function of what's on the
-// first screen: which way each panel arrives, who carries it, and when each
-// worker leaves. src/scripts/intro.ts measures the page and draws the plan.
 
 export type Rect = { x: number; y: number; w: number; h: number };
 export type Viewport = { w: number; h: number };
@@ -8,14 +5,12 @@ export type Point = { x: number; y: number };
 export type PanelSpec = { rect: Rect; foreman?: boolean };
 export type From = 'left' | 'right' | 'bottom';
 
-// WHY: Milliseconds from the first frame. The light comes on at `tap`, and the
-// page fades in from `reveal` to `end`.
+/** Cue times in milliseconds from the animation’s first frame. */
 export const TIMING = { end: 3000, reveal: 2450, travel: 600, lastStart: 600, cheer: 320, exitFrom: 1550, exitSpan: 500, jump: 2020, tap: 2260, down: 2480 } as const;
 
 // WHY: A panel starting lower than this on the first screen is left for the
 // fade-in: its carriers would have nowhere to stand.
 const MIN_VISIBLE = 80;
-// WHY: Where a carrier stands under its panel, and the hop down to the lane.
 const UNDER = 28;
 const DROP = 170;
 

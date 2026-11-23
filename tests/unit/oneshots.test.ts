@@ -181,7 +181,6 @@ describe('brief and the after-delivery marker', () => {
     await expectRejected(withBrief('bad', `${BRIEF}<!-- after delivery-->\n${LATER}`), /after delivery.*exactly/);
     await expectRejected(withBrief('bad', `${BRIEF}  <!-- After Delivery\n${LATER}`), /After Delivery.*exactly/);
     await expectRejected(withBrief('bad', `${BRIEF}<!-- after  delivery -->\n${LATER}`), /after  delivery.*exactly/);
-    // WHY: After a closed fence the marker counts again.
     await expectRejected(withBrief('bad', `${BRIEF}\`\`\`\nx\n\`\`\`\n<!-- after delivery -->\n${LATER}<!-- after delivery -->\n`), /more than one/);
     await expectRejected(withBrief('bad', `${BRIEF}<!-- after delivery -->\n${LATER}<!-- after delivery -->\n`), /more than one/);
     await expectRejected(withBrief('bad', `<!-- after delivery -->\n${LATER}`), /nothing before/);
@@ -340,8 +339,6 @@ describe('demo file set', () => {
     await expectRejected(withPage('<style>@Import "https://cdn.example.com/x.css";</style>'), /cdn\.example\.com/);
   });
   it('rejects a file that is written in once but still requested from elsewhere', async () => {
-    // WHY: Writing b.css into the page doesn't answer an @import or import() that
-    // still names it: that reference is a request of its own.
     await expectRejected(withPage('<link rel="stylesheet" href="a.css"><link rel="stylesheet" href="b.css">', '', { 'bad/a.css': '@import "b.css";', 'bad/b.css': 'p{}' }), /b\.css as a separate request/);
     await expectRejected(withPage('<style>@import "b.css";</style><link rel="stylesheet" href="b.css">', '', { 'bad/b.css': 'p{}' }), /b\.css as a separate request/);
     await expectRejected(withPage('<script src="a.js"></script><script src="b.js"></script>', '', { 'bad/a.js': 'import("./b.js");', 'bad/b.js': '' }), /b\.js as a separate request/);
@@ -395,8 +392,7 @@ describe('demo file set', () => {
   });
 });
 
-// WHY: What a page loads as separate scripts and stylesheets, read as a browser
-// parses it (so markup inside a comment doesn't count).
+// WHY: A browser parser keeps commented-out tags out of this independent request detector.
 type Parsed5 = { tagName?: string; attrs?: { name: string; value: string }[]; childNodes?: Parsed5[]; content?: Parsed5 };
 function separateLoads(html: string): string[] {
   const out: string[] = [];
@@ -433,7 +429,7 @@ describe('vendoring and disclosure', () => {
   });
   it('serves the demo as one page, with its script, d3 and fonts written in', () => {
     expect(demo.files.map((f) => f.rel)).toEqual(['index.html']);
-    // WHY: Control first: the parser-based detector sees both kinds of load.
+    // WHY: The positive control catches a detector that always reports no loads.
     expect(separateLoads('<script src="a.js"></script><!-- <script src="c.js"></script> --><link rel="stylesheet" href="b.css">')).toEqual(['a.js', 'b.css']);
     expect(separateLoads(served)).toEqual([]);
     expect(served).toContain(`<script>${readFileSync(path.join(NODE_MODULES, 'd3/dist/d3.min.js'), 'utf8')}</script>`);

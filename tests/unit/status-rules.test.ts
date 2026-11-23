@@ -31,9 +31,7 @@ describe('statusForHour', () => {
 
 describe('easternParts', () => {
   it('reads the hour in America/New_York, not the machine timezone', () => {
-    // WHY: 2026-10-07T04:30Z is 00:30 EDT.
     expect(easternParts(new Date('2026-10-07T04:30:00Z')).hour).toBe(0);
-    // WHY: 2026-01-15T14:00Z is 09:00 EST.
     expect(easternParts(new Date('2026-01-15T14:00:00Z')).hour).toBe(9);
   });
 });

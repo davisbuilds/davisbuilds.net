@@ -1,5 +1,3 @@
-// WHY: Theme control in the title block: system → light → dark.
-// The choice is a per-visitor convenience; storage failures fall back to system.
 const ORDER = ['system', 'light', 'dark'] as const;
 type Theme = (typeof ORDER)[number];
 

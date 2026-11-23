@@ -1,16 +1,9 @@
 #!/usr/bin/env node
-// WHY: The operator's telemetry snapshot. It reads GitHub with the
-// owner's `gh` login and this host's agentmonitor through its read-only CLI,
-// applies the publishing rules against the last published document, validates
-// the result, and writes the candidate. It emits aggregates only: no project,
-// repository or session names reach the document.
-//
-//   node scripts/telemetry/snapshot.mjs [--dry-run] [--previous <published.json>]
-//                                       [--out <candidate.json>] [--accept-decrease "<reason>"]
-//
-// --dry-run prints the document instead of writing it. Exit 1 means the
-// document failed validation (nothing written); exit 3 means it was written
-// but a source couldn't be read and was carried forward (a failed run).
+/**
+ * Write a validated aggregate telemetry snapshot.
+ * Flags include --dry-run, --previous <published.json>, --out <candidate.json>, and --accept-decrease "<reason>".
+ * Exit 1 means validation failed without writing. Exit 3 means a source failed and a prior reading was carried forward.
+ */
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -65,8 +58,6 @@ async function graphql(query, variables = {}) {
   return body.data;
 }
 
-// WHY: Authored pull requests merged in the last 30 days, in every repository the
-// login can read (see src/lib/telemetry-github.ts).
 const MERGED_PRS = `query($cursor: String) {
   viewer { pullRequests(states: MERGED, first: 100, after: $cursor, orderBy: { field: UPDATED_AT, direction: DESC }) {
     nodes { id mergedAt updatedAt }

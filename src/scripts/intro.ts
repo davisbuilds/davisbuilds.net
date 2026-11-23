@@ -1,16 +1,9 @@
-// WHY: The first-visit intro on Home: a pixel crew carries the first screen's
-// panels in, a foreman checks them off, and the last worker switches on the
-// readout's light before the page fades in. The inline script in index.astro
-// decides whether it plays (first visit or ?intro, never with reduced motion,
-// a link into the page, or an automated browser) and hides the page; this
-// draws it from the page's own layout, then shows the page. Any key, click,
-// touch or scroll skips to the page.
 import { planIntro, STORAGE_KEY, TIMING, type Plan, type PlannedPanel, type Rect } from '../lib/intro';
 
 const root = document.documentElement;
 // WHY: Started this late, the page has waited long enough: show it.
 const LATE_MS = 2500;
-const P = 3; // WHY: px per sprite pixel
+const P = 3;
 
 type Colors = Record<'sheet' | 'ink' | 'rule' | 'muted' | 'signal' | 'ok' | 'agent' | 'agentDark' | 'agentHi', string>;
 type Drawn = PlannedPanel & { el: Element; bordered: boolean; bars: Rect[]; rules: number[] };
@@ -104,8 +97,7 @@ function rectOf(el: Element): Rect {
 }
 const sameRect = (a: Rect, b: Rect) => a.x === b.x && a.y === b.y && a.w === b.w && a.h === b.h;
 
-// WHY: Skeleton bars where the panel's text lines are, relative to the panel. The
-// gear stamp's letters are left out: the gear is stamped on its own.
+// WHY: The gear stamp renders separately, so omitting its lettering avoids duplicate text in the skeleton.
 function textBars(el: Element, at: Rect): Rect[] {
   const bars: Rect[] = [];
   const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
@@ -137,7 +129,6 @@ function colors(): Colors {
   const s = getComputedStyle(root), v = (k: string) => s.getPropertyValue(`--${k}`).trim();
   return { sheet: v('sheet'), ink: v('ink'), rule: v('rule'), muted: v('muted'), signal: v('signal'), ok: v('ok'), agent: v('agent'), agentDark: v('agent-dark'), agentHi: v('agent-hi') };
 }
-// WHY: The light shows the readout's real state: green only for a fresh reading.
 const stateColor = (state: string | undefined, c: Colors) => (state === 'ok' ? c.ok : state === 'stale' ? c.signal : c.muted);
 
 const clamp = (x: number, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -175,7 +166,6 @@ function blockAt(p: PlannedPanel, t: number, vp: { w: number; h: number }) {
 
 function draw(ctx: CanvasRenderingContext2D, t: number, s: Scene) {
   const { plan, c } = s, vp = { w: innerWidth, h: innerHeight };
-  // WHY: Panels under way are drawn last, over the ones already placed.
   const order = [...s.drawn].sort((m, n) => Number(blockAt(n, t, vp).landed) - Number(blockAt(m, t, vp).landed));
   for (const p of order) {
     if (t < p.a) continue;
@@ -261,5 +251,4 @@ function drawLight(ctx: CanvasRenderingContext2D, t: number, s: Scene) {
   ctx.restore();
 }
 
-// WHY: Last, once every helper above is defined.
 if (root.dataset.intro === 'play') start();
