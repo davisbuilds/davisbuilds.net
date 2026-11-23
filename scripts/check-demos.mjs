@@ -1,7 +1,3 @@
-/**
- * Play all runnable demos in the built site and fail for network, CSP, script, or drawing errors.
- * Use --shots <dir> for optional captures, --seconds <n> for run time, or --origin <url> for an existing server.
- */
 import { spawn } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';

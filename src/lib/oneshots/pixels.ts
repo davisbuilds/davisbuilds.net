@@ -5,7 +5,6 @@ export const MIN_DRAWN_PIXELS = 100;
 // compression of gradients).
 const TOLERANCE = 8;
 
-/** Grid size and visible cells used to sample the background and count drawn pixels. */
 export type VisibleCells = { size: number; cells: Array<[number, number]> };
 
 export async function drawnPixels(png: Buffer, visible?: VisibleCells): Promise<number> {

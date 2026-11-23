@@ -1,8 +1,4 @@
 #!/usr/bin/env node
-/**
- * Audit accessibility, the compressed Home HTML/CSS/JavaScript budget, and third-party requests against built pages.
- * Use --no-build to reuse dist/ and --no-demos to omit runnable demo checks.
- */
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';

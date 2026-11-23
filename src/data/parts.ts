@@ -7,9 +7,7 @@ export type Part = {
   repo: string;
   function: string;
   lang: string;
-  /** Category label in the Home system diagram. */
   kind?: string;
-  /** Diagram placement. Parts without a lane appear on Systems. */
   lane?: Lane;
   blurb?: string;
 };
@@ -29,11 +27,10 @@ export type App = {
   name: string;
   kind: string;
   description: string;
-  /** Public repository identifier when the source is available. */
   repo?: string;
   url?: string;
   featured?: boolean;
-  /** Publication approval for the display name and curated live URL. */
+  // WHY: A product can be published while its source stays private, so approval is limited to its curated live URL.
   publishedBrand?: boolean;
 };
 

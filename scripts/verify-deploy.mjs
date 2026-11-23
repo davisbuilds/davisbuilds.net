@@ -1,8 +1,4 @@
 #!/usr/bin/env node
-/**
- * Verify the live release or a given release ID against its manifest.
- * Use --no-http to skip the origin HTTP comparison or --public to compare the public host.
- */
 import { parseArgs } from 'node:util';
 import { currentRelease, verifyRelease } from './lib/release.mjs';
 

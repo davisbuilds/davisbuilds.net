@@ -1,9 +1,4 @@
 #!/usr/bin/env node
-/**
- * Write a validated aggregate telemetry snapshot.
- * Flags include --dry-run, --previous <published.json>, --out <candidate.json>, and --accept-decrease "<reason>".
- * Exit 1 means validation failed without writing. Exit 3 means a source failed and a prior reading was carried forward.
- */
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import path from 'node:path';

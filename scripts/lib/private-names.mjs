@@ -36,7 +36,6 @@ export function checkScopes(response) {
   if (!scopes.includes('repo')) throw new Error("the gh login's token lacks the repo scope (a fine-grained or app token may see only some private repositories); log in with `gh auth login`");
 }
 
-/** Load the private inventory for the named site repository. */
 export function privateNames(self) {
   // WHY: Required: without it the scan would silently skip every project it lists.
   if (!existsSync(EXTRA_NAMES)) throw new Error(`${EXTRA_NAMES} is missing; the private-name scan needs it`);

@@ -2,9 +2,7 @@ import { ageMs, HOST_STALE_AFTER_MS, UNAVAILABLE_AFTER_MS, type AgentHost, type 
 
 export type RuleOptions = {
   now: number;
-  /** The source returned the known GitHub control total. */
   githubControlOk: boolean;
-  /** Operator-provided reason for accepting a lower year-to-date total. */
   acceptDecrease?: string;
 };
 

@@ -1,8 +1,4 @@
 #!/usr/bin/env node
-/**
- * Activate the previous release and verify it against its manifest.
- * Use --no-http to skip the origin HTTP comparison or --public to compare the public host.
- */
 import { parseArgs } from 'node:util';
 import { remote, requireServeCheck, verifyRelease } from './lib/release.mjs';
 

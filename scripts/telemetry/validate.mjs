@@ -1,8 +1,4 @@
 #!/usr/bin/env node
-/**
- * Validate a candidate telemetry document before publication.
- * Pass <document.json> and optionally --previous <published.json>. Invalid input exits with status 1.
- */
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { checkDocument } from '../../src/lib/telemetry-schema.ts';

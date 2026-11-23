@@ -1,8 +1,4 @@
 #!/usr/bin/env node
-/**
- * Import a vault Writing note into the site frontmatter. The vault remains the authoring source.
- * Run node scripts/import-essay.mjs "<vault note>.md" [--dry-run].
- */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { convertNote, sourceOf } from '../src/lib/essay-import.ts';

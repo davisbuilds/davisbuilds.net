@@ -1,8 +1,4 @@
 #!/usr/bin/env node
-/**
- * Publish a validated telemetry document and update the baseline used by the next upload.
- * Pass a document path and optionally --previous <published.json>.
- */
 import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync } from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';

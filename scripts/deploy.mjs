@@ -1,9 +1,4 @@
 #!/usr/bin/env node
-/**
- * Build and verify a deployable release before activation.
- * Use --no-activate to stage a release, --no-http to skip the origin HTTP comparison,
- * --public to compare the public host, or --allow-branch to choose a clean non-main checkout.
- */
 import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';

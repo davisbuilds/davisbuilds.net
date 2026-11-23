@@ -9,7 +9,6 @@ import { DEMO_CSP, FONT_FAMILIES, GOOGLE_FONTS_CSS, PRECONNECT_HOSTS, SCRIPTS, S
 
 export type Substitution = { file: string; from: string; to: string; label: string };
 export type DemoFile = { rel: string; bytes: Buffer };
-/** files contains the served entry page. sources contains the original artifacts used to review a lock bump. */
 export type Demo = { entry: string; files: DemoFile[]; sources: DemoFile[]; substitutions: Substitution[] };
 
 // WHY: HTML is the only document type served, because only HTML pages get the

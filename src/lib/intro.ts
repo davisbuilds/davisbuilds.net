@@ -5,7 +5,6 @@ export type Point = { x: number; y: number };
 export type PanelSpec = { rect: Rect; foreman?: boolean };
 export type From = 'left' | 'right' | 'bottom';
 
-/** Cue times in milliseconds from the animation’s first frame. */
 export const TIMING = { end: 3000, reveal: 2450, travel: 600, lastStart: 600, cheer: 320, exitFrom: 1550, exitSpan: 500, jump: 2020, tap: 2260, down: 2480 } as const;
 
 // WHY: A panel starting lower than this on the first screen is left for the

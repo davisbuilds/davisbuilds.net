@@ -37,7 +37,6 @@ export const essaySchema = z
     importance: z.int().min(0).max(10),
     tags: z.array(z.string().trim().min(1)),
     written_by: z.string().trim().min(1),
-    /** Publication date set by the owner. A blank or missing value denotes an unpublished essay. */
     published: z.union([z.literal('').transform(() => null), calendarDate]).nullish(),
     also_on: z.url({ protocol: /^https$/ }).optional(),
     canonical: z.url({ protocol: /^https$/ }).optional(),

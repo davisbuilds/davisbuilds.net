@@ -33,7 +33,6 @@ export const plotPoints = (runs: SyncedRun[]) =>
 export type PlotLabel = { x: number; y: number; anchor: 'start' | 'end' };
 export type PlotArea = { left: number; right: number; top: number; bottom: number };
 
-/** Returns a position per point or null when the label cannot fit. The tooltip still identifies omitted labels. */
 export function placeLabels(points: { x: number; y: number; text: string }[], area: PlotArea, charWidth = 6.3): (PlotLabel | null)[] {
   type Box = { x0: number; x1: number; y0: number; y1: number };
   const hit = (a: Box, b: Box) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;

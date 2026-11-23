@@ -76,7 +76,6 @@ function frontmatterLine(key: string, value: unknown): string {
   return `${key}: ${JSON.stringify(value)}`;
 }
 
-/** Pass the source note’s vault-relative path to distinguish notes with the same filename. */
 export function convertNote(text: string, fileName: string, source = fileName): Imported {
   const src = text.replace(/^﻿/, '').replace(/\r\n/g, '\n');
   const m = /^---\n([\s\S]*?)\n---\n?/.exec(src);

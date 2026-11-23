@@ -14,7 +14,6 @@ export type SyncedRun = {
   lab: Lab;
   humanTurns: number | null;
   wallClockMinutes: number | null;
-  /** The original brief through the delivery boundary. briefAfterDelivery indicates omitted follow-ups. */
   brief: string | null;
   briefAfterDelivery: boolean;
   hero: string | null;

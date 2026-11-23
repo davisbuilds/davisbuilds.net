@@ -22,11 +22,9 @@ export type Harness = (typeof HARNESSES)[number];
 export type GithubSource = {
   status: Status;
   read_at: string | null;
-  /** GitHub metrics are omitted when the source is unavailable. */
   year?: number;
   contributions_ytd?: number;
   contributions_by_year?: Array<{ year: number; total: number }>;
-  /** Pull requests authored by the operator and merged in the last 30 days, across repositories visible to the login. */
   pull_requests_30d?: number;
   weekly_contributions?: { bucket: (typeof BUCKETS)[number]; start: string; counts: number[] };
   accepted_decrease?: { reason: string; previous: number; at: string };

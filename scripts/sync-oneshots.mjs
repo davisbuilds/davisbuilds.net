@@ -1,8 +1,3 @@
-/**
- * Sync run files from the pinned oneshots commit.
- * Use --since <sha> to compare demo inputs against a previous revision.
- * Set DAVISBUILDS_ONESHOTS to read a local fixture checkout.
- */
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';

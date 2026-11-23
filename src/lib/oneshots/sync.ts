@@ -24,7 +24,6 @@ const MAX_BRIEF_BYTES = 64 * 1024;
 const caption = (file: string) => path.basename(file, path.extname(file)).replace(/[-_]+/g, ' ');
 export const sha256 = (b: Buffer | string) => createHash('sha256').update(b).digest('hex');
 
-/** Exact brief line that separates the original request from follow-up messages. */
 export const DELIVERY_MARKER = '<!-- after delivery -->';
 
 // WHY: Ignore matching text in fenced samples so an example cannot truncate the brief.
