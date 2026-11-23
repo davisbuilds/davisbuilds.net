@@ -1,7 +1,4 @@
-// WHY: The published telemetry document, shared by the page's
-// reader and the operator's validator. Every field is allowlisted: a key, a
-// label or a number outside these rules fails the check, so nothing but
-// aggregate counts can reach /telemetry.json.
+// WHY: Allowlist the public document’s fields so telemetry can expose aggregate data only.
 
 export const SCHEMA_VERSION = 1;
 
@@ -25,11 +22,9 @@ export type Harness = (typeof HARNESSES)[number];
 export type GithubSource = {
   status: Status;
   read_at: string | null;
-  // WHY: Present unless the source is unavailable.
   year?: number;
   contributions_ytd?: number;
   contributions_by_year?: Array<{ year: number; total: number }>;
-  // WHY: Authored pull requests merged in the last 30 days, any repository the login can read.
   pull_requests_30d?: number;
   weekly_contributions?: { bucket: (typeof BUCKETS)[number]; start: string; counts: number[] };
   accepted_decrease?: { reason: string; previous: number; at: string };
@@ -56,8 +51,6 @@ export type TelemetryDocument = {
 
 export type Check<T> = { ok: true; value: T } | { ok: false; errors: string[] };
 
-// WHY: A small strict checker: each reader records errors under a path, and an
-// object check fails on any key it wasn't told about.
 type Errors = string[];
 const isObject = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null && !Array.isArray(x);
 const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/;
@@ -97,8 +90,6 @@ function list(x: unknown, path: string, max: number, e: Errors, each: (item: unk
   if (x.length > max) e.push(`${path}: more than ${max} entries`);
   x.forEach((item, i) => each(item, `${path}[${i}]`));
 }
-// WHY: Status and read_at are common to every source; an unavailable source may
-// carry nothing else, and any other status must carry every field.
 function head(x: Record<string, unknown>, path: string, e: Errors): boolean {
   oneOf(x.status, STATUSES, `${path}.status`, e);
   if (x.read_at === null && x.status !== 'unavailable') e.push(`${path}.read_at: only an unavailable source may have no reading`);

@@ -1,6 +1,4 @@
-// WHY: Every rendered page passes through here, in dev and at build time, so
-// links to other sites open in a new tab wherever they come from: components,
-// essay Markdown, oneshots data.
+// WHY: Process the rendered HTML so external-link handling also covers Markdown and generated content.
 import { defineMiddleware } from 'astro:middleware';
 import { markExternalLinks } from './lib/external-links';
 

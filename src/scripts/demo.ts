@@ -1,6 +1,4 @@
-// WHY: Swaps a demo's poster for its sandboxed frame when the visitor presses Run.
-// On a narrow screen the inline stage is too small to use, so Run follows its
-// link to the full-screen page instead.
+// WHY: Use the full-screen link on narrow viewports because the inline stage is too small to play.
 const narrow = matchMedia('(max-width: 860px)');
 document.querySelectorAll<HTMLElement>('.stage[data-demo-src]').forEach((stage) => {
   const link = stage.querySelector<HTMLAnchorElement>('[data-run-demo]');

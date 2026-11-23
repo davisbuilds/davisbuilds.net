@@ -1,6 +1,3 @@
-// WHY: Essay frontmatter. The content collection validates every essay
-// against this at build time, so a missing field, an unknown value, or a
-// `updated` or `published` date earlier than `created` fails the build.
 import { z } from 'astro/zod';
 import { isCalendarDate } from './dates.ts';
 
@@ -11,10 +8,7 @@ export const CONFIDENCES = [
 
 export { isCalendarDate };
 
-// WHY: YAML turns an unquoted date into a Date and silently rolls impossible days
-// over (2026-02-31 becomes March 3), so the schema can't see the original.
-// The loader runs this on the raw frontmatter text first.
-// `published` may be blank: that means unpublished, as in the vault.
+// WHY: Validate the original date text because YAML rolls impossible unquoted dates forward before schema validation.
 export function checkRawDates(frontmatter: string): string[] {
   const problems: string[] = [];
   for (const field of ['created', 'updated', 'published']) {
@@ -43,8 +37,6 @@ export const essaySchema = z
     importance: z.int().min(0).max(10),
     tags: z.array(z.string().trim().min(1)),
     written_by: z.string().trim().min(1),
-    // WHY: The date the essay went public. Blank (bare or quoted) or missing means
-    // unpublished; only the owner sets it.
     published: z.union([z.literal('').transform(() => null), calendarDate]).nullish(),
     also_on: z.url({ protocol: /^https$/ }).optional(),
     canonical: z.url({ protocol: /^https$/ }).optional(),

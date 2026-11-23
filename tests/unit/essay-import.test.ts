@@ -5,8 +5,6 @@ import { checkRawDates, essaySchema } from '../../src/lib/essay-schema';
 
 const BODY = 'An opening paragraph.\n\n## What worked\n\n1. **A point.** With a [link](https://example.com/).\n';
 
-// WHY: A vault Writing note as Obsidian saves it: vault key order, `type`, and the
-// `writing` collection tag.
 const note = (patch: Record<string, string> = {}, body = BODY) => {
   const fields: Record<string, string> = {
     title: 'Working with Agents',

@@ -1,6 +1,4 @@
-// WHY: /llms.txt in the llmstxt.org format. Built from the same
-// sources as the pages: published essays, the synced oneshots runs and the
-// parts list, so it can't list anything a page doesn't show.
+// WHY: Reuse the page inputs so /llms.txt lists only material the site publishes.
 import type { APIContext } from 'astro';
 import { getPublishedEssays } from '../lib/writing';
 import { loadOneshots } from '../lib/oneshots/data';

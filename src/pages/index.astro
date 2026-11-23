@@ -1,8 +1,5 @@
 ---
-// WHY: Home: the hero and its readout, telemetry tiles, the system diagram, the
-// oneshots strip and the writing register. Readouts are telemetry: they
-// render "unavailable" here, never a number, and the telemetry reader fills
-// each [data-readout] from the published document.
+// WHY: Build-time readouts start as unavailable so missing telemetry cannot appear as zero.
 import { Image } from 'astro:assets';
 import Sheet from '../layouts/Sheet.astro';
 import AppCard from '../components/AppCard.astro';
@@ -28,10 +25,8 @@ const essays = (await getPublishedEssays()).slice(0, 3);
 ---
 <Sheet title="Home" current="home" description="Davis Gee is a systems engineer who builds AI infrastructure and context-engineering tools, and writes about working with agents.">
   <script is:inline slot="head" define:vars={{ key: STORAGE_KEY }}>
-    // WHY: Decide before first paint whether the intro plays, so the page never
-    // flashes before it: a first visit or ?intro, but never with reduced motion,
-    // a link into the page, or an automated browser. Unreadable storage counts
-    // as seen. If the intro script never runs, the page shows after 5 s anyway.
+    // WHY: Decide before the first paint to avoid a flash. Release the page after
+    // five seconds if the animation script fails to run.
     try {
       let seen = true;
       try { seen = localStorage.getItem(key) === '1'; } catch (e) {}

@@ -1,5 +1,4 @@
-// WHY: The time-of-day status shown in the title block.
-// It is a fixed rule table over the Eastern-time hour, never presence data.
+// WHY: Use Eastern-time labels to provide a time-of-day cue without collecting presence data.
 
 export const STATUS_RULES: ReadonlyArray<{ until: number; label: string }> = [
   { until: 6, label: 'ASLEEP · AGENTS RUNNING' },

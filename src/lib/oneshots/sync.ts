@@ -1,6 +1,4 @@
-// WHY: Reads a checkout of the oneshots repository's runs/ directory, validates
-// every run, and only then writes the site's copies. If any
-// run fails, nothing is written, so no file from a bad run reaches the build.
+// WHY: Validate all runs before writing the snapshot so a bad contribution cannot publish a partial sync.
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -26,22 +24,16 @@ const MAX_BRIEF_BYTES = 64 * 1024;
 const caption = (file: string) => path.basename(file, path.extname(file)).replace(/[-_]+/g, ' ');
 export const sha256 = (b: Buffer | string) => createHash('sha256').update(b).digest('hex');
 
-// WHY: oneshots RUNS.md: a line reading exactly this comes before messages sent
-// after the work was delivered (repository moves, PR requests). The page
-// shows the brief up to it and links to the full file.
 export const DELIVERY_MARKER = '<!-- after delivery -->';
 
-// WHY: The indexes of lines outside fenced code blocks, where a marker counts. A
-// prompt that shows the marker in a code sample is quoting it. Same rule as
-// the oneshots validator (scripts/validate_runs.py).
+// WHY: Ignore matching text in fenced samples so an example cannot truncate the brief.
 function proseLines(lines: string[]): number[] {
   const out: number[] = [];
   let fence: string | null = null;
   lines.forEach((line, i) => {
     const m = /^ {0,3}(`{3,}|~{3,})/.exec(line);
     if (fence) {
-      // WHY: A closer is the fence character alone, at least as long, then only
-      // whitespace; anything else on the line is still code.
+      // WHY: A shorter fence or one followed by code leaves the Markdown sample open.
       if (m && m[1][0] === fence[0] && m[1].length >= fence.length && !line.slice(m[0].length).trim()) fence = null;
     } else if (m) fence = m[1];
     else out.push(i);
@@ -54,10 +46,8 @@ export function splitBrief(text: string, dir: string): { brief: string; afterDel
   const prose = proseLines(lines.map((l) => l.replace(/\r$/, '')));
   const line = (i: number) => lines[i].replace(/\r$/, '');
   const at = prose.filter((i) => line(i) === DELIVERY_MARKER);
-  // WHY: A marker in another case or spacing would leave the later messages on
-  // the page unnoticed. Other typos aren't caught.
-  // Only a line that is itself a comment (indented under 4 spaces, so not
-  // code) counts: a prompt may quote the marker inline.
+  // WHY: Fail on near misses of the marker so a typo cannot publish post-delivery messages.
+  // Only an actual comment line qualifies, since a prompt can quote the marker inline.
   const near = prose.map(line).find((l) => l !== DELIVERY_MARKER && /^ {0,3}<!--/.test(l) && /after\s*delivery/i.test(l));
   if (near) throw new RunError(dir, `brief line "${near.trim()}" looks like the delivery marker; write it exactly as ${DELIVERY_MARKER}`);
   if (at.length > 1) throw new RunError(dir, `brief has more than one ${DELIVERY_MARKER} line`);
@@ -153,7 +143,6 @@ export async function syncOneshots(opts: SyncOptions): Promise<SyncedData> {
     .sort();
   if (dirs.length === 0) throw new Error(`oneshots: no runs with a run.toml under ${opts.runsDir}`);
 
-  // WHY: Phase 1: validate everything. Any RunError stops here, before any write.
   const staged: Staged[] = [];
   for (const dir of dirs) staged.push(await stageRun(opts.runsDir, dir, opts));
 

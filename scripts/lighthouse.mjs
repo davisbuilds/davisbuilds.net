@@ -1,25 +1,4 @@
 #!/usr/bin/env node
-// WHY: Lighthouse accessibility, Home's transfer
-// budget, and no requests to third-party hosts, measured on the built site
-// served the way nginx serves it (gzip level 1 on the same types).
-//
-//   node scripts/lighthouse.mjs [--no-build] [--no-demos]
-//
-// --no-build audits whatever dist/ already holds, for both phases. A page
-// that build lacks fails the run: Lighthouse refuses a non-200 document
-// (ERRORED_DOCUMENT_REQUEST) rather than scoring the 404 page.
-//
-// It builds twice. The fixture build supplies the essay page, because no
-// essay is published at launch and the template is what's being measured.
-// The production build, built last so dist/ is left as production, supplies
-// every other page. Each page is audited at mobile and desktop settings, and
-// every page must score at least 95 for accessibility, in the light and the
-// dark color scheme. Then
-// check-demos.mjs plays each runnable demo for 10 seconds and fails on any
-// request to another host.
-//
-// Before trusting a clean result, a control page with a third-party image and
-// known accessibility faults must trip both detectors.
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
@@ -32,13 +11,12 @@ const args = process.argv.slice(2);
 const PORT = 4394, DEBUG_PORT = 9334;
 const ORIGIN = `http://localhost:${PORT}`;
 const A11Y_FLOOR = 95;
-const HOME_BUDGET = 150 * 1024; // WHY: compressed HTML + CSS + JS, excluding fonts and images
+const HOME_BUDGET = 150 * 1024;
 const OUT = '.lighthouse';
 const CONTROL = '/__lighthouse-control/';
 const SCHEME_CONTROL = '/__lighthouse-scheme/';
 
-// WHY: The same types nginx gzips (private/server/nginx/davisbuilds.net.conf), plus
-// HTML, which nginx always compresses.
+// WHY: Match the deployment server’s content types when measuring compressed transfer size.
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'application/javascript', '.json': 'application/json',
   '.xml': 'text/xml', '.txt': 'text/plain', '.md': 'text/markdown', '.svg': 'image/svg+xml',
@@ -93,8 +71,6 @@ function build(script) {
   if (r.status !== 0) throw new Error(`pnpm ${script} failed`);
 }
 
-// WHY: Patched Chrome, with an isolated Playwright profile and debugging port for Lighthouse.
-// `scheme` sets prefers-color-scheme (Blink: 0 dark, 1 light).
 async function startChrome(scheme) {
   const browser = await launchPatchedChromium({
     args: [`--blink-settings=preferredColorScheme=${scheme === 'dark' ? 0 : 1}`, `--remote-debugging-port=${DEBUG_PORT}`],

@@ -1,6 +1,4 @@
-// WHY: Run manifests (run.toml) from the oneshots repository, schema 1. The
-// repository accepts outside contributions, so everything here is untrusted
-// input: a manifest that doesn't validate fails the build, naming its run.
+// WHY: Manifest inputs can come from outside contributors, so an invalid run blocks the build.
 import { parse } from 'smol-toml';
 import { z } from 'astro/zod';
 import { isCalendarDate } from '../dates.ts';

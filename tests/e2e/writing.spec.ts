@@ -127,7 +127,6 @@ test.describe('feeds and unpublished essays (asserted on dist/)', () => {
     expect(rss.match(/<item>/g)).toHaveLength(1);
     expect(rss).toContain('<link>https://davisbuilds.net/writing/published-essay/</link>');
     expect(rss).not.toContain('Unpublished Fixture');
-    // WHY: Dated by publication, not creation (2026-01-12).
     expect(rss).toContain('<pubDate>Fri, 20 Feb 2026 00:00:00 GMT</pubDate>');
   });
 

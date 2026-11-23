@@ -1,17 +1,14 @@
 import { browserUse } from './scripts/browser-runtime.cjs';
 import { defineConfig, devices } from '@playwright/test';
 
-// WHY: E2E runs against `astro preview` of the fixture build (`pnpm build:fixtures`),
-// so tests see exactly what ships, with fixture content and telemetry. It uses
-// its own port and never reuses a running server, so a `pnpm dev` on 4321 can't
-// stand in for the build.
+// WHY: Use a dedicated preview of the fixture build to exercise the shipped output without drafts or a live dev server.
 export default defineConfig({
   globalSetup: './scripts/browser-runtime.cjs',
   testDir: './tests/e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  // WHY: GitHub-hosted runners for public repositories have 4 vCPUs.
+  // WHY: Cap CI concurrency at the hosted runner’s four available CPU cores.
   workers: process.env.CI ? 4 : undefined,
   reporter: process.env.CI ? [['html', { open: 'never' }], ['list']] : 'list',
   use: {

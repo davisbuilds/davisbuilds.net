@@ -1,5 +1,4 @@
-// WHY: Pure helpers for the Writing section. src/lib/writing.ts applies them to the
-// content collection; keeping them here lets unit tests run without Astro.
+// WHY: Keep ordering independent of the Astro collection so unit tests can use plain entries.
 
 type EntryLike = { id: string; body?: string; data: { created: Date; published?: Date | null } };
 
@@ -22,11 +21,7 @@ export function countWords(markdown: string): number {
 
 export const readingMinutes = (words: number): number => Math.max(1, Math.round(words / 200));
 
-// WHY: Published essays only, newest first. Document numbers (W-01, W-02, ...)
-// follow publication order, so an old draft published later takes the next
-// number instead of renumbering what's out, and nothing about unpublished
-// drafts, not even their count, shows in the numbering. `published` is a
-// date, so essays published the same day order by creation, then slug.
+// WHY: Assign document numbers in publication order so publishing an older draft preserves existing numbers.
 export function arrange<T extends EntryLike>(entries: T[]): Arranged<T>[] {
   const published = entries
     .flatMap((entry) => (entry.data.published instanceof Date ? [{ entry, published: entry.data.published }] : []))

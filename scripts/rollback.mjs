@@ -1,10 +1,4 @@
 #!/usr/bin/env node
-// WHY: Roll back to the release before the current one, then verify
-// it: on the server against its manifest, and every file nginx serves against
-// the same manifest (--no-http skips that; --public also checks the public
-// hostname against the local snapshot).
-//
-//   node scripts/rollback.mjs [--no-http] [--public]
 import { parseArgs } from 'node:util';
 import { remote, requireServeCheck, verifyRelease } from './lib/release.mjs';
 

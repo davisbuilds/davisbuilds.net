@@ -1,10 +1,4 @@
-// WHY: The owner's private project names must never reach the built site. The list
-// isn't kept in this repository, since naming them here would publish them:
-// it is read at deploy time from GitHub (private repositories the owner's `gh`
-// login can see) plus `private/names.txt`, one name per line, for projects
-// that aren't on GitHub. A `github: <name>` line there names a private
-// repository the GitHub list must include: a login that can't see private
-// repositories returns an empty or partial list without failing.
+// WHY: Read the private inventory at deploy time because putting it in this repository would publish it.
 import { APPS } from '../../src/data/parts.ts';
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
@@ -25,8 +19,7 @@ export function parseNamesFile(text) {
   return { names, canaries };
 }
 
-// WHY: Throws unless the GitHub list provably covers the owner's private
-// repositories: at least one canary, and every canary present.
+// WHY: A successful GitHub request can still return a partial inventory if the login lacks access.
 export function checkCanaries(listed, canaries) {
   if (!canaries.length) throw new Error(`${EXTRA_NAMES} names no \`github:\` canary, so a partial GitHub list would pass unnoticed`);
   const seen = new Set(listed.map((n) => n.toLowerCase()));
@@ -43,7 +36,6 @@ export function checkScopes(response) {
   if (!scopes.includes('repo')) throw new Error("the gh login's token lacks the repo scope (a fine-grained or app token may see only some private repositories); log in with `gh auth login`");
 }
 
-// WHY: `self` is this site's own repository, which the site names on purpose.
 export function privateNames(self) {
   // WHY: Required: without it the scan would silently skip every project it lists.
   if (!existsSync(EXTRA_NAMES)) throw new Error(`${EXTRA_NAMES} is missing; the private-name scan needs it`);
@@ -60,9 +52,7 @@ export function publicNames() {
   return gh(['api', '--paginate', 'user/repos?visibility=public&affiliation=owner&per_page=100', '--jq', '.[].name']).map((n) => n.toLowerCase());
 }
 
-// WHY: A name counts where it stands as its own token: `tools` matches "tools",
-// "/tools/" and ".tools" but not "devtools", and `widget-ai` doesn't match
-// "Widget AI".
+// WHY: Token boundaries prevent a short project name from matching an unrelated longer word.
 const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 export const tokenRe = (name) => new RegExp(`(?<![a-z0-9_-])${escape(name)}(?![a-z0-9_-])`, 'i');
 
@@ -72,8 +62,7 @@ export const tokenRe = (name) => new RegExp(`(?<![a-z0-9_-])${escape(name)}(?![a
 const isDemoFile = (file) => /^oneshots\/[^/]+\/files\//.test(file);
 export const scannable = (file) => /\.(html|xml|txt|json|js|css|md|svg)$/.test(file) && !isDemoFile(file);
 
-// WHY: What a deploy scans: the text of every scannable file, plus every built
-// path (a file's name is public too, whatever its type), as [label, text].
+// WHY: File paths also reach the public deployment and can disclose names independently of file contents.
 export const scanTargets = (built, read) => [
   ...built.filter(scannable).map((f) => [f, read(f)]),
   ['built paths', built.filter((f) => !isDemoFile(f)).join('\n')],
@@ -107,10 +96,7 @@ export function findPrivateNames(texts, names, apps = APPS) {
         return boundary(full[offset - 1]) && boundary(full[offset + url.length]) ? '' : url;
       });
       const destinations = [
-        // WHY: Inspect path-like tokens in every format, including CSS, srcset,
-        // data attributes, Markdown references, JS strings and ordinary prose.
-        // Angle brackets delimit HTML text, so closing tags cannot turn a
-        // standalone display name into a path. Backslashes count as paths too.
+        // WHY: HTML tag boundaries keep a standalone approved name from being interpreted as a path.
         ...(normalized.match(/(?:[a-z0-9._~@%:+-]*[\/\\])+[a-z0-9._~@%:+/\\-]+/gi) ?? []),
         ...(normalized.match(/(?:[a-z0-9_~@%+-]+\.)+[a-z0-9_~@%+-]+/gi) ?? []),
         ...(normalized.match(/(?:https?:\/\/|\/\/|\b(?:[a-z0-9-]+\.)+[a-z]{2,}[/:])[^\s<>"'`\)\]]+/gi) ?? []),

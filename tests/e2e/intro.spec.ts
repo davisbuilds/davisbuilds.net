@@ -17,7 +17,6 @@ test.describe('landing intro', () => {
     await page.goto('/');
     expect(await intro(page)).toBe('play');
     await expect(page.locator('canvas.intro')).toHaveCount(1);
-    // WHY: The page under the canvas is really hidden while it plays.
     expect(await pageOpacity(page)).toBe('0');
     await finished(page);
     await expect(page.locator('canvas.intro')).toHaveCount(0);

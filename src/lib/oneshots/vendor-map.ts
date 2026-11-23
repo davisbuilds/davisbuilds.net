@@ -1,7 +1,4 @@
-// WHY: The fixed map from third-party URLs that demos load to pinned copies, which
-// the sync writes into the demo's page. A third-party load that isn't covered here fails the
-// build, so adding a run that uses a new CDN file means adding it here, from a
-// pinned package, in a reviewed commit.
+// WHY: Pin replacements for third-party loads so runnable demo pages do not depend on a CDN.
 
 export const SCRIPTS: Record<string, { pkg: string; file: string; out: string; label: string }> = {
   'https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js': {
@@ -26,8 +23,7 @@ export const FONT_FAMILIES: Record<string, Family> = {
   'IBM Plex Mono': { kind: 'static', pkg: '@fontsource/ibm-plex-mono', sourceName: 'IBM Plex Mono' },
 };
 
-// WHY: Preconnect hints to these hosts are commented out once their files are
-// served locally.
+// WHY: Preconnecting would still contact the original host after its assets have been vendored.
 export const PRECONNECT_HOSTS = new Set(['fonts.googleapis.com', 'fonts.gstatic.com', 'cdnjs.cloudflare.com']);
 
 // WHY: Inserted after <head> in every served demo page, so a demo can't reach

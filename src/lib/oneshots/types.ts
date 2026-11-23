@@ -14,8 +14,6 @@ export type SyncedRun = {
   lab: Lab;
   humanTurns: number | null;
   wallClockMinutes: number | null;
-  // WHY: The brief up to the oneshots `<!-- after delivery -->` line;
-  // briefAfterDelivery says messages after it were left out.
   brief: string | null;
   briefAfterDelivery: boolean;
   hero: string | null;
@@ -27,7 +25,6 @@ export type SyncedRun = {
 };
 
 export type SyncedData = {
-  // WHY: Fixtures use a placeholder repo and SHA so link-building runs in tests.
   source: { kind: 'repository' | 'fixtures'; repo: string; sha: string };
   runs: SyncedRun[];
 };

@@ -1,6 +1,3 @@
-// WHY: Whether a screenshot of a demo frame shows anything drawn: enough pixels
-// that differ from its most common color. An empty canvas or a page that fails
-// before painting is one flat color.
 import sharp from 'sharp';
 
 export const MIN_DRAWN_PIXELS = 100;
@@ -8,9 +5,6 @@ export const MIN_DRAWN_PIXELS = 100;
 // compression of gradients).
 const TOLERANCE = 8;
 
-// WHY: A grid of cells over the image, with the cells a visitor can see. Only
-// pixels in visible cells count, and the background color is taken from
-// them. Without a grid, every pixel counts.
 export type VisibleCells = { size: number; cells: Array<[number, number]> };
 
 export async function drawnPixels(png: Buffer, visible?: VisibleCells): Promise<number> {

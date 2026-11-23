@@ -1,21 +1,3 @@
-// WHY: Plays every runnable demo in the built site, inside its sandbox, and reports
-// what each one did: requests to other hosts, CSP
-// violations, script errors, and whether the frame drew anything (by its
-// pixels, not its DOM: an empty canvas still counts as nothing drawn).
-//
-// Canvases are read from inside the frame. On CI's software WebGL a busy demo
-// can starve the compositor so a screenshot never completes, while reading a
-// canvas needs no new frame. A setup script makes WebGL keep its last frame
-// readable. A frame without enough drawn canvas pixels (a DOM or SVG demo, or
-// a blank one) is judged by a screenshot instead.
-//
-//   pnpm build && node scripts/check-demos.mjs [--shots <dir>] [--seconds 6]
-//
-// Exits non-zero if any demo requests another host or anything after its own
-// page, hits its CSP, throws or logs an error, or draws nothing: a demo that
-// doesn't work in its sandbox must not be published as runnable. In production
-// the host's bot check blocks every request a sandboxed frame makes after its
-// page, so a second request here is a demo that breaks there.
 import { spawn } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -26,8 +8,6 @@ const args = process.argv.slice(2);
 const opt = (name, fallback) => (args.includes(name) ? args[args.indexOf(name) + 1] : fallback);
 const shots = opt('--shots', null);
 const seconds = Number(opt('--seconds', '6'));
-// WHY: --origin plays the demos from a running server (the rehearsal's nginx, with
-// its sandbox header) instead of a local preview.
 const external = opt('--origin', null);
 const port = 4393;
 const origin = external ?? `http://localhost:${port}`;
@@ -85,14 +65,7 @@ try {
       await page.waitForTimeout(seconds * 1000);
       frame = page.frames().find((f) => f.url().includes(`/oneshots/${run.slug}/files/`));
       if (frame) {
-        // WHY: Only what a visitor can see counts. A canvas is read if
-        // checkVisibility passes (display, visibility, opacity, ancestors
-        // included) and nothing from it up to the root sets a filter, clip
-        // path, mask or blend, which hit-testing can't see. Its box is split
-        // into an 8x8 grid, and a cell counts only where the canvas is on top
-        // at the cell's center and at its four corners (inset 1px), so a cell
-        // that is partly covered drops out whole. Hit-testing leaves out what
-        // is covered, clipped by an ancestor or off-screen.
+        // WHY: Measure visible pixels so an off-screen, clipped, or covered canvas cannot pass the drawing gate.
         const GRID = 8;
         const canvases = await frame.evaluate((grid) =>
           [...document.querySelectorAll('canvas')].flatMap((c) => {

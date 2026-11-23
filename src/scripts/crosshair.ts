@@ -1,6 +1,4 @@
-// WHY: The weekly contributions chart and its crosshair: built from the telemetry
-// series with DOM calls only (no markup strings), so a value can never become
-// an element. Pointer or touch reads any week into the caption.
+// WHY: Build the chart with DOM calls so telemetry values remain data.
 const NS = 'http://www.w3.org/2000/svg';
 // WHY: The chart is drawn at its box's width (one unit is about one CSS pixel), so
 // labels keep their size and nothing scrolls on a phone. Redrawn on resize.

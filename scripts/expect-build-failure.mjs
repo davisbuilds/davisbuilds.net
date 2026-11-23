@@ -1,6 +1,4 @@
-// WHY: Each bad essay fixture must fail the build, and the
-// error must name both the file and the problem field. Builds into temporary
-// directories so the real dist/ is untouched.
+// WHY: Use isolated output directories so the failure fixtures cannot replace the working build.
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';

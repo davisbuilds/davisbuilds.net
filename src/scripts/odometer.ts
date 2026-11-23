@@ -1,5 +1,3 @@
-// WHY: The odometer roll: a number's digits spin into place once, then the element
-// goes back to plain text. Reduced motion skips the roll entirely.
 import { reducedMotion } from './motion';
 
 const ROLL_MS = 1300;

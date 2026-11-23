@@ -1,7 +1,4 @@
-// WHY: Autonomy plot tooltip: pointing at a run shows its title, model, wall clock
-// and turns beside the point. A mouse hides it on leaving; a tap keeps it
-// until the next tap elsewhere, since a finger "leaves" as it lifts. The
-// svg's own label lists every run for screen readers.
+// WHY: Touch release also fires pointerleave, so a tap keeps its tooltip until a later tap elsewhere.
 const tip = document.getElementById('plot-tip');
 const wrap = tip?.parentElement;
 if (tip && wrap) {

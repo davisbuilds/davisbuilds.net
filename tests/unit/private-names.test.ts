@@ -83,7 +83,7 @@ describe('explicit published application brands', () => {
   });
 
   it('does not permit source associations, other destinations or built paths for a published brand', () => {
-    // WHY: All destinations here are synthetic policy fixtures.
+    // WHY: Synthetic destinations exercise the policy without publishing the live allowlist.
     expect(findPrivateNames([
       ['source.html', '<a href="https://github.com/example/approved-widget">Source</a>'],
       ['other.html', 'https://other.example/approved-widget'],

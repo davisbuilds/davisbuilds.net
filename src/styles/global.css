@@ -1,5 +1,3 @@
-/* WHY: Site styles, ported from the round-3 Instrument prototype.
-   Tokens live in tokens.css; every color here comes from a token. */
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
@@ -103,7 +101,6 @@ button { font: inherit; color: inherit; }
 .tile .v { font-family: var(--f-mono); font-weight: 700; font-size: 1.9rem; line-height: 1.1; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
 .tile .src { font-family: var(--f-mono); font-size: 10.5px; color: var(--muted); }
 .tile .warn { font-family: var(--f-mono); font-size: 10.5px; color: var(--signal); }
-/* WHY: A reading with no current value: the word, never a zero. */
 .unavailable { color: var(--muted); font-weight: 500; letter-spacing: 0; }
 .readout .big.unavailable { font-size: 1.6rem; padding-top: 22px; }
 .tile .v.unavailable { font-size: 1.05rem; padding-top: 8px; }
@@ -116,7 +113,6 @@ button { font: inherit; color: inherit; }
 .chart-cap .label b { color: var(--signal); font-weight: 500; }
 .chart-wrap svg text { font-family: var(--f-mono); font-size: 10px; fill: var(--muted); }
 .chart-wrap svg text.tag { fill: var(--sheet); }
-/* WHY: A reading over 3 hours old: the value dims and its age says stale. */
 .is-stale [data-value], .is-stale .harness span:last-child { color: var(--muted); }
 .is-stale [data-read], .stale-label { color: var(--signal); }
 .fig .is-stale [data-read] { fill: var(--signal); }
@@ -237,7 +233,6 @@ button { font: inherit; color: inherit; }
 .prose ol, .prose ul { margin: 0 0 1.2em; padding-left: 1.4em; }
 .prose li { margin-bottom: 0.3em; }
 .prose a { text-decoration-color: var(--signal); text-underline-offset: 3px; }
-/* WHY: Inline code as Obsidian shows it: a small mono chip. Code blocks keep their own frame. */
 .prose code { font-family: var(--f-mono); font-size: 0.84em; background: var(--code-bg); padding: 0.1em 0.28em; border-radius: 4px; }
 .prose pre code { font-size: inherit; background: none; padding: 0; border-radius: 0; }
 .prose .tldr { border: 1px solid var(--ink); padding: 14px 18px; background: var(--signal-soft); }
@@ -389,8 +384,7 @@ button { font: inherit; color: inherit; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
-/* WHY: The first-visit intro (src/scripts/intro.ts): the sheet's frame and zones
-   stay, its contents wait under the crew's canvas, then fade in. */
+/* WHY: Only the contents fade in so the sheet frame stays visible during the intro. */
 html[data-intro] .sheet .inner { opacity: 0; }
 html[data-intro="reveal"] .sheet .inner { opacity: 1; transition: opacity 0.55s ease; }
 html[data-intro="skip"] .sheet .inner { opacity: 1; transition: opacity 0.2s ease; }

@@ -1,7 +1,4 @@
 ---
-// WHY: The stage for a runnable demo. The Run link opens the full-screen page;
-// with JavaScript on a wide screen, src/scripts/demo.ts loads the sandboxed
-// frame in place.
 import { Image } from 'astro:assets';
 import { runImage } from '../lib/oneshots/data';
 import { DEMO_SANDBOX } from '../lib/oneshots/vendor-map';
@@ -10,7 +7,7 @@ import type { SyncedRun } from '../lib/oneshots/types';
 interface Props { run: SyncedRun; commit: string }
 const { run, commit } = Astro.props;
 const hero = runImage(run, run.hero);
-// WHY: One entry per kind of edit: each written-in script is its own substitution.
+// WHY: Multiple substitutions can represent one edit category in the visitor-facing disclosure.
 const edits = [...new Set(run.demo!.substitutions.map((s) => s.label))];
 ---
 <div class="stage" data-demo-src={run.demo!.src} data-demo-title={`${run.title}, running`} data-sandbox={DEMO_SANDBOX}>

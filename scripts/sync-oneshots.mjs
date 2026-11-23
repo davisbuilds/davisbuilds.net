@@ -1,16 +1,3 @@
-// WHY: Fetches the oneshots repository at the pinned commit and writes the site's
-// copies of its runs. Reads files only; nothing from that
-// repository runs here.
-//
-//   node scripts/sync-oneshots.mjs [--since <sha>]
-//
-// To review a lock bump, it lists the demo files that differ from a baseline:
-// the commit in the lock at HEAD when the working lock differs from it, or
-// the commit given with --since. Both sides go through the current sync code,
-// so the list shows what changed in the oneshots repository.
-//
-// DAVISBUILDS_ONESHOTS=<dir> reads <dir>/runs and <dir>/releases.json instead
-// (fixtures). GITHUB_TOKEN, if set, raises the GitHub API rate limit.
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';

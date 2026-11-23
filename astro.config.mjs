@@ -13,7 +13,6 @@ export default defineConfig({
   // cross-origin. Dev and preview send this header; nginx sends it for
   // /oneshots/_vendor/ in production.
   server: { headers: { 'Access-Control-Allow-Origin': '*' } },
-  // WHY: The unified pipeline, not Astro's default Sätteri, so the margin-note
-  // plugin can run as an ordinary rehype plugin.
+  // WHY: The margin-note plugin uses rehype, so the site selects the unified Markdown pipeline.
   markdown: { processor: unified({ rehypePlugins: [rehypeSidenotes] }) },
 });

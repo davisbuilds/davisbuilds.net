@@ -1,10 +1,4 @@
-// WHY: Created and last-push dates for the parts list, read from GitHub at build
-// time. One request lists the owner's public repositories, so a
-// part that was renamed or made private is missing from it.
-//
-// - Production builds fail if GitHub can't be read or a part is missing.
-// - Fixture builds (DAVISBUILDS_FIXTURES) read tests/fixtures/github/repos.json.
-// - `astro dev` renders "unavailable" instead of failing.
+// WHY: A production build must confirm the listed repositories are public. Fixture builds and local development can run without GitHub.
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { APPS, GITHUB_OWNER, PARTS } from '../data/parts';

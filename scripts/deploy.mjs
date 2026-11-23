@@ -1,18 +1,4 @@
 #!/usr/bin/env node
-// WHY: Deploy the site: build, freeze a snapshot, hash
-// it, upload it to incoming/, have the server verify it into releases/, then
-// switch `current` to it in one step and verify what's live.
-//
-//   node scripts/deploy.mjs [--no-activate] [--no-http] [--public] [--allow-branch]
-//
-// After activating, the server fetches every file from its own nginx and
-// compares it with the release manifest. --no-http skips that, for a
-// deploy while the vhost still serves something else (the first one, before
-// cutover). --public also compares every file served at the public hostname,
-// which the proxy's bot challenge blocks for scripted clients.
-// --no-activate stops after finalize: the release is on the server, verified,
-// and the previous one keeps serving. --allow-branch deploys a clean checkout
-// that isn't origin/main.
 import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -45,8 +31,6 @@ for (const v of ['DAVISBUILDS_FIXTURES', 'DAVISBUILDS_CONTENT', 'DAVISBUILDS_ONE
   if (process.env[v]) die(`${v} is set; a release is always a production build`);
 }
 
-// WHY: The server config and the checks that hold it to the build live in the
-// private companion repository, checked out at private/ (see AGENTS.md).
 for (const p of ['private/tests', 'private/names.txt']) if (!existsSync(p)) die(`no ${p}; a deploy needs the private checkout's server checks and name list`);
 console.log('server config checks…');
 run('pnpm', ['exec', 'vitest', 'run', 'private/tests'], { stdio: 'inherit' });
@@ -54,16 +38,14 @@ run('pnpm', ['exec', 'vitest', 'run', 'private/tests'], { stdio: 'inherit' });
 console.log('building…');
 run('pnpm', ['build'], { stdio: 'inherit' });
 
-// WHY: What a release must never contain: the telemetry document (deploys never
-// touch it), fixture content, or anything that isn't a plain file.
+// WHY: Release snapshots exclude fixture inputs and telemetry, which is published independently.
 const built = files('dist');
 if (built.includes('telemetry.json')) die('dist/ contains telemetry.json; the site never ships it');
 const fixtures = built.filter((f) => /(^|\/)fixture-/.test(f));
 if (fixtures.length) die(`dist/ contains fixture content (${fixtures[0]}); is this a fixture build?`);
 for (const f of ['index.html', '404.html']) if (!built.includes(f)) die(`dist/ has no ${f}`);
 
-// WHY: No private project name anywhere in the site's own text or file names. The
-// control: the same scan finds the public repositories the Systems page links.
+// WHY: Known public repository names provide a positive control before trusting a clean private-name scan.
 const self = JSON.parse(run('gh', ['repo', 'view', '--json', 'name'])).name;
 const texts = scanTargets(built, (f) => readFileSync(path.join('dist', f), 'utf8'));
 if (!findNames(texts, publicNames()).length) die('the private-name scan found no public repository names either; it is not reading the build');

@@ -1,11 +1,4 @@
 #!/usr/bin/env node
-// WHY: Publish a telemetry document: validate it against the last
-// published one, `put` it as the dbs-telemetry identity, and only then make
-// it the new baseline. The server (private/server/telemetry-shell.sh) writes a
-// temporary file and renames it, so /telemetry.json is always one complete
-// document.
-//
-//   node scripts/telemetry/upload.mjs [<document.json>] [--previous <published.json>]
 import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync } from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
@@ -32,8 +25,7 @@ if (errors.length) {
   process.exit(1);
 }
 
-// WHY: The baseline's directory first, so a successful upload always becomes the
-// baseline the next upload is checked against.
+// WHY: Reject directory creation failures before changing the published document.
 mkdirSync(path.dirname(previousPath), { recursive: true });
 console.log(sshVerb(HOST, ['put'], readFileSync(file)));
 copyFileSync(file, `${previousPath}.tmp`);

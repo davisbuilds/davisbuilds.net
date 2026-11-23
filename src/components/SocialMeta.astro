@@ -1,6 +1,5 @@
 ---
-// WHY: Card tags for link previews. With an image, ask for the large card; without
-// one, the small card, so a preview never shows an empty image frame.
+// WHY: Request the smaller preview when there is no image so link cards avoid an empty frame.
 import type { SocialImage } from '../lib/oneshots/social';
 
 interface Props { image?: SocialImage | null }

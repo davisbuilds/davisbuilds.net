@@ -64,7 +64,7 @@ test('links to other sites open in a new tab, links within it do not', async ({ 
       } else expect(l.target, `${path} ${l.href}`).toBeNull();
     }
   }
-  // WHY: Control: the footer's profile links alone put external links on every page.
+  // WHY: The footer supplies five known external links per page, so a detector that finds none fails.
   expect(external).toBeGreaterThanOrEqual(PAGES.length * 5);
 });
 
